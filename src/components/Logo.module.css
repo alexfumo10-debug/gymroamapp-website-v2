@@ -1,0 +1,38 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 16px;
+  color: #0A0A0B;
+  position: relative;
+}
+
+.icon::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 4px;
+  height: 4px;
+  background: #0A0A0B;
+  border-radius: 50%;
+}
+
+.text {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 3px;
+}

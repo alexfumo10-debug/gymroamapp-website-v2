@@ -1,0 +1,339 @@
+/* ── Hero ── */
+.hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 24px 0;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  margin-bottom: 12px;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.hero p {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto 48px;
+}
+
+/* ── Value props ── */
+.values {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.valueCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.valueIcon {
+  font-size: 20px;
+  margin-bottom: 12px;
+  width: 40px;
+  height: 40px;
+  background: var(--surface2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.valueCard h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.valueCard p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── Divider ── */
+.divider {
+  width: 48px;
+  height: 1px;
+  background: var(--border);
+  margin: 0 auto 64px;
+}
+
+/* ── How it works ── */
+.how {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+.how h2 {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.stepNum {
+  min-width: 32px;
+  height: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.stepText h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.stepText p {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── Form section ── */
+.formSection {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.formSection > h2 {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.formSection > p {
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.formCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.formCard label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formCard input,
+.formCard select,
+.formCard textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.formCard input:focus,
+.formCard textarea:focus {
+  border-color: var(--accent);
+}
+
+.formCard select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.formCard textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.sectionLabel {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.sectionLabelFirst {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.helper {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: -12px;
+  margin-bottom: 16px;
+}
+
+.required {
+  color: #ff4d6d;
+}
+
+.submitBtn {
+  width: 100%;
+  background: var(--accent);
+  color: #0a0a0b;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 8px;
+}
+
+.submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(232, 255, 60, 0.15);
+}
+
+.submitBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.formNote {
+  font-size: 12px;
+  color: var(--dim);
+  text-align: center;
+  margin-top: 16px;
+}
+
+/* ── Success state ── */
+.success {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  background: rgba(232, 255, 60, 0.1);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 28px;
+  color: var(--accent);
+}
+
+.success h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.success p {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.nextSteps {
+  text-align: left;
+  max-width: 400px;
+  margin: 24px auto 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.nextSteps h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.nextSteps ol {
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .values {
+    grid-template-columns: 1fr;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 48px 24px 0;
+  }
+}
