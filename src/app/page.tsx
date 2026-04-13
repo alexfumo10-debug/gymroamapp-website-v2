@@ -8,6 +8,7 @@ import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from "@/l
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
+import Globe from "@/components/Globe";
 import Image from "next/image";
 import styles from "./page.module.css";
 
@@ -142,6 +143,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <Globe />
 
       <div className={styles.divider} />
 
