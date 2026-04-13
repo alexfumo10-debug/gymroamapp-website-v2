@@ -27,6 +27,12 @@ const TRAINER_POINTS = [
   "Receive and respond to messages from interested clients",
 ];
 
+const GROW_CARDS = [
+  { icon: "\u{1F4CD}", title: "Get listed", desc: "Your gym shows up for every traveler searching nearby" },
+  { icon: "\u{1F4F8}", title: "Showcase", desc: "Photos, schedule, and pricing right in the app" },
+  { icon: "\u{1F4AC}", title: "Connect", desc: "Receive messages from travelers looking for drop-ins" },
+];
+
 const USER_TYPES = ["Gym Goer", "Trainer", "Gym Owner", "Influencer"];
 
 export default function Home() {
@@ -162,6 +168,24 @@ export default function Home() {
           </div>
           <a href="#top" className={styles.btn}>Get started</a>
           <p className={styles.priceLine}>Trainer Pro starts at $9.99/month</p>
+        </div>
+      </section>
+
+      <section className={styles.growCta} id="grow">
+        <div className={`${styles.growInner} fade-up`}>
+          <div className={styles.growTag}>For Gym Owners</div>
+          <h2>Grow your gym with<br /><span className={styles.accent}>GymRoam</span></h2>
+          <p>Get your gym in front of thousands of traveling fitness enthusiasts. List your space, attract drop-in visitors, and fill empty class spots.</p>
+          <div className={styles.growGrid}>
+            {GROW_CARDS.map((card) => (
+              <div key={card.title} className={styles.growCard}>
+                <div className={styles.growIcon}>{card.icon}</div>
+                <h4>{card.title}</h4>
+                <p>{card.desc}</p>
+              </div>
+            ))}
+          </div>
+          <a href="/grow" className={styles.btnOutline}>Apply now</a>
         </div>
       </section>
 
