@@ -73,13 +73,15 @@
   .success { margin: 0 auto; }
   .note { text-align: center; }
   .badge { justify-content: center; }
-  .trainersInner { text-align: center; }
-  .trainersInner > p { margin: 0 auto 48px; text-align: center; }
-  .trainerPoints { align-items: center; }
-  .trainerPoint { justify-content: center; }
-  .btn { margin: 0 auto; }
-  .priceLine { text-align: center; }
   .features { padding: 80px 24px; }
+
+  /* Trainers — center the whole section */
+  .trainersInner { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .trainersInner > p { margin: 0 auto 48px; text-align: center; }
+  .trainerPoints { align-items: stretch; width: 100%; max-width: 360px; margin: 0 auto 48px; }
+  .trainerPoint { justify-content: flex-start; text-align: left; }
+  .btn { min-width: 200px; max-width: 280px; justify-content: center; }
+  .priceLine { text-align: center; }
 }
 
 @media (max-width: 640px) {
@@ -88,18 +90,26 @@
   .heroText > p { font-size: 15px; }
   .heroPhones { height: 320px; }
   .phone { width: 170px; height: 350px; border-radius: 28px; }
-  .inputRow { flex-direction: column; gap: 0; border-radius: 14px; }
-  .inputRow input { text-align: center; padding: 14px 16px; }
-  .inputRow button { border-radius: 0 0 10px 10px; padding: 14px 22px; width: 100%; }
+
+  /* Waitlist — stack input and button */
+  .inputRow { flex-direction: column; gap: 0; padding: 0; border-radius: 14px; overflow: hidden; }
+  .inputRow input { text-align: center; padding: 14px 16px; border-radius: 0; }
+  .inputRow button { border-radius: 0; padding: 14px 22px; width: 100%; }
   .typeRow { gap: 8px; }
   .typeBtn { flex: 1; min-width: calc(50% - 8px); text-align: center; justify-content: center; display: flex; align-items: center; }
-  .featureRow { flex-direction: column; gap: 8px; text-align: center; }
+
+  /* Features — centered layout */
+  .featureRow { flex-direction: column; gap: 8px; text-align: center; align-items: center; }
   .featureNum { min-width: auto; }
   .featureRow p { font-size: 14px; }
   .features { padding: 60px 20px; }
   .featuresList { gap: 40px; }
+
+  /* Trainers */
   .trainers { padding: 60px 20px; }
-  .trainerPoints { gap: 16px; }
+  .trainersInner h2 { font-size: 26px; }
+  .trainerPoints { max-width: 300px; gap: 16px; }
   .trainerPoint span { font-size: 14px; }
+
   .divider { margin: 0 auto; }
 }

@@ -45,9 +45,9 @@
   .logo { margin-bottom: 36px; }
   .heading { font-size: 36px; letter-spacing: -1px; }
   .tagline { font-size: 15px; margin-bottom: 32px; }
-  .inputRow { flex-direction: column; gap: 0; }
-  .inputRow input { text-align: center; padding: 14px 16px; }
-  .inputRow button { border-radius: 0 0 10px 10px; padding: 14px 22px; width: 100%; }
+  .inputRow { flex-direction: column; gap: 0; padding: 0; border-radius: 14px; overflow: hidden; }
+  .inputRow input { text-align: center; padding: 14px 16px; border-radius: 0; }
+  .inputRow button { border-radius: 0; padding: 14px 22px; width: 100%; }
   .typeRow { gap: 8px; }
   .typeBtn { flex: 1; min-width: calc(50% - 8px); text-align: center; display: flex; align-items: center; justify-content: center; }
   .footerLinks { gap: 16px; }
