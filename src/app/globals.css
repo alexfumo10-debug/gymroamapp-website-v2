@@ -68,6 +68,13 @@ a {
   transform: translateY(0);
 }
 
+/* Hide Vercel toolbar */
+#__next-build-indicator,
+[data-nextjs-dialog-overlay],
+nextjs-portal {
+  display: none !important;
+}
+
 /* Pulse animation */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
