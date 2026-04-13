@@ -327,15 +327,62 @@
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
+  .hero {
+    padding: 48px 20px 0;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+
   .values {
     grid-template-columns: 1fr;
+    padding: 0 20px 64px;
+  }
+
+  .valueCard {
+    text-align: center;
+  }
+
+  .valueIcon {
+    margin: 0 auto 12px;
+  }
+
+  .how {
+    padding: 0 20px 64px;
+  }
+
+  .how h2 {
+    font-size: 22px;
+  }
+
+  .formSection {
+    padding: 0 20px 60px;
+  }
+
+  .formSection > h2 {
+    font-size: 22px;
+  }
+
+  .formCard {
+    padding: 24px 20px;
   }
 
   .formRow {
     grid-template-columns: 1fr;
   }
 
-  .hero {
-    padding: 48px 24px 0;
+  .step {
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .divider {
+    margin: 0 auto 48px;
   }
 }

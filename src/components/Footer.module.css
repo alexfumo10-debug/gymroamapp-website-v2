@@ -50,11 +50,24 @@
 }
 
 @media (max-width: 640px) {
+  .footer {
+    padding: 40px 20px;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
   .inner {
     flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
   }
   .bottom {
     flex-direction: column;
     gap: 4px;
+    text-align: center;
+    align-items: center;
   }
 }
