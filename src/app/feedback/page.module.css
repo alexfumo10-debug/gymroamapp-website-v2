@@ -32,13 +32,15 @@
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--muted);
-  padding: 6px 14px;
+  padding: 10px 14px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+  -webkit-appearance: none;
+  min-height: 44px;
 }
 
 .filterBtn:hover {
@@ -72,6 +74,8 @@
   text-align: left;
   font-family: inherit;
   transition: border-color 0.2s;
+  -webkit-appearance: none;
+  min-height: 48px;
 }
 
 .submitToggle:hover {
@@ -132,13 +136,15 @@
   background: var(--accent);
   color: #0a0a0b;
   border: none;
-  padding: 10px 24px;
+  padding: 12px 24px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.2s;
+  -webkit-appearance: none;
+  min-height: 44px;
 }
 
 .submitBtn:hover {

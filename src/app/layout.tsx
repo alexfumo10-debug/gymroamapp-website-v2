@@ -24,6 +24,14 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
     apple: "/apple-touch-icon.png",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "GymRoam",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -33,6 +41,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.className}>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+        <meta name="format-detection" content="telephone=no" />
+      </head>
       <body>{children}</body>
     </html>
   );

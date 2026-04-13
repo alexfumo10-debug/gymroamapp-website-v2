@@ -32,6 +32,8 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -40,11 +42,34 @@ body {
   color: var(--text);
   line-height: 1.6;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Prevent iOS zoom on input focus — inputs must be >= 16px */
+input, select, textarea {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+
+/* Minimum touch target size for iOS — buttons and nav links only */
+button, [role="button"] {
+  min-height: 44px;
+}
+
+/* Fix iOS momentum scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
 }
 
 a {
   color: var(--accent);
   text-decoration: none;
+  -webkit-touch-callout: none;
 }
 
 /* Fade up animation */
