@@ -28,9 +28,9 @@ const TRAINER_POINTS = [
 ];
 
 const GROW_CARDS = [
-  { icon: "\u{1F4CD}", title: "Get listed", desc: "Your gym shows up for every traveler searching nearby" },
-  { icon: "\u{1F4F8}", title: "Showcase", desc: "Photos, schedule, and pricing right in the app" },
-  { icon: "\u{1F4AC}", title: "Connect", desc: "Receive messages from travelers looking for drop-ins" },
+  { title: "Get listed", desc: "Your gym shows up for every traveler searching nearby" },
+  { title: "Showcase", desc: "Photos, schedule, and pricing right in the app" },
+  { title: "Connect", desc: "Receive messages from travelers looking for drop-ins" },
 ];
 
 const USER_TYPES = ["Gym Goer", "Trainer", "Gym Owner", "Influencer"];
@@ -179,7 +179,6 @@ export default function Home() {
           <div className={styles.growGrid}>
             {GROW_CARDS.map((card) => (
               <div key={card.title} className={styles.growCard}>
-                <div className={styles.growIcon}>{card.icon}</div>
                 <h4>{card.title}</h4>
                 <p>{card.desc}</p>
               </div>
