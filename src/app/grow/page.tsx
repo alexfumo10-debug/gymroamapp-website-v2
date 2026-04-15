@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { GYM_PARTNER_PRICE } from "@/lib/subscription";
 import styles from "./page.module.css";
 
 export default function GrowPage() {
@@ -158,6 +159,17 @@ export default function GrowPage() {
           <p>
             GymRoam sends travelers and locals to your door. Get listed, get
             seen, get booked.
+          </p>
+          <p
+            style={{
+              fontSize: 13,
+              color: "var(--dim)",
+              marginTop: -24,
+              marginBottom: 48,
+            }}
+          >
+            Gym Partner &middot; <strong style={{ color: "var(--accent)" }}>{GYM_PARTNER_PRICE}</strong>{" "}
+            &middot; cancel anytime
           </p>
         </section>
 
@@ -491,6 +503,9 @@ export default function GrowPage() {
                   </li>
                   <li>
                     Set your own password and access your Partner Dashboard
+                  </li>
+                  <li>
+                    We&apos;ll send a billing link for Gym Partner ({GYM_PARTNER_PRICE})
                   </li>
                 </ol>
               </div>
