@@ -10,6 +10,7 @@ import {
 import {
   collection,
   getDocs,
+  addDoc,
   doc,
   updateDoc,
   setDoc,
@@ -18,6 +19,12 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import Toast from "@/components/Toast";
+import {
+  TRAINER_PRO_PRICE,
+  MIN_INSTAGRAM_FOLLOWERS,
+  GYM_PARTNER_PRICE,
+  GYM_PARTNER_PAYMENT_LINK,
+} from "@/lib/subscription";
 import styles from "./page.module.css";
 
 const ADMIN_EMAIL = "gymroamapp@gmail.com";
@@ -43,8 +50,33 @@ interface Application {
   gymInstagram?: string;
   gymPhone?: string;
   dayPass?: string;
+  subscriptionActive?: boolean;
+  subscriptionStatus?: string;
   verifyMethod?: string;
   notes?: string;
+  createdAt?: FirestoreTimestamp;
+}
+
+interface TrainerApplication {
+  id: string;
+  status: "pending" | "approved" | "rejected";
+  fullName: string;
+  email: string;
+  phone: string;
+  city: string;
+  country: string;
+  instagramHandle: string;
+  followerCount: number;
+  specialty: string;
+  certifications?: string;
+  yearsExperience?: string;
+  bio: string;
+  offersDropIns?: string;
+  rate?: string;
+  websiteOrLink?: string;
+  notes?: string;
+  instagramVerified?: boolean;
+  paymentStatus?: "unpaid" | "paid";
   createdAt?: FirestoreTimestamp;
 }
 
@@ -83,17 +115,29 @@ export default function AdminPanel() {
 
   // Data state
   const [applications, setApplications] = useState<Application[]>([]);
+  const [trainerApps, setTrainerApps] = useState<TrainerApplication[]>([]);
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
   const [feedbackCount, setFeedbackCount] = useState<number | null>(null);
+
+  // Top-level pool switcher
+  const [appPool, setAppPool] = useState<"gym" | "trainer">("gym");
   const [currentTab, setCurrentTab] = useState<
     "pending" | "approved" | "rejected"
   >("pending");
 
-  // Modal state
+  // Gym modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalApp, setModalApp] = useState<Application | null>(null);
   const [generatedPasscode, setGeneratedPasscode] = useState("");
   const [approving, setApproving] = useState(false);
+
+  // Trainer modal state
+  const [trainerModalOpen, setTrainerModalOpen] = useState(false);
+  const [trainerModalApp, setTrainerModalApp] =
+    useState<TrainerApplication | null>(null);
+  const [trainerPasscode, setTrainerPasscode] = useState("");
+  const [trainerApproving, setTrainerApproving] = useState(false);
+  const [instagramConfirmed, setInstagramConfirmed] = useState(false);
 
   // Toast state
   const [toastMsg, setToastMsg] = useState("");
@@ -116,6 +160,21 @@ export default function AdminPanel() {
       setApplications(apps);
     } catch (e) {
       console.error("Load error:", e);
+    }
+  }, []);
+
+  const loadTrainerApplications = useCallback(async () => {
+    try {
+      const snap = await getDocs(
+        query(collection(db, "trainerApplications"), orderBy("createdAt", "desc"))
+      );
+      const apps: TrainerApplication[] = [];
+      snap.forEach((d) =>
+        apps.push({ id: d.id, ...d.data() } as TrainerApplication)
+      );
+      setTrainerApps(apps);
+    } catch (e) {
+      console.error("Trainer load error:", e);
     }
   }, []);
 
@@ -169,6 +228,7 @@ export default function AdminPanel() {
     await signOut(auth);
     setIsLoggedIn(false);
     setApplications([]);
+    setTrainerApps([]);
     setWaitlistEntries([]);
     setFeedbackCount(null);
   };
@@ -177,15 +237,28 @@ export default function AdminPanel() {
   useEffect(() => {
     if (isLoggedIn) {
       loadApplications();
+      loadTrainerApplications();
       loadWaitlist();
       loadFeedbackCount();
     }
-  }, [isLoggedIn, loadApplications, loadWaitlist, loadFeedbackCount]);
+  }, [
+    isLoggedIn,
+    loadApplications,
+    loadTrainerApplications,
+    loadWaitlist,
+    loadFeedbackCount,
+  ]);
 
   // --- Derived stats ---
 
   const pendingCount = applications.filter((a) => a.status === "pending").length;
   const approvedCount = applications.filter(
+    (a) => a.status === "approved"
+  ).length;
+  const trainerPendingCount = trainerApps.filter(
+    (a) => a.status === "pending"
+  ).length;
+  const trainerApprovedCount = trainerApps.filter(
     (a) => a.status === "approved"
   ).length;
 
@@ -195,6 +268,7 @@ export default function AdminPanel() {
   ).length;
 
   const filteredApps = applications.filter((a) => a.status === currentTab);
+  const filteredTrainers = trainerApps.filter((a) => a.status === currentTab);
 
   // Type breakdown for waitlist
   const typeBreakdown: Record<string, number> = {};
@@ -230,7 +304,7 @@ export default function AdminPanel() {
     showToast(`Exported ${waitlistEntries.length} signups`);
   };
 
-  // --- Approve flow ---
+  // --- Gym Approve flow ---
 
   const openApproveModal = (appId: string) => {
     const app = applications.find((a) => a.id === appId);
@@ -255,7 +329,6 @@ export default function AdminPanel() {
     setApproving(true);
 
     try {
-      // 1. Create Firebase Auth account (this will sign out admin)
       const result = await createUserWithEmailAndPassword(
         auth,
         modalApp.ownerEmail,
@@ -263,7 +336,6 @@ export default function AdminPanel() {
       );
       const partnerId = result.user.uid;
 
-      // 2. Create Firestore user profile
       await setDoc(doc(db, "users", partnerId), {
         displayName: modalApp.ownerName,
         username: "",
@@ -284,7 +356,6 @@ export default function AdminPanel() {
         createdAt: serverTimestamp(),
       });
 
-      // 3. Create gym partner document
       await setDoc(doc(db, "gymPartners", modalApp.id), {
         partnerId,
         gymName: modalApp.gymName,
@@ -304,14 +375,47 @@ export default function AdminPanel() {
         approvedAt: serverTimestamp(),
       });
 
-      // 4. Update application status
       await updateDoc(doc(db, "gymPartnerApplications", modalApp.id), {
         status: "approved",
         approvedAt: serverTimestamp(),
         partnerUserId: partnerId,
       });
 
-      // Update local state
+      /* send gym partner their approval email with passcode + Stripe billing link */
+      await addDoc(collection(db, "mail"), {
+        to: [modalApp.ownerEmail],
+        message: {
+          subject: "GymRoam — You're approved! Activate your Gym Partner listing",
+          html: `
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #E8FF3C;">
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
+              </div>
+              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;color:#E8FF3C;">You're approved!</h2>
+              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;"><strong style="color:#E8E8EE;">${modalApp.gymName}</strong> is ready to go live, ${modalApp.ownerName}.</p>
+
+              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:16px;">
+                <h3 style="color:#E8FF3C;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Step 1 · Activate your listing</h3>
+                <p style="margin:0 0 16px;font-size:14px;color:#8A8A99;line-height:1.6;">Subscribe to Gym Partner (${GYM_PARTNER_PRICE}, cancel anytime). Your listing goes live the moment payment clears:</p>
+                <a href="${GYM_PARTNER_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(modalApp.ownerEmail)}" style="display:block;background:#E8FF3C;color:#0A0A0B;text-decoration:none;padding:14px;border-radius:10px;text-align:center;font-weight:800;font-size:15px;">Activate Gym Partner →</a>
+                <p style="margin:12px 0 0;font-size:11px;color:#55555F;text-align:center;">Use <strong style="color:#8A8A99;">${modalApp.ownerEmail}</strong> at checkout so we can match the subscription to your listing.</p>
+              </div>
+
+              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <h3 style="color:#E8FF3C;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Step 2 · Sign in</h3>
+                <p style="margin:0 0 12px;font-size:14px;color:#8A8A99;line-height:1.6;">Download GymRoam and sign in with:</p>
+                <p style="margin:0 0 4px;font-size:13px;color:#8A8A99;">Email: <strong style="color:#E8E8EE;">${modalApp.ownerEmail}</strong></p>
+                <p style="margin:0 0 12px;font-size:13px;color:#8A8A99;">Passcode:</p>
+                <div style="background:#0A0A0B;border:1px solid #1F1F26;border-radius:8px;padding:14px;text-align:center;font-size:22px;font-weight:900;letter-spacing:3px;color:#E8FF3C;">${generatedPasscode}</div>
+                <p style="margin:12px 0 0;font-size:11px;color:#55555F;text-align:center;">You'll set your own password on first login.</p>
+              </div>
+
+              <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">Questions? Reply to this email.</p>
+            </div>
+          `,
+        },
+      });
+
       setApplications((prev) =>
         prev.map((a) =>
           a.id === modalApp.id ? { ...a, status: "approved" as const } : a
@@ -319,10 +423,9 @@ export default function AdminPanel() {
       );
       closeModal();
 
-      // createUserWithEmailAndPassword signs out admin, so redirect to login
       setIsLoggedIn(false);
       showToast(
-        "Partner created! Sign back in to continue. Send them this passcode: " +
+        "Partner approved! Email sent with passcode + Stripe link. Passcode: " +
           generatedPasscode
       );
     } catch (e: unknown) {
@@ -337,8 +440,6 @@ export default function AdminPanel() {
     setApproving(false);
   };
 
-  // --- Reject flow ---
-
   const rejectApp = async (appId: string) => {
     if (!window.confirm("Reject this application?")) return;
     try {
@@ -352,6 +453,173 @@ export default function AdminPanel() {
         )
       );
       showToast("Application rejected");
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+  };
+
+  // --- Trainer Approve flow ---
+
+  const openTrainerModal = (appId: string) => {
+    const app = trainerApps.find((a) => a.id === appId);
+    if (!app) return;
+    setTrainerModalApp(app);
+    setTrainerPasscode(generatePasscode());
+    setInstagramConfirmed(false);
+    setTrainerModalOpen(true);
+  };
+
+  const closeTrainerModal = () => {
+    setTrainerModalOpen(false);
+    setTrainerModalApp(null);
+  };
+
+  const copyTrainerPasscode = () => {
+    navigator.clipboard.writeText(trainerPasscode);
+    showToast("Passcode copied");
+  };
+
+  const confirmTrainerApprove = async () => {
+    if (!trainerModalApp) return;
+    if (!instagramConfirmed) {
+      showToast("Confirm Instagram is verified first");
+      return;
+    }
+    setTrainerApproving(true);
+
+    try {
+      const result = await createUserWithEmailAndPassword(
+        auth,
+        trainerModalApp.email,
+        trainerPasscode
+      );
+      const trainerId = result.user.uid;
+
+      await setDoc(doc(db, "users", trainerId), {
+        displayName: trainerModalApp.fullName,
+        username: "",
+        role: "trainer",
+        mustChangePassword: true,
+        hasCompletedOnboarding: true,
+        trainerAppId: trainerModalApp.id,
+        specialty: trainerModalApp.specialty,
+        city: trainerModalApp.city,
+        country: trainerModalApp.country,
+        gymsVisited: 0,
+        citiesVisited: 0,
+        reviewCount: 0,
+        friendCount: 0,
+        selectedActivities: [],
+        travelerType: "",
+        goal: "",
+        phoneNumber: trainerModalApp.phone || "",
+        subscriptionActive: false,
+        createdAt: serverTimestamp(),
+      });
+
+      await setDoc(doc(db, "trainers", trainerModalApp.id), {
+        trainerId,
+        fullName: trainerModalApp.fullName,
+        specialty: trainerModalApp.specialty,
+        city: trainerModalApp.city,
+        country: trainerModalApp.country,
+        instagramHandle: trainerModalApp.instagramHandle,
+        followerCount: trainerModalApp.followerCount,
+        certifications: trainerModalApp.certifications || "",
+        yearsExperience: trainerModalApp.yearsExperience || "",
+        bio: trainerModalApp.bio,
+        offersDropIns: trainerModalApp.offersDropIns || "",
+        rate: trainerModalApp.rate || "",
+        websiteOrLink: trainerModalApp.websiteOrLink || "",
+        views: 0,
+        saves: 0,
+        messages: 0,
+        isVerified: true,
+        instagramVerified: true,
+        subscriptionActive: false,
+        approvedAt: serverTimestamp(),
+      });
+
+      await updateDoc(doc(db, "trainerApplications", trainerModalApp.id), {
+        status: "approved",
+        instagramVerified: true,
+        approvedAt: serverTimestamp(),
+        trainerUserId: trainerId,
+      });
+
+      /* send trainer their approval email with passcode + in-app subscribe instructions */
+      await addDoc(collection(db, "mail"), {
+        to: [trainerModalApp.email],
+        message: {
+          subject: "GymRoam — You're approved! Here's your passcode",
+          html: `
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #E8FF3C;">
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
+              </div>
+              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;color:#E8FF3C;">You're approved!</h2>
+              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">Welcome to GymRoam, ${trainerModalApp.fullName}.</p>
+
+              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:16px;">
+                <h3 style="color:#E8FF3C;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Step 1 · Sign in</h3>
+                <p style="margin:0 0 12px;font-size:14px;color:#8A8A99;line-height:1.6;">Download GymRoam on the App Store, then sign in with:</p>
+                <p style="margin:0 0 4px;font-size:13px;color:#8A8A99;">Email: <strong style="color:#E8E8EE;">${trainerModalApp.email}</strong></p>
+                <p style="margin:0 0 12px;font-size:13px;color:#8A8A99;">Passcode:</p>
+                <div style="background:#0A0A0B;border:1px solid #1F1F26;border-radius:8px;padding:14px;text-align:center;font-size:22px;font-weight:900;letter-spacing:3px;color:#E8FF3C;">${trainerPasscode}</div>
+                <p style="margin:12px 0 0;font-size:11px;color:#55555F;text-align:center;">You'll set your own password on first login.</p>
+              </div>
+
+              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <h3 style="color:#E8FF3C;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Step 2 · Subscribe to Trainer Pro</h3>
+                <p style="margin:0 0 8px;font-size:14px;color:#8A8A99;line-height:1.6;">Inside the app, tap <strong style="color:#E8E8EE;">Activate Trainer Pro</strong>. Confirm with Face ID.</p>
+                <p style="margin:0 0 8px;font-size:14px;color:#8A8A99;line-height:1.6;"><strong style="color:#E8E8EE;">${TRAINER_PRO_PRICE}</strong>, billed through Apple. Cancel anytime from iPhone Settings → Subscriptions.</p>
+                <p style="margin:0;font-size:14px;color:#8A8A99;line-height:1.6;">Your profile goes live the moment the subscription activates.</p>
+              </div>
+
+              <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">Questions? Reply to this email.</p>
+            </div>
+          `,
+        },
+      });
+
+      setTrainerApps((prev) =>
+        prev.map((a) =>
+          a.id === trainerModalApp.id ? { ...a, status: "approved" as const } : a
+        )
+      );
+      closeTrainerModal();
+
+      setIsLoggedIn(false);
+      showToast(
+        "Trainer approved! Email sent with passcode + Apple IAP instructions. Passcode: " +
+          trainerPasscode
+      );
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string };
+      if (err.code === "auth/email-already-in-use") {
+        showToast("This email already has an account");
+      } else {
+        showToast("Error: " + (err.message || "Unknown error"));
+      }
+    }
+
+    setTrainerApproving(false);
+  };
+
+  const rejectTrainer = async (appId: string) => {
+    if (!window.confirm("Reject this trainer application?")) return;
+    try {
+      await updateDoc(doc(db, "trainerApplications", appId), {
+        status: "rejected",
+        rejectedAt: serverTimestamp(),
+      });
+      setTrainerApps((prev) =>
+        prev.map((a) =>
+          a.id === appId ? { ...a, status: "rejected" as const } : a
+        )
+      );
+      showToast("Trainer application rejected");
     } catch (e: unknown) {
       const err = e as { message?: string };
       showToast("Error: " + (err.message || "Unknown error"));
@@ -407,6 +675,9 @@ export default function AdminPanel() {
     );
   }
 
+  const activePendingCount =
+    appPool === "gym" ? pendingCount : trainerPendingCount;
+
   return (
     <>
       <div className={styles.admin}>
@@ -431,14 +702,20 @@ export default function AdminPanel() {
             </div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statLabel}>Pending Applications</div>
+            <div className={styles.statLabel}>Pending Gyms</div>
             <div className={styles.statValue}>{pendingCount || "\u2014"}</div>
-            <div className={styles.statSub}>Gym partners awaiting review</div>
+            <div className={styles.statSub}>
+              {approvedCount} approved
+            </div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statLabel}>Approved Partners</div>
-            <div className={styles.statValue}>{approvedCount || "\u2014"}</div>
-            <div className={styles.statSub}>Active gym partners</div>
+            <div className={styles.statLabel}>Pending Trainers</div>
+            <div className={styles.statValue}>
+              {trainerPendingCount || "\u2014"}
+            </div>
+            <div className={styles.statSub}>
+              {trainerApprovedCount} approved
+            </div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statLabel}>Feedback</div>
@@ -503,11 +780,46 @@ export default function AdminPanel() {
           )}
         </div>
 
-        {/* Partner Applications */}
+        {/* Applications Section */}
         <div className={styles.sectionHeader}>
-          <h2>Partner Applications</h2>
+          <h2>Applications</h2>
         </div>
 
+        {/* Pool switcher (Gym vs Trainer) */}
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${appPool === "gym" ? styles.tabActive : ""}`}
+            onClick={() => setAppPool("gym")}
+          >
+            Gym Partners
+            {pendingCount > 0 && (
+              <span
+                className={`${styles.badge} ${
+                  appPool === "gym" ? styles.badgeActive : ""
+                }`}
+              >
+                {pendingCount}
+              </span>
+            )}
+          </button>
+          <button
+            className={`${styles.tab} ${appPool === "trainer" ? styles.tabActive : ""}`}
+            onClick={() => setAppPool("trainer")}
+          >
+            Trainers
+            {trainerPendingCount > 0 && (
+              <span
+                className={`${styles.badge} ${
+                  appPool === "trainer" ? styles.badgeActive : ""
+                }`}
+              >
+                {trainerPendingCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Status tabs */}
         <div className={styles.tabs}>
           {(["pending", "approved", "rejected"] as const).map((tab) => {
             const isActive = currentTab === tab;
@@ -518,13 +830,13 @@ export default function AdminPanel() {
                 onClick={() => setCurrentTab(tab)}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                {tab === "pending" && pendingCount > 0 && (
+                {tab === "pending" && activePendingCount > 0 && (
                   <span
                     className={`${styles.badge} ${
                       isActive ? styles.badgeActive : ""
                     }`}
                   >
-                    {pendingCount}
+                    {activePendingCount}
                   </span>
                 )}
               </button>
@@ -532,120 +844,305 @@ export default function AdminPanel() {
           })}
         </div>
 
-        <div className={styles.appList}>
-          {filteredApps.length === 0 ? (
-            <div className={styles.empty}>No {currentTab} applications.</div>
-          ) : (
-            filteredApps.map((a) => {
-              const statusClass = {
-                pending: styles.statusPending,
-                approved: styles.statusApproved,
-                rejected: styles.statusRejected,
-              }[a.status];
+        {/* GYM APPLICATIONS */}
+        {appPool === "gym" && (
+          <div className={styles.appList}>
+            {filteredApps.length === 0 ? (
+              <div className={styles.empty}>No {currentTab} applications.</div>
+            ) : (
+              filteredApps.map((a) => {
+                const statusClass = {
+                  pending: styles.statusPending,
+                  approved: styles.statusApproved,
+                  rejected: styles.statusRejected,
+                }[a.status];
 
-              return (
-                <div className={styles.appCard} key={a.id}>
-                  <div className={styles.appTop}>
-                    <div>
-                      <div className={styles.appGym}>{a.gymName || ""}</div>
-                      <div className={styles.appDate}>
-                        {formatDate(a.createdAt, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                return (
+                  <div className={styles.appCard} key={a.id}>
+                    <div className={styles.appTop}>
+                      <div>
+                        <div className={styles.appGym}>{a.gymName || ""}</div>
+                        <div className={styles.appDate}>
+                          {formatDate(a.createdAt, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      </div>
+                      <div className={styles.appStatusStack}>
+                        <span className={`${styles.appStatus} ${statusClass}`}>
+                          {a.status}
+                        </span>
+                        {a.status === "approved" &&
+                          (() => {
+                            const active = a.subscriptionActive === true;
+                            const canceled =
+                              a.subscriptionStatus === "canceled" ||
+                              a.subscriptionStatus === "incomplete_expired";
+                            const label = active
+                              ? "Paying"
+                              : canceled
+                              ? "Canceled"
+                              : a.subscriptionStatus === "past_due"
+                              ? "Past due"
+                              : "Awaiting payment";
+                            const cls = active
+                              ? styles.subActive
+                              : canceled || a.subscriptionStatus === "past_due"
+                              ? styles.subCanceled
+                              : styles.subPending;
+                            return (
+                              <span
+                                className={`${styles.appStatus} ${cls}`}
+                                title={
+                                  a.subscriptionStatus
+                                    ? `Stripe status: ${a.subscriptionStatus}`
+                                    : "No Stripe subscription yet"
+                                }
+                              >
+                                {label}
+                              </span>
+                            );
+                          })()}
                       </div>
                     </div>
-                    <span className={`${styles.appStatus} ${statusClass}`}>
-                      {a.status}
-                    </span>
-                  </div>
 
-                  <div className={styles.appDetails}>
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Owner</div>
-                      {a.ownerName || ""} &mdash; {a.ownerRole || ""}
-                    </div>
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Email</div>
-                      {a.ownerEmail || ""}
-                    </div>
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Phone</div>
-                      {a.ownerPhone || ""}
-                    </div>
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Type</div>
-                      {a.gymType || ""}
-                    </div>
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Address</div>
-                      {a.gymAddress || ""}, {a.gymCity || ""},{" "}
-                      {a.gymState || ""}
-                    </div>
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Day Passes</div>
-                      {a.dayPass || "Not specified"}
-                    </div>
-                    {a.gymWebsite && (
+                    <div className={styles.appDetails}>
                       <div className={styles.appField}>
-                        <div className={styles.appFieldLabel}>Website</div>
+                        <div className={styles.appFieldLabel}>Owner</div>
+                        {a.ownerName || ""} &mdash; {a.ownerRole || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Email</div>
+                        {a.ownerEmail || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Phone</div>
+                        {a.ownerPhone || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Type</div>
+                        {a.gymType || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Address</div>
+                        {a.gymAddress || ""}, {a.gymCity || ""},{" "}
+                        {a.gymState || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Day Passes</div>
+                        {a.dayPass || "Not specified"}
+                      </div>
+                      {a.gymWebsite && (
+                        <div className={styles.appField}>
+                          <div className={styles.appFieldLabel}>Website</div>
+                          <a
+                            href={a.gymWebsite}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.websiteLink}
+                          >
+                            {a.gymWebsite}
+                          </a>
+                        </div>
+                      )}
+                      {a.gymInstagram && (
+                        <div className={styles.appField}>
+                          <div className={styles.appFieldLabel}>Instagram</div>
+                          {a.gymInstagram}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles.appVerify}>
+                      <div className={styles.appFieldLabel}>How to verify</div>
+                      <p>{a.verifyMethod || "Not provided"}</p>
+                    </div>
+
+                    {a.notes && (
+                      <div className={styles.appVerify}>
+                        <div className={styles.appFieldLabel}>Notes</div>
+                        <p>{a.notes}</p>
+                      </div>
+                    )}
+
+                    {a.status === "pending" && (
+                      <div className={styles.appActions}>
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnApprove}`}
+                          onClick={() => openApproveModal(a.id)}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnReject}`}
+                          onClick={() => rejectApp(a.id)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* TRAINER APPLICATIONS */}
+        {appPool === "trainer" && (
+          <div className={styles.appList}>
+            {filteredTrainers.length === 0 ? (
+              <div className={styles.empty}>
+                No {currentTab} trainer applications.
+              </div>
+            ) : (
+              filteredTrainers.map((a) => {
+                const statusClass = {
+                  pending: styles.statusPending,
+                  approved: styles.statusApproved,
+                  rejected: styles.statusRejected,
+                }[a.status];
+
+                const meetsMin = (a.followerCount || 0) >= MIN_INSTAGRAM_FOLLOWERS;
+                const handle = a.instagramHandle?.replace(/^@/, "") || "";
+
+                return (
+                  <div className={styles.appCard} key={a.id}>
+                    <div className={styles.appTop}>
+                      <div>
+                        <div className={styles.appGym}>{a.fullName || ""}</div>
+                        <div className={styles.appDate}>
+                          {a.specialty} &middot;{" "}
+                          {formatDate(a.createdAt, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </div>
+                      </div>
+                      <span className={`${styles.appStatus} ${statusClass}`}>
+                        {a.status}
+                      </span>
+                    </div>
+
+                    <div className={styles.appDetails}>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Email</div>
+                        {a.email || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Phone</div>
+                        {a.phone || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Location</div>
+                        {a.city || ""}, {a.country || ""}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Experience</div>
+                        {a.yearsExperience || "—"}
+                      </div>
+                      <div className={styles.appField}>
+                        <div className={styles.appFieldLabel}>Instagram</div>
                         <a
-                          href={a.gymWebsite}
+                          href={`https://instagram.com/${handle}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={styles.websiteLink}
                         >
-                          {a.gymWebsite}
+                          {a.instagramHandle || ""}
                         </a>
                       </div>
-                    )}
-                    {a.gymInstagram && (
                       <div className={styles.appField}>
-                        <div className={styles.appFieldLabel}>Instagram</div>
-                        {a.gymInstagram}
+                        <div className={styles.appFieldLabel}>Followers</div>
+                        <span
+                          style={{
+                            color: meetsMin ? "var(--green)" : "var(--red)",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {(a.followerCount || 0).toLocaleString()}{" "}
+                          {meetsMin ? "✓" : "✗ below min"}
+                        </span>
+                      </div>
+                      {a.certifications && (
+                        <div className={styles.appField}>
+                          <div className={styles.appFieldLabel}>Certs</div>
+                          {a.certifications}
+                        </div>
+                      )}
+                      {a.rate && (
+                        <div className={styles.appField}>
+                          <div className={styles.appFieldLabel}>Rate</div>
+                          {a.rate}
+                        </div>
+                      )}
+                      {a.offersDropIns && (
+                        <div className={styles.appField}>
+                          <div className={styles.appFieldLabel}>Drop-ins</div>
+                          {a.offersDropIns}
+                        </div>
+                      )}
+                      {a.websiteOrLink && (
+                        <div className={styles.appField}>
+                          <div className={styles.appFieldLabel}>Link</div>
+                          <a
+                            href={
+                              a.websiteOrLink.startsWith("http")
+                                ? a.websiteOrLink
+                                : `https://${a.websiteOrLink}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.websiteLink}
+                          >
+                            {a.websiteOrLink}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles.appVerify}>
+                      <div className={styles.appFieldLabel}>Bio</div>
+                      <p>{a.bio || "—"}</p>
+                    </div>
+
+                    {a.notes && (
+                      <div className={styles.appVerify}>
+                        <div className={styles.appFieldLabel}>Notes</div>
+                        <p>{a.notes}</p>
+                      </div>
+                    )}
+
+                    {a.status === "pending" && (
+                      <div className={styles.appActions}>
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnApprove}`}
+                          onClick={() => openTrainerModal(a.id)}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnReject}`}
+                          onClick={() => rejectTrainer(a.id)}
+                        >
+                          Reject
+                        </button>
                       </div>
                     )}
                   </div>
-
-                  <div className={styles.appVerify}>
-                    <div className={styles.appFieldLabel}>How to verify</div>
-                    <p>{a.verifyMethod || "Not provided"}</p>
-                  </div>
-
-                  {a.notes && (
-                    <div className={styles.appVerify}>
-                      <div className={styles.appFieldLabel}>Notes</div>
-                      <p>{a.notes}</p>
-                    </div>
-                  )}
-
-                  {a.status === "pending" && (
-                    <div className={styles.appActions}>
-                      <button
-                        className={`${styles.actionBtn} ${styles.btnApprove}`}
-                        onClick={() => openApproveModal(a.id)}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        className={`${styles.actionBtn} ${styles.btnReject}`}
-                        onClick={() => rejectApp(a.id)}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Approve Modal */}
+      {/* Gym Approve Modal */}
       {modalOpen && modalApp && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
@@ -684,6 +1181,91 @@ export default function AdminPanel() {
                 disabled={approving}
               >
                 {approving ? "Creating account..." : "Create Account & Approve"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trainer Approve Modal */}
+      {trainerModalOpen && trainerModalApp && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3>Approve Trainer</h3>
+            <p className={styles.modalSubtitle}>
+              {trainerModalApp.fullName} &middot; {trainerModalApp.specialty}
+            </p>
+
+            <label className={styles.modalLabel}>Verify Instagram</label>
+            <a
+              href={`https://instagram.com/${trainerModalApp.instagramHandle?.replace(/^@/, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.websiteLink}
+              style={{ display: "block", marginBottom: 8, fontSize: 14 }}
+            >
+              Open {trainerModalApp.instagramHandle} →
+            </a>
+            <p className={styles.passcodeHint} style={{ marginBottom: 12 }}>
+              Claimed <strong>{trainerModalApp.followerCount.toLocaleString()}</strong>{" "}
+              followers. Minimum: {MIN_INSTAGRAM_FOLLOWERS.toLocaleString()}.
+            </p>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 13,
+                color: "var(--muted)",
+                marginBottom: 16,
+                cursor: "pointer",
+                textTransform: "none",
+                letterSpacing: "normal",
+                fontWeight: 400,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={instagramConfirmed}
+                onChange={(e) => setInstagramConfirmed(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: "var(--accent)" }}
+              />
+              I verified this Instagram account and follower count
+            </label>
+
+            <label className={styles.modalLabel}>Trainer&apos;s Email</label>
+            <input
+              className={styles.modalInput}
+              type="email"
+              value={trainerModalApp.email}
+              readOnly
+            />
+
+            <label className={styles.modalLabel}>Temporary Passcode</label>
+            <div className={styles.passcodeRow}>
+              <div className={styles.passcodeDisplay}>{trainerPasscode}</div>
+              <button className={styles.copyBtn} onClick={copyTrainerPasscode}>
+                Copy
+              </button>
+            </div>
+            <p className={styles.passcodeHint}>
+              Trainer receives email with this passcode + instructions to
+              subscribe in-app via Apple ({TRAINER_PRO_PRICE}).
+            </p>
+
+            <div className={styles.modalActions}>
+              <button
+                className={styles.btnCancel}
+                onClick={closeTrainerModal}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.btnConfirm}
+                onClick={confirmTrainerApprove}
+                disabled={trainerApproving || !instagramConfirmed}
+              >
+                {trainerApproving ? "Approving..." : "Approve & Send Email"}
               </button>
             </div>
           </div>
