@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   createUserWithEmailAndPassword,
+  onAuthStateChanged,
 } from "firebase/auth";
 import {
   collection,
@@ -195,6 +196,21 @@ export default function AdminPanel() {
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     setToastShow(true);
+  }, []);
+
+  // Auto sign-in from persisted Firebase session
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user && user.email) {
+        const email = user.email.toLowerCase();
+        if (ADMIN_EMAILS.includes(email)) {
+          setAdminEmail(email);
+          setAdminName(ADMIN_NAMES[email] || "Admin");
+          setIsLoggedIn(true);
+        }
+      }
+    });
+    return () => unsub();
   }, []);
 
   // --- Data loading ---
