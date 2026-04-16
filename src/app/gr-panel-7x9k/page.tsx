@@ -725,6 +725,30 @@ export default function AdminPanel() {
         text,
         createdAt: serverTimestamp(),
       });
+      /* notify the other admin */
+      const otherEmail = ADMIN_EMAILS.find((e) => e !== adminEmail);
+      if (otherEmail) {
+        await addDoc(collection(db, "mail"), {
+          to: [otherEmail],
+          message: {
+            subject: `GymRoam — ${adminName} posted an update`,
+            html: `
+              <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #E8FF3C;">
+                <div style="text-align:center;margin-bottom:24px;">
+                  <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
+                </div>
+                <h2 style="text-align:center;margin:0 0 8px;font-size:22px;color:#E8FF3C;">New Update</h2>
+                <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">From ${adminName}</p>
+                <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:16px;">
+                  <p style="color:#E8E8EE;font-size:14px;margin:0;line-height:1.6;white-space:pre-wrap;">${text}</p>
+                </div>
+                <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">View in the <a href="https://www.gymroamapp.com/gr-panel-7x9k" style="color:#E8FF3C;text-decoration:none;">Admin Dashboard</a></p>
+              </div>
+            `,
+          },
+        });
+      }
+
       setNewUpdateText("");
       await loadUpdates();
       showToast("Update posted");
@@ -760,9 +784,35 @@ export default function AdminPanel() {
         assignedToEmail: "gymroamapp@gmail.com",
         priority: "medium",
       });
+      /* notify assignee via email */
+      await addDoc(collection(db, "mail"), {
+        to: [newTask.assignedToEmail],
+        message: {
+          subject: `GymRoam — New task assigned: ${newTask.title.trim()}`,
+          html: `
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #E8FF3C;">
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
+              </div>
+              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;color:#E8FF3C;">New Task Assigned</h2>
+              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">From ${adminName}</p>
+              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:16px;">
+                <h3 style="color:#E8E8EE;font-size:16px;margin:0 0 8px;">${newTask.title.trim()}</h3>
+                ${newTask.description.trim() ? `<p style="color:#8A8A99;font-size:14px;margin:0 0 12px;line-height:1.6;">${newTask.description.trim()}</p>` : ""}
+                <p style="margin:0;font-size:13px;color:#8A8A99;">
+                  Priority: <strong style="color:#E8E8EE;">${newTask.priority.charAt(0).toUpperCase() + newTask.priority.slice(1)}</strong>
+                  &nbsp;&middot;&nbsp; Assigned to: <strong style="color:#E8E8EE;">${newTask.assignedTo}</strong>
+                </p>
+              </div>
+              <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">View in the <a href="https://www.gymroamapp.com/gr-panel-7x9k" style="color:#E8FF3C;text-decoration:none;">Admin Dashboard</a></p>
+            </div>
+          `,
+        },
+      });
+
       setTaskModalOpen(false);
       await loadTasks();
-      showToast("Task created");
+      showToast("Task created — email sent to " + newTask.assignedTo);
     } catch (e: unknown) {
       const err = e as { message?: string };
       showToast("Error: " + (err.message || "Unknown error"));
