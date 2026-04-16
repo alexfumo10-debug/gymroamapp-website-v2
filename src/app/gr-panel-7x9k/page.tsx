@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { db, auth } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
@@ -19,6 +19,7 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  onSnapshot,
 } from "firebase/firestore";
 import Toast from "@/components/Toast";
 import {
@@ -182,6 +183,7 @@ export default function AdminPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessageText, setNewMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Top-level pool switcher
   const [appPool, setAppPool] = useState<"gym" | "trainer">("gym");
@@ -308,18 +310,8 @@ export default function AdminPanel() {
     }
   }, []);
 
-  const loadMessages = useCallback(async () => {
-    try {
-      const snap = await getDocs(
-        query(collection(db, "messages"), orderBy("createdAt", "asc"))
-      );
-      const msgs: Message[] = [];
-      snap.forEach((d) => msgs.push({ id: d.id, ...d.data() } as Message));
-      setMessages(msgs);
-    } catch (e) {
-      console.error("Messages load error:", e);
-    }
-  }, []);
+  // loadMessages is kept for initial load; real-time sync handled by onSnapshot below
+  const loadMessages = useCallback(() => {}, []);
 
   // --- Auth actions ---
 
@@ -368,7 +360,6 @@ export default function AdminPanel() {
       loadFeedbackCount();
       loadUpdates();
       loadTasks();
-      loadMessages();
     }
   }, [
     isLoggedIn,
@@ -380,6 +371,25 @@ export default function AdminPanel() {
     loadTasks,
     loadMessages,
   ]);
+
+  // Real-time messages listener
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const msgs: Message[] = [];
+      snap.forEach((d) => msgs.push({ id: d.id, ...d.data() } as Message));
+      setMessages(msgs);
+    }, (err) => {
+      console.error("Messages realtime error:", err);
+    });
+    return () => unsub();
+  }, [isLoggedIn]);
+
+  // Auto-scroll chat to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // --- Derived stats ---
 
@@ -914,7 +924,6 @@ export default function AdminPanel() {
         createdAt: serverTimestamp(),
       });
       setNewMessageText("");
-      await loadMessages();
     } catch (e: unknown) {
       const err = e as { message?: string };
       showToast("Error: " + (err.message || "Unknown error"));
@@ -1685,6 +1694,7 @@ export default function AdminPanel() {
                 );
               })
             )}
+            <div ref={chatEndRef} />
           </div>
 
           {/* Message input */}
