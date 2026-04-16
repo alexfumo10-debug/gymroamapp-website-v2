@@ -27,7 +27,11 @@ import {
 } from "@/lib/subscription";
 import styles from "./page.module.css";
 
-const ADMIN_EMAIL = "gymroamapp@gmail.com";
+const ADMIN_EMAILS = ["gymroamapp@gmail.com", "kevin@aigrowthhouse.com"];
+const ADMIN_NAMES: Record<string, string> = {
+  "gymroamapp@gmail.com": "Alessandro",
+  "kevin@aigrowthhouse.com": "Kevin",
+};
 
 interface FirestoreTimestamp {
   seconds: number;
@@ -88,6 +92,28 @@ interface WaitlistEntry {
   createdAt?: FirestoreTimestamp;
 }
 
+interface UpdatePost {
+  id: string;
+  author: string;
+  authorEmail: string;
+  text: string;
+  createdAt?: FirestoreTimestamp;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  assignedTo: string;
+  assignedToEmail: string;
+  status: "todo" | "in_progress" | "completed";
+  priority: "low" | "medium" | "high";
+  createdBy: string;
+  createdByEmail: string;
+  createdAt?: FirestoreTimestamp;
+  completedAt?: FirestoreTimestamp;
+}
+
 function generatePasscode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -112,12 +138,35 @@ export default function AdminPanel() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminName, setAdminName] = useState("");
+
+  // Section navigation
+  const [activeSection, setActiveSection] = useState<"operations" | "updates" | "tasks">("operations");
 
   // Data state
   const [applications, setApplications] = useState<Application[]>([]);
   const [trainerApps, setTrainerApps] = useState<TrainerApplication[]>([]);
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
   const [feedbackCount, setFeedbackCount] = useState<number | null>(null);
+
+  // Updates state
+  const [updates, setUpdates] = useState<UpdatePost[]>([]);
+  const [newUpdateText, setNewUpdateText] = useState("");
+  const [postingUpdate, setPostingUpdate] = useState(false);
+
+  // Tasks state
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskTab, setTaskTab] = useState<"todo" | "in_progress" | "completed">("todo");
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    assignedTo: "Alessandro",
+    assignedToEmail: "gymroamapp@gmail.com",
+    priority: "medium" as "low" | "medium" | "high",
+  });
+  const [creatingTask, setCreatingTask] = useState(false);
 
   // Top-level pool switcher
   const [appPool, setAppPool] = useState<"gym" | "trainer">("gym");
@@ -203,12 +252,38 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const loadUpdates = useCallback(async () => {
+    try {
+      const snap = await getDocs(
+        query(collection(db, "updates"), orderBy("createdAt", "desc"))
+      );
+      const posts: UpdatePost[] = [];
+      snap.forEach((d) => posts.push({ id: d.id, ...d.data() } as UpdatePost));
+      setUpdates(posts);
+    } catch (e) {
+      console.error("Updates load error:", e);
+    }
+  }, []);
+
+  const loadTasks = useCallback(async () => {
+    try {
+      const snap = await getDocs(
+        query(collection(db, "tasks"), orderBy("createdAt", "desc"))
+      );
+      const items: Task[] = [];
+      snap.forEach((d) => items.push({ id: d.id, ...d.data() } as Task));
+      setTasks(items);
+    } catch (e) {
+      console.error("Tasks load error:", e);
+    }
+  }, []);
+
   // --- Auth actions ---
 
   const doLogin = async () => {
     setLoginError("");
 
-    if (loginEmail.trim() !== ADMIN_EMAIL) {
+    if (!ADMIN_EMAILS.includes(loginEmail.trim().toLowerCase())) {
       setLoginError("Access denied. Admin only.");
       return;
     }
@@ -216,6 +291,9 @@ export default function AdminPanel() {
     setLoginLoading(true);
     try {
       await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
+      const email = loginEmail.trim().toLowerCase();
+      setAdminEmail(email);
+      setAdminName(ADMIN_NAMES[email] || "Admin");
       setIsLoggedIn(true);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -227,10 +305,14 @@ export default function AdminPanel() {
   const doSignOut = async () => {
     await signOut(auth);
     setIsLoggedIn(false);
+    setAdminEmail("");
+    setAdminName("");
     setApplications([]);
     setTrainerApps([]);
     setWaitlistEntries([]);
     setFeedbackCount(null);
+    setUpdates([]);
+    setTasks([]);
   };
 
   // Load data after login
@@ -240,6 +322,8 @@ export default function AdminPanel() {
       loadTrainerApplications();
       loadWaitlist();
       loadFeedbackCount();
+      loadUpdates();
+      loadTasks();
     }
   }, [
     isLoggedIn,
@@ -247,6 +331,8 @@ export default function AdminPanel() {
     loadTrainerApplications,
     loadWaitlist,
     loadFeedbackCount,
+    loadUpdates,
+    loadTasks,
   ]);
 
   // --- Derived stats ---
@@ -626,6 +712,92 @@ export default function AdminPanel() {
     }
   };
 
+  // --- Updates actions ---
+
+  const postUpdate = async () => {
+    const text = newUpdateText.trim();
+    if (!text) return;
+    setPostingUpdate(true);
+    try {
+      await addDoc(collection(db, "updates"), {
+        author: adminName,
+        authorEmail: adminEmail,
+        text,
+        createdAt: serverTimestamp(),
+      });
+      setNewUpdateText("");
+      await loadUpdates();
+      showToast("Update posted");
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+    setPostingUpdate(false);
+  };
+
+  // --- Tasks actions ---
+
+  const createTask = async () => {
+    if (!newTask.title.trim()) return;
+    setCreatingTask(true);
+    try {
+      await addDoc(collection(db, "tasks"), {
+        title: newTask.title.trim(),
+        description: newTask.description.trim(),
+        assignedTo: newTask.assignedTo,
+        assignedToEmail: newTask.assignedToEmail,
+        status: "todo",
+        priority: newTask.priority,
+        createdBy: adminName,
+        createdByEmail: adminEmail,
+        createdAt: serverTimestamp(),
+        completedAt: null,
+      });
+      setNewTask({
+        title: "",
+        description: "",
+        assignedTo: "Alessandro",
+        assignedToEmail: "gymroamapp@gmail.com",
+        priority: "medium",
+      });
+      setTaskModalOpen(false);
+      await loadTasks();
+      showToast("Task created");
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+    setCreatingTask(false);
+  };
+
+  const updateTaskStatus = async (
+    taskId: string,
+    newStatus: "todo" | "in_progress" | "completed"
+  ) => {
+    try {
+      const updateData: Record<string, unknown> = { status: newStatus };
+      if (newStatus === "completed") {
+        updateData.completedAt = serverTimestamp();
+      } else {
+        updateData.completedAt = null;
+      }
+      await updateDoc(doc(db, "tasks", taskId), updateData);
+      await loadTasks();
+      showToast(
+        newStatus === "completed" ? "Task completed!" : "Status updated"
+      );
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+  };
+
+  const priorityClass: Record<string, string> = {
+    high: styles.priorityHigh,
+    medium: styles.priorityMedium,
+    low: styles.priorityLow,
+  };
+
   // --- Render ---
 
   if (!isLoggedIn) {
@@ -683,10 +855,32 @@ export default function AdminPanel() {
       <div className={styles.admin}>
         <div className={styles.adminHeader}>
           <h1>Admin Dashboard</h1>
-          <button className={styles.signOutBtn} onClick={doSignOut}>
-            Sign Out
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 13, color: "var(--dim)", fontWeight: 600 }}>
+              {adminName}
+            </span>
+            <button className={styles.signOutBtn} onClick={doSignOut}>
+              Sign Out
+            </button>
+          </div>
         </div>
+
+        {/* Section Navigation */}
+        <div className={styles.sectionNav}>
+          {(["operations", "updates", "tasks"] as const).map((section) => (
+            <button
+              key={section}
+              className={`${styles.sectionTab} ${activeSection === section ? styles.sectionTabActive : ""}`}
+              onClick={() => setActiveSection(section)}
+            >
+              {section.charAt(0).toUpperCase() + section.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* ========== OPERATIONS SECTION ========== */}
+        {activeSection === "operations" && (
+        <>
 
         {/* Stats Grid */}
         <div className={styles.statsGrid}>
@@ -1140,6 +1334,180 @@ export default function AdminPanel() {
             )}
           </div>
         )}
+
+        </>
+        )}
+
+        {/* ========== UPDATES SECTION ========== */}
+        {activeSection === "updates" && (
+        <>
+          <div className={styles.sectionHeader}>
+            <h2>Updates</h2>
+          </div>
+
+          {/* Post form */}
+          <div className={styles.updateForm}>
+            <textarea
+              className={styles.updateInput}
+              placeholder="Share an update with the team..."
+              value={newUpdateText}
+              onChange={(e) => setNewUpdateText(e.target.value)}
+              rows={3}
+            />
+            <button
+              className={styles.updatePostBtn}
+              onClick={postUpdate}
+              disabled={postingUpdate || !newUpdateText.trim()}
+            >
+              {postingUpdate ? "Posting..." : "Post Update"}
+            </button>
+          </div>
+
+          {/* Feed */}
+          <div className={styles.updateFeed}>
+            {updates.length === 0 ? (
+              <div className={styles.empty}>No updates yet. Post the first one!</div>
+            ) : (
+              updates.map((u) => (
+                <div className={styles.updateCard} key={u.id}>
+                  <div className={styles.updateMeta}>
+                    <span className={styles.updateAuthor}>{u.author}</span>
+                    <span className={styles.updateTime}>
+                      {formatDate(u.createdAt, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <div className={styles.updateText}>{u.text}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+        )}
+
+        {/* ========== TASKS SECTION ========== */}
+        {activeSection === "tasks" && (
+        <>
+          <div className={styles.sectionHeader}>
+            <h2>Tasks</h2>
+            <button
+              className={styles.exportBtn}
+              onClick={() => setTaskModalOpen(true)}
+            >
+              + New Task
+            </button>
+          </div>
+
+          {/* Status sub-tabs */}
+          <div className={styles.tabs}>
+            {(["todo", "in_progress", "completed"] as const).map((tab) => {
+              const isActive = taskTab === tab;
+              const count = tasks.filter((t) => t.status === tab).length;
+              const label =
+                tab === "todo"
+                  ? "To Do"
+                  : tab === "in_progress"
+                  ? "In Progress"
+                  : "Completed";
+              return (
+                <button
+                  key={tab}
+                  className={`${styles.tab} ${isActive ? styles.tabActive : ""}`}
+                  onClick={() => setTaskTab(tab)}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span
+                      className={`${styles.badge} ${isActive ? styles.badgeActive : ""}`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Task cards */}
+          <div className={styles.appList}>
+            {tasks.filter((t) => t.status === taskTab).length === 0 ? (
+              <div className={styles.empty}>
+                No {taskTab === "todo" ? "to do" : taskTab === "in_progress" ? "in progress" : "completed"} tasks.
+              </div>
+            ) : (
+              tasks
+                .filter((t) => t.status === taskTab)
+                .map((t) => (
+                  <div className={styles.appCard} key={t.id}>
+                    <div className={styles.appTop}>
+                      <div>
+                        <div className={styles.appGym}>{t.title}</div>
+                        <div className={styles.appDate}>
+                          Assigned to {t.assignedTo} &middot; Created by{" "}
+                          {t.createdBy}
+                        </div>
+                      </div>
+                      <span
+                        className={`${styles.appStatus} ${priorityClass[t.priority] || ""}`}
+                      >
+                        {t.priority}
+                      </span>
+                    </div>
+
+                    {t.description && (
+                      <div className={styles.appVerify}>
+                        <p>{t.description}</p>
+                      </div>
+                    )}
+
+                    {t.status === "completed" && t.completedAt && (
+                      <div className={styles.appDate} style={{ marginBottom: 12 }}>
+                        Completed{" "}
+                        {formatDate(t.completedAt, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </div>
+                    )}
+
+                    <div className={styles.appActions}>
+                      {t.status === "todo" && (
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnApprove}`}
+                          onClick={() => updateTaskStatus(t.id, "in_progress")}
+                        >
+                          Start
+                        </button>
+                      )}
+                      {t.status === "in_progress" && (
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnApprove}`}
+                          onClick={() => updateTaskStatus(t.id, "completed")}
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {t.status !== "todo" && (
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnReject}`}
+                          onClick={() => updateTaskStatus(t.id, "todo")}
+                        >
+                          Move to To Do
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        </>
+        )}
+
       </div>
 
       {/* Gym Approve Modal */}
@@ -1266,6 +1634,91 @@ export default function AdminPanel() {
                 disabled={trainerApproving || !instagramConfirmed}
               >
                 {trainerApproving ? "Approving..." : "Approve & Send Email"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Task Modal */}
+      {taskModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3>New Task</h3>
+            <p className={styles.modalSubtitle}>Create a task for the team</p>
+
+            <label className={styles.modalLabel}>Title</label>
+            <input
+              className={styles.modalInput}
+              placeholder="Task title"
+              value={newTask.title}
+              onChange={(e) =>
+                setNewTask({ ...newTask, title: e.target.value })
+              }
+            />
+
+            <label className={styles.modalLabel}>Description</label>
+            <textarea
+              className={styles.modalInput}
+              placeholder="Optional description"
+              value={newTask.description}
+              onChange={(e) =>
+                setNewTask({ ...newTask, description: e.target.value })
+              }
+              rows={3}
+              style={{ resize: "vertical" }}
+            />
+
+            <label className={styles.modalLabel}>Assign To</label>
+            <select
+              className={styles.modalInput}
+              value={newTask.assignedTo}
+              onChange={(e) => {
+                const name = e.target.value;
+                const email =
+                  name === "Alessandro"
+                    ? "gymroamapp@gmail.com"
+                    : "kevin@aigrowthhouse.com";
+                setNewTask({
+                  ...newTask,
+                  assignedTo: name,
+                  assignedToEmail: email,
+                });
+              }}
+            >
+              <option value="Alessandro">Alessandro</option>
+              <option value="Kevin">Kevin</option>
+            </select>
+
+            <label className={styles.modalLabel}>Priority</label>
+            <select
+              className={styles.modalInput}
+              value={newTask.priority}
+              onChange={(e) =>
+                setNewTask({
+                  ...newTask,
+                  priority: e.target.value as "low" | "medium" | "high",
+                })
+              }
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+
+            <div className={styles.modalActions}>
+              <button
+                className={styles.btnCancel}
+                onClick={() => setTaskModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.btnConfirm}
+                onClick={createTask}
+                disabled={creatingTask || !newTask.title.trim()}
+              >
+                {creatingTask ? "Creating..." : "Create Task"}
               </button>
             </div>
           </div>
