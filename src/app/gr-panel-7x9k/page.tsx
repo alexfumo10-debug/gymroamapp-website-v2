@@ -14,6 +14,7 @@ import {
   addDoc,
   doc,
   updateDoc,
+  deleteDoc,
   setDoc,
   query,
   orderBy,
@@ -101,6 +102,14 @@ interface UpdatePost {
   createdAt?: FirestoreTimestamp;
 }
 
+interface Message {
+  id: string;
+  author: string;
+  authorEmail: string;
+  text: string;
+  createdAt?: FirestoreTimestamp;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -143,7 +152,7 @@ export default function AdminPanel() {
   const [adminName, setAdminName] = useState("");
 
   // Section navigation
-  const [activeSection, setActiveSection] = useState<"operations" | "updates" | "tasks">("operations");
+  const [activeSection, setActiveSection] = useState<"operations" | "updates" | "tasks" | "messages">("operations");
 
   // Data state
   const [applications, setApplications] = useState<Application[]>([]);
@@ -168,6 +177,11 @@ export default function AdminPanel() {
     priority: "medium" as "low" | "medium" | "high",
   });
   const [creatingTask, setCreatingTask] = useState(false);
+
+  // Messages state
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessageText, setNewMessageText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   // Top-level pool switcher
   const [appPool, setAppPool] = useState<"gym" | "trainer">("gym");
@@ -294,6 +308,19 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const loadMessages = useCallback(async () => {
+    try {
+      const snap = await getDocs(
+        query(collection(db, "messages"), orderBy("createdAt", "asc"))
+      );
+      const msgs: Message[] = [];
+      snap.forEach((d) => msgs.push({ id: d.id, ...d.data() } as Message));
+      setMessages(msgs);
+    } catch (e) {
+      console.error("Messages load error:", e);
+    }
+  }, []);
+
   // --- Auth actions ---
 
   const doLogin = async () => {
@@ -329,6 +356,7 @@ export default function AdminPanel() {
     setFeedbackCount(null);
     setUpdates([]);
     setTasks([]);
+    setMessages([]);
   };
 
   // Load data after login
@@ -340,6 +368,7 @@ export default function AdminPanel() {
       loadFeedbackCount();
       loadUpdates();
       loadTasks();
+      loadMessages();
     }
   }, [
     isLoggedIn,
@@ -349,6 +378,7 @@ export default function AdminPanel() {
     loadFeedbackCount,
     loadUpdates,
     loadTasks,
+    loadMessages,
   ]);
 
   // --- Derived stats ---
@@ -858,6 +888,40 @@ export default function AdminPanel() {
     }
   };
 
+  const deleteTask = async (taskId: string) => {
+    if (!window.confirm("Delete this task?")) return;
+    try {
+      await deleteDoc(doc(db, "tasks", taskId));
+      await loadTasks();
+      showToast("Task deleted");
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+  };
+
+  // --- Messages actions ---
+
+  const postMessage = async () => {
+    const text = newMessageText.trim();
+    if (!text) return;
+    setSendingMessage(true);
+    try {
+      await addDoc(collection(db, "messages"), {
+        author: adminName,
+        authorEmail: adminEmail,
+        text,
+        createdAt: serverTimestamp(),
+      });
+      setNewMessageText("");
+      await loadMessages();
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+    setSendingMessage(false);
+  };
+
   const priorityClass: Record<string, string> = {
     high: styles.priorityHigh,
     medium: styles.priorityMedium,
@@ -933,7 +997,7 @@ export default function AdminPanel() {
 
         {/* Section Navigation */}
         <div className={styles.sectionNav}>
-          {(["operations", "updates", "tasks"] as const).map((section) => (
+          {(["operations", "updates", "tasks", "messages"] as const).map((section) => (
             <button
               key={section}
               className={`${styles.sectionTab} ${activeSection === section ? styles.sectionTabActive : ""}`}
@@ -1566,10 +1630,84 @@ export default function AdminPanel() {
                           Move to To Do
                         </button>
                       )}
+                      {t.status === "completed" && (
+                        <button
+                          className={`${styles.actionBtn} ${styles.btnDelete}`}
+                          onClick={() => deleteTask(t.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
             )}
+          </div>
+        </>
+        )}
+
+        {/* ========== MESSAGES SECTION ========== */}
+        {activeSection === "messages" && (
+        <>
+          <div className={styles.sectionHeader}>
+            <h2>Messages</h2>
+          </div>
+
+          {/* Chat thread */}
+          <div className={styles.chatThread}>
+            {messages.length === 0 ? (
+              <div className={styles.empty}>No messages yet. Start the conversation!</div>
+            ) : (
+              messages.map((m) => {
+                const isMe = m.authorEmail === adminEmail;
+                return (
+                  <div
+                    className={`${styles.chatBubbleRow} ${isMe ? styles.chatBubbleRowMe : ""}`}
+                    key={m.id}
+                  >
+                    <div
+                      className={`${styles.chatBubble} ${isMe ? styles.chatBubbleMe : styles.chatBubbleThem}`}
+                    >
+                      {!isMe && (
+                        <div className={styles.chatAuthor}>{m.author}</div>
+                      )}
+                      <div className={styles.chatText}>{m.text}</div>
+                      <div className={styles.chatTime}>
+                        {formatDate(m.createdAt, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Message input */}
+          <div className={styles.chatInputRow}>
+            <input
+              className={styles.chatInput}
+              placeholder="Type a message..."
+              value={newMessageText}
+              onChange={(e) => setNewMessageText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  postMessage();
+                }
+              }}
+            />
+            <button
+              className={styles.chatSendBtn}
+              onClick={postMessage}
+              disabled={sendingMessage || !newMessageText.trim()}
+            >
+              {sendingMessage ? "..." : "Send"}
+            </button>
           </div>
         </>
         )}

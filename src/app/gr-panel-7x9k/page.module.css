@@ -741,6 +741,120 @@
   color: var(--blue);
 }
 
+/* DELETE BUTTON */
+.btnDelete {
+  background: rgba(255, 77, 109, 0.12);
+  color: var(--red);
+}
+
+/* CHAT / MESSAGES */
+.chatThread {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  padding: 20px;
+  min-height: 400px;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chatBubbleRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.chatBubbleRowMe {
+  justify-content: flex-end;
+}
+
+.chatBubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chatBubbleMe {
+  background: var(--accent);
+  color: #0a0a0b;
+  border-bottom-right-radius: 4px;
+}
+
+.chatBubbleThem {
+  background: var(--surface2);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.chatAuthor {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.chatBubbleMe .chatAuthor {
+  color: #0a0a0b;
+}
+
+.chatText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chatTime {
+  font-size: 10px;
+  margin-top: 6px;
+  opacity: 0.6;
+}
+
+.chatInputRow {
+  display: flex;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 12px 16px;
+}
+
+.chatInput {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+.chatInput:focus {
+  border-color: var(--accent);
+}
+
+.chatSendBtn {
+  background: var(--accent);
+  color: #0a0a0b;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.chatSendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 @media (max-width: 640px) {
   .appDetails {
     grid-template-columns: 1fr;
@@ -753,5 +867,8 @@
   }
   .sectionNav {
     flex-wrap: wrap;
+  }
+  .chatThread {
+    min-height: 300px;
   }
 }
