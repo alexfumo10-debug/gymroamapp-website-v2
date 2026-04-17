@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { db, auth } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
@@ -19,7 +19,6 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  onSnapshot,
 } from "firebase/firestore";
 import Toast from "@/components/Toast";
 import {
@@ -103,14 +102,6 @@ interface UpdatePost {
   createdAt?: FirestoreTimestamp;
 }
 
-interface Message {
-  id: string;
-  author: string;
-  authorEmail: string;
-  text: string;
-  createdAt?: FirestoreTimestamp;
-}
-
 interface Task {
   id: string;
   title: string;
@@ -153,7 +144,7 @@ export default function AdminPanel() {
   const [adminName, setAdminName] = useState("");
 
   // Section navigation
-  const [activeSection, setActiveSection] = useState<"operations" | "updates" | "tasks" | "messages">("operations");
+  const [activeSection, setActiveSection] = useState<"operations" | "updates" | "tasks">("operations");
 
   // Data state
   const [applications, setApplications] = useState<Application[]>([]);
@@ -178,12 +169,6 @@ export default function AdminPanel() {
     priority: "medium" as "low" | "medium" | "high",
   });
   const [creatingTask, setCreatingTask] = useState(false);
-
-  // Messages state
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessageText, setNewMessageText] = useState("");
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Top-level pool switcher
   const [appPool, setAppPool] = useState<"gym" | "trainer">("gym");
@@ -310,9 +295,6 @@ export default function AdminPanel() {
     }
   }, []);
 
-  // loadMessages is kept for initial load; real-time sync handled by onSnapshot below
-  const loadMessages = useCallback(() => {}, []);
-
   // --- Auth actions ---
 
   const doLogin = async () => {
@@ -348,7 +330,6 @@ export default function AdminPanel() {
     setFeedbackCount(null);
     setUpdates([]);
     setTasks([]);
-    setMessages([]);
   };
 
   // Load data after login
@@ -369,27 +350,7 @@ export default function AdminPanel() {
     loadFeedbackCount,
     loadUpdates,
     loadTasks,
-    loadMessages,
   ]);
-
-  // Real-time messages listener
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
-    const unsub = onSnapshot(q, (snap) => {
-      const msgs: Message[] = [];
-      snap.forEach((d) => msgs.push({ id: d.id, ...d.data() } as Message));
-      setMessages(msgs);
-    }, (err) => {
-      console.error("Messages realtime error:", err);
-    });
-    return () => unsub();
-  }, [isLoggedIn]);
-
-  // Auto-scroll chat to bottom on new messages
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   // --- Derived stats ---
 
@@ -910,27 +871,6 @@ export default function AdminPanel() {
     }
   };
 
-  // --- Messages actions ---
-
-  const postMessage = async () => {
-    const text = newMessageText.trim();
-    if (!text) return;
-    setSendingMessage(true);
-    try {
-      await addDoc(collection(db, "messages"), {
-        author: adminName,
-        authorEmail: adminEmail,
-        text,
-        createdAt: serverTimestamp(),
-      });
-      setNewMessageText("");
-    } catch (e: unknown) {
-      const err = e as { message?: string };
-      showToast("Error: " + (err.message || "Unknown error"));
-    }
-    setSendingMessage(false);
-  };
-
   const priorityClass: Record<string, string> = {
     high: styles.priorityHigh,
     medium: styles.priorityMedium,
@@ -1006,7 +946,7 @@ export default function AdminPanel() {
 
         {/* Section Navigation */}
         <div className={styles.sectionNav}>
-          {(["operations", "updates", "tasks", "messages"] as const).map((section) => (
+          {(["operations", "updates", "tasks"] as const).map((section) => (
             <button
               key={section}
               className={`${styles.sectionTab} ${activeSection === section ? styles.sectionTabActive : ""}`}
@@ -1651,73 +1591,6 @@ export default function AdminPanel() {
                   </div>
                 ))
             )}
-          </div>
-        </>
-        )}
-
-        {/* ========== MESSAGES SECTION ========== */}
-        {activeSection === "messages" && (
-        <>
-          <div className={styles.sectionHeader}>
-            <h2>Messages</h2>
-          </div>
-
-          {/* Chat thread */}
-          <div className={styles.chatThread}>
-            {messages.length === 0 ? (
-              <div className={styles.empty}>No messages yet. Start the conversation!</div>
-            ) : (
-              messages.map((m) => {
-                const isMe = m.authorEmail === adminEmail;
-                return (
-                  <div
-                    className={`${styles.chatBubbleRow} ${isMe ? styles.chatBubbleRowMe : ""}`}
-                    key={m.id}
-                  >
-                    <div
-                      className={`${styles.chatBubble} ${isMe ? styles.chatBubbleMe : styles.chatBubbleThem}`}
-                    >
-                      {!isMe && (
-                        <div className={styles.chatAuthor}>{m.author}</div>
-                      )}
-                      <div className={styles.chatText}>{m.text}</div>
-                      <div className={styles.chatTime}>
-                        {formatDate(m.createdAt, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Message input */}
-          <div className={styles.chatInputRow}>
-            <input
-              className={styles.chatInput}
-              placeholder="Type a message..."
-              value={newMessageText}
-              onChange={(e) => setNewMessageText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  postMessage();
-                }
-              }}
-            />
-            <button
-              className={styles.chatSendBtn}
-              onClick={postMessage}
-              disabled={sendingMessage || !newMessageText.trim()}
-            >
-              {sendingMessage ? "..." : "Send"}
-            </button>
           </div>
         </>
         )}
