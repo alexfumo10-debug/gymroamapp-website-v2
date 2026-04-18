@@ -14,7 +14,7 @@ import styles from "./page.module.css";
 
 const FEATURES = [
   { num: "01", title: "Search any city", desc: "Type a city name or let GPS do the work. Gyms, studios, and wellness centers populate automatically within your radius." },
-  { num: "02", title: "Real photos and contact", desc: "See actual photos, phone numbers, and websites. Call the gym or get directions with one tap." },
+  { num: "02", title: "Contact info at a glance", desc: "See phone numbers, websites, and addresses. Call the gym or get directions with one tap." },
   { num: "03", title: "Filter by what you do", desc: "Lifting, yoga, pilates, cycling, CrossFit, run clubs, HIIT, wellness. Find exactly what fits your routine." },
   { num: "04", title: "Save and compare", desc: "Shortlist gyms, mark the ones you've visited, and let AI rank your options based on how you train." },
   { num: "05", title: "Train with friends", desc: "See where your friends work out across the world. Like their activity. Track your own cities and achievements." },
@@ -95,7 +95,7 @@ export default function Home() {
               Coming Soon to iOS
             </div>
             <h1>Find Your Sweat.<br /><span className={styles.accent}>Anywhere.</span></h1>
-            <p>Search any city. See real photos. Get directions. Never miss a workout.</p>
+            <p>Search any city. Get directions. Never miss a workout.</p>
             {!joined ? (
               <div className={styles.waitlist}>
                 <div className={styles.typeRow}>

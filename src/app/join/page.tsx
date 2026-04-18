@@ -10,7 +10,7 @@ import Toast from "@/components/Toast";
 import styles from "./page.module.css";
 
 const USER_TYPES = ["Gym Goer", "Trainer", "Gym Owner", "Influencer"];
-const FEATURES = ["Any City, Worldwide", "Real Photos & Reviews", "Gyms, Yoga, Pilates & More"];
+const FEATURES = ["Any City, Worldwide", "Reviews & Ratings", "Gyms, Yoga, Pilates & More"];
 
 export default function JoinPage() {
   const [selectedType, setSelectedType] = useState("Gym Goer");
@@ -63,7 +63,7 @@ export default function JoinPage() {
         </div>
 
         <h1 className={styles.heading}>Find Your Sweat.<br /><span className={styles.accent}>Anywhere.</span></h1>
-        <p className={styles.tagline}>Search any city. See real photos. Get directions. Never miss a workout when you travel.</p>
+        <p className={styles.tagline}>Search any city. Get directions. Never miss a workout when you travel.</p>
 
         {!joined ? (
           <div className={styles.waitlist}>

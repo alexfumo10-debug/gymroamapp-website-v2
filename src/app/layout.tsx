@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   keywords: "gym finder, travel fitness, gym near me, workout travel, fitness app, yoga studio finder",
   openGraph: {
     title: "GymRoam — Find Your Sweat. Anywhere.",
-    description: "Search any city and instantly discover nearby gyms with photos, directions, and details.",
+    description: "Search any city and instantly discover nearby gyms with directions and details.",
     type: "website",
     images: ["/og-image.png"],
   },
