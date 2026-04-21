@@ -18,6 +18,8 @@ import {
   setDoc,
   query,
   orderBy,
+  where,
+  Timestamp,
   serverTimestamp,
 } from "firebase/firestore";
 import Toast from "@/components/Toast";
@@ -102,6 +104,14 @@ interface UpdatePost {
   createdAt?: FirestoreTimestamp;
 }
 
+interface PageView {
+  id: string;
+  path: string;
+  sessionId: string;
+  referrer?: string;
+  createdAt?: FirestoreTimestamp;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -151,6 +161,9 @@ export default function AdminPanel() {
   const [trainerApps, setTrainerApps] = useState<TrainerApplication[]>([]);
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
   const [feedbackCount, setFeedbackCount] = useState<number | null>(null);
+
+  // Page views / traffic state
+  const [pageViews, setPageViews] = useState<PageView[]>([]);
 
   // Updates state
   const [updates, setUpdates] = useState<UpdatePost[]>([]);
@@ -259,6 +272,25 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const loadPageViews = useCallback(async () => {
+    try {
+      // Last 7 days only — keeps reads cheap
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const snap = await getDocs(
+        query(
+          collection(db, "pageViews"),
+          where("createdAt", ">=", Timestamp.fromDate(sevenDaysAgo)),
+          orderBy("createdAt", "desc")
+        )
+      );
+      const views: PageView[] = [];
+      snap.forEach((d) => views.push({ id: d.id, ...d.data() } as PageView));
+      setPageViews(views);
+    } catch (e) {
+      console.error("PageViews load error:", e);
+    }
+  }, []);
+
   const loadFeedbackCount = useCallback(async () => {
     try {
       const snap = await getDocs(collection(db, "feedback"));
@@ -330,6 +362,7 @@ export default function AdminPanel() {
     setFeedbackCount(null);
     setUpdates([]);
     setTasks([]);
+    setPageViews([]);
   };
 
   // Load data after login
@@ -339,6 +372,7 @@ export default function AdminPanel() {
       loadTrainerApplications();
       loadWaitlist();
       loadFeedbackCount();
+      loadPageViews();
       loadUpdates();
       loadTasks();
     }
@@ -348,6 +382,7 @@ export default function AdminPanel() {
     loadTrainerApplications,
     loadWaitlist,
     loadFeedbackCount,
+    loadPageViews,
     loadUpdates,
     loadTasks,
   ]);
@@ -379,6 +414,37 @@ export default function AdminPanel() {
     const t = e.type || "Gym Goer";
     typeBreakdown[t] = (typeBreakdown[t] || 0) + 1;
   });
+
+  // Traffic stats (last 7 days in pageViews)
+  const nowSec = Date.now() / 1000;
+  const startOfTodaySec = new Date().setHours(0, 0, 0, 0) / 1000;
+  const sevenDaysAgoSec = nowSec - 7 * 24 * 60 * 60;
+
+  const viewsToday = pageViews.filter(
+    (v) => (v.createdAt?.seconds || 0) >= startOfTodaySec
+  ).length;
+  const viewsWeek = pageViews.filter(
+    (v) => (v.createdAt?.seconds || 0) >= sevenDaysAgoSec
+  ).length;
+  const uniqueTodaySet = new Set(
+    pageViews
+      .filter((v) => (v.createdAt?.seconds || 0) >= startOfTodaySec)
+      .map((v) => v.sessionId)
+  );
+  const uniqueVisitorsToday = uniqueTodaySet.size;
+
+  // Top page today
+  const pathCountsToday: Record<string, number> = {};
+  pageViews
+    .filter((v) => (v.createdAt?.seconds || 0) >= startOfTodaySec)
+    .forEach((v) => {
+      pathCountsToday[v.path] = (pathCountsToday[v.path] || 0) + 1;
+    });
+  const topPageEntry = Object.entries(pathCountsToday).sort(
+    (a, b) => b[1] - a[1]
+  )[0];
+  const topPagePath = topPageEntry ? topPageEntry[0] : "—";
+  const topPageCount = topPageEntry ? topPageEntry[1] : 0;
 
   // --- CSV export ---
 
@@ -996,6 +1062,45 @@ export default function AdminPanel() {
               {feedbackCount ?? "\u2014"}
             </div>
             <div className={styles.statSub}>Feature requests</div>
+          </div>
+        </div>
+
+        {/* Website Traffic */}
+        <div className={styles.sectionHeader}>
+          <h2>Website Traffic</h2>
+          <span style={{ fontSize: 11, color: "var(--dim)" }}>
+            Last 7 days
+          </span>
+        </div>
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Views Today</div>
+            <div className={styles.statValue}>{viewsToday || "\u2014"}</div>
+            <div className={styles.statSub}>Page views</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Unique Visitors</div>
+            <div className={styles.statValue}>
+              {uniqueVisitorsToday || "\u2014"}
+            </div>
+            <div className={styles.statSub}>Today</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Views This Week</div>
+            <div className={styles.statValue}>{viewsWeek || "\u2014"}</div>
+            <div className={styles.statSub}>Rolling 7 days</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Top Page Today</div>
+            <div
+              className={styles.statValue}
+              style={{ fontSize: 18, wordBreak: "break-all" }}
+            >
+              {topPagePath}
+            </div>
+            <div className={styles.statSub}>
+              {topPageCount > 0 ? `${topPageCount} views` : "No views yet"}
+            </div>
           </div>
         </div>
 
