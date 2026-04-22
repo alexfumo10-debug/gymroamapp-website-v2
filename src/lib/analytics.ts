@@ -21,6 +21,34 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 const SESSION_KEY = "gr_session_id";
 const TRACKED_KEY_PREFIX = "gr_tracked_";
 
+// Patterns that identify non-human traffic. Covers the major search
+// crawlers, headless browsers, link-preview unfurlers (Slack/FB/Twitter/
+// Discord), uptime monitors, and generic scrapers.
+const BOT_UA_REGEX = new RegExp(
+  [
+    "bot", "crawl", "spider", "scrape",
+    "headless", "puppeteer", "playwright", "selenium", "phantom",
+    "lighthouse", "pagespeed", "gtmetrix", "pingdom", "uptimerobot",
+    "facebookexternalhit", "slackbot", "twitterbot", "discordbot",
+    "telegrambot", "whatsapp", "linkedinbot",
+    "google-inspection", "googleother", "adsbot", "mediapartners",
+    "bingpreview", "yandex", "duckduckbot", "baiduspider",
+    "archive\\.org_bot", "semrushbot", "ahrefsbot", "mj12bot", "dotbot",
+    "applebot", "petalbot", "curl", "wget",
+  ].join("|"),
+  "i"
+);
+
+function isBot(): boolean {
+  if (typeof navigator === "undefined") return true;
+  // Browsers controlled by automation tools (Selenium, Puppeteer, etc.)
+  // set navigator.webdriver = true.
+  if ((navigator as Navigator & { webdriver?: boolean }).webdriver) return true;
+  const ua = navigator.userAgent || "";
+  if (!ua) return true;
+  return BOT_UA_REGEX.test(ua);
+}
+
 function getSessionId(): string {
   if (typeof window === "undefined") return "";
   let id = sessionStorage.getItem(SESSION_KEY);
@@ -36,6 +64,9 @@ export async function trackPageView(path: string): Promise<void> {
 
   // Skip admin panel traffic so we don't pollute our own numbers
   if (path.startsWith("/gr-panel-")) return;
+
+  // Skip bots, crawlers, and automated browsers
+  if (isBot()) return;
 
   // Dedupe: one view per path per session
   const trackedKey = TRACKED_KEY_PREFIX + path;
