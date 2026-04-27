@@ -1,0 +1,15 @@
+# GymRoam — robots.txt
+# Public marketing pages may be indexed; admin and feedback paths must not.
+
+User-agent: *
+Allow: /
+Allow: /join
+Allow: /grow
+
+Disallow: /gr-panel-7x9k
+Disallow: /gr-panel-7x9k/
+Disallow: /feedback
+Disallow: /api/
+Disallow: /_next/
+
+Sitemap: https://gymroamapp.com/sitemap.xml
