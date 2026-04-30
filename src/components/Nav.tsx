@@ -13,7 +13,7 @@ export default function Nav() {
       <div className={styles.inner}>
         <Logo />
         <ul className={`${styles.links} ${menuOpen ? styles.show : ""}`}>
-          <li><Link href="/search">Explore</Link></li>
+          <li><Link href="/search" className={styles.exploreLink}>Explore Gyms</Link></li>
           <li><Link href="/#features">Features</Link></li>
           <li><Link href="/#trainers">Trainers</Link></li>
           <li><Link href="/grow">Grow Your Gym</Link></li>

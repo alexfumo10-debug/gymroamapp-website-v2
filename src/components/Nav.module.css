@@ -47,6 +47,29 @@
   font-weight: 700 !important;
 }
 
+.exploreLink {
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+  position: relative;
+}
+
+.exploreLink::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.exploreLink:hover::after {
+  opacity: 1;
+}
+
 .ig {
   display: flex;
   align-items: center;

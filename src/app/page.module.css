@@ -22,6 +22,95 @@
 .inputRow button:hover { transform: translateY(-1px); }
 .inputRow button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .note { font-size: 12px; color: var(--dim); margin-top: 10px; }
+.previewLink { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; transition: opacity 0.15s; }
+.previewLink:hover { opacity: 0.8; }
+
+/* TRY IT NOW SECTION */
+.tryNow {
+  padding: 96px 24px;
+  background: linear-gradient(180deg, rgba(232, 255, 60, 0.04) 0%, transparent 100%);
+  border-top: 1px solid rgba(232, 255, 60, 0.1);
+  border-bottom: 1px solid rgba(232, 255, 60, 0.1);
+}
+
+.tryNowInner {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.tryNowTag {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 100px;
+  background: rgba(232, 255, 60, 0.14);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.tryNow h2 {
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 900;
+  margin: 0 0 18px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.tryNow p {
+  font-size: 17px;
+  color: var(--dim);
+  margin: 0 auto 32px;
+  line-height: 1.6;
+  max-width: 540px;
+}
+
+.tryNowBtn {
+  display: inline-block;
+  padding: 16px 32px;
+  background: var(--accent);
+  color: #0a0a0b;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 900;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: transform 0.18s, box-shadow 0.18s;
+  box-shadow: 0 14px 40px rgba(232, 255, 60, 0.18);
+}
+
+.tryNowBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 48px rgba(232, 255, 60, 0.28);
+}
+
+.tryNowChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.tryNowChip {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 100px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .tryNow {
+    padding: 64px 20px;
+  }
+}
 
 /* SUCCESS */
 .success { display: flex; background: var(--surface); border: 1px solid rgba(232,255,60,0.3); border-radius: 14px; padding: 16px 18px; max-width: 440px; align-items: center; gap: 14px; }

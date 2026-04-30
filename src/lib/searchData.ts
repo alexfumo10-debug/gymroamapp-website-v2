@@ -1,12 +1,9 @@
 /**
  * Mock gym dataset for the /search experience.
  *
- * NOT real partnerships — names are fictional, but neighborhoods and
- * coordinates are real Miami spots. Used as a pre-launch placeholder
- * so visitors can preview the search experience.
- *
- * Replace with real Firestore-backed gym data once partners start
- * subscribing via /grow.
+ * Categories, colors, and emoji match the GymRoam iOS app exactly
+ * (see GymCategory enum in Models.swift). Names are fictional but
+ * neighborhoods and coordinates are real Miami spots.
  */
 
 export interface SearchGym {
@@ -22,13 +19,52 @@ export interface SearchGym {
   description: string;
   amenities: string[];
   hours: string;
-  /** Optional badge — shows the red PROMO ribbon on the card thumbnail */
   promo?: string;
-  /** Optional tourist-day-pass flag — shown on the gym card */
   touristPass?: boolean;
 }
 
+/**
+ * Activity categories — exact match with the iOS app's GymCategory enum.
+ * Emojis are used by the app as a fallback display.
+ */
+export const ACTIVITY_TYPES = [
+  "Lifting",
+  "Pilates",
+  "Yoga",
+  "Cycling",
+  "Run Club",
+  "Wellness",
+  "Hyrox",
+];
+
+/**
+ * Brand color per category — mirrors GymCategory.color in Models.swift.
+ * Used for category pills and accent details on the search page.
+ */
+export const CATEGORY_COLORS: Record<string, string> = {
+  All: "#E8FF3C",
+  Lifting: "#E8FF3C",
+  Pilates: "#F4A0FF",
+  Yoga: "#A0FFDE",
+  Cycling: "#FF9A3C",
+  "Run Club": "#FF4D6D",
+  Wellness: "#7EB8FF",
+  Hyrox: "#FF3C6E",
+};
+
+export const CATEGORY_EMOJI: Record<string, string> = {
+  All: "🗺️",
+  Lifting: "🏋️",
+  Pilates: "🌸",
+  Yoga: "🧘",
+  Cycling: "🚴",
+  "Run Club": "🏃",
+  Wellness: "🌿",
+  Hyrox: "⚡",
+};
+
 export const SEARCH_GYMS: SearchGym[] = [
+  /* LIFTING */
   {
     id: "iron-forge",
     name: "Iron Forge Athletic Club",
@@ -65,6 +101,19 @@ export const SEARCH_GYMS: SearchGym[] = [
     hours: "6:00 AM – 10:00 PM",
   },
   {
+    id: "mid-beach-strength",
+    name: "Mid-Beach Strength House",
+    type: "Lifting",
+    area: "Mid-Beach",
+    lat: 25.811, lng: -80.135,
+    rating: 4.5, reviewCount: 156, dropInPrice: 20,
+    description: "No-frills strength gym. Just iron and chalk.",
+    amenities: ["Squat racks", "Deadlift platforms", "Chalk"],
+    hours: "5:00 AM – 11:00 PM",
+  },
+
+  /* PILATES */
+  {
     id: "brickell-pilates",
     name: "Brickell Pilates Lab",
     type: "Pilates",
@@ -86,6 +135,30 @@ export const SEARCH_GYMS: SearchGym[] = [
     amenities: ["Reformers", "Mat classes", "Private sessions"],
     hours: "7:00 AM – 8:00 PM",
   },
+  {
+    id: "design-district-pilates",
+    name: "Design District Pilates",
+    type: "Pilates",
+    area: "Design District",
+    lat: 25.8137, lng: -80.193,
+    rating: 4.7, reviewCount: 165, dropInPrice: 36,
+    description: "Reformer + tower combo classes in a gallery-style space.",
+    amenities: ["Reformers", "Towers", "Spring board"],
+    hours: "6:30 AM – 8:30 PM",
+  },
+  {
+    id: "south-pointe-pilates",
+    name: "South Pointe Pilates",
+    type: "Pilates",
+    area: "South Beach",
+    lat: 25.7682, lng: -80.135,
+    rating: 4.8, reviewCount: 287, dropInPrice: 38,
+    description: "Reformer studio with ocean views. Small classes.",
+    amenities: ["Reformers", "Ocean views", "Spring board"],
+    hours: "6:30 AM – 8:00 PM",
+  },
+
+  /* YOGA */
   {
     id: "wynwood-wellness",
     name: "Wynwood Wellness Studio",
@@ -111,83 +184,40 @@ export const SEARCH_GYMS: SearchGym[] = [
     touristPass: true,
   },
   {
-    id: "ocean-drive-cf",
-    name: "Ocean Drive CrossFit",
-    type: "CrossFit",
-    area: "South Beach",
-    lat: 25.78, lng: -80.13,
-    rating: 4.7, reviewCount: 298, dropInPrice: 28,
-    description: "Affiliate box with daily WODs and open gym hours.",
-    amenities: ["Olympic lifting", "Gymnastics rig", "Outdoor turf"],
-    hours: "5:30 AM – 9:00 PM",
-    touristPass: true,
+    id: "coconut-grove-yoga",
+    name: "Coconut Grove Yoga Loft",
+    type: "Yoga",
+    area: "Coconut Grove",
+    lat: 25.7295, lng: -80.2435,
+    rating: 4.8, reviewCount: 278, dropInPrice: 24,
+    description: "Treetop yoga loft with skylight and breeze. Vinyasa & yin.",
+    amenities: ["Skylight studio", "Mats", "Tea bar"],
+    hours: "6:30 AM – 9:00 PM",
   },
   {
-    id: "coral-way-cf",
-    name: "Coral Way CrossFit",
-    type: "CrossFit",
-    area: "Little Havana",
-    lat: 25.749, lng: -80.226,
-    rating: 4.6, reviewCount: 176, dropInPrice: 25,
-    description: "Tight community vibe. Great coaching for fundamentals.",
-    amenities: ["Olympic lifting", "Pull-up rig", "Open gym"],
-    hours: "6:00 AM – 9:00 PM",
+    id: "brickell-yoga",
+    name: "Brickell Hot Yoga",
+    type: "Yoga",
+    area: "Brickell",
+    lat: 25.7665, lng: -80.1898,
+    rating: 4.6, reviewCount: 312, dropInPrice: 26,
+    description: "26 & 2, hot vinyasa, and breathwork. 90-minute classes.",
+    amenities: ["Hot studio", "Showers", "Lockers"],
+    hours: "6:00 AM – 9:30 PM",
   },
   {
-    id: "cg-climbing",
-    name: "Coral Gables Climbing Co.",
-    type: "Climbing",
-    area: "Coral Gables",
-    lat: 25.7215, lng: -80.2684,
-    rating: 4.8, reviewCount: 445, dropInPrice: 32,
-    description: "Bouldering, top-rope, lead climbing. Indoor cave system.",
-    amenities: ["Bouldering", "Top-rope", "Lead", "Gear rental"],
-    hours: "10:00 AM – 11:00 PM",
+    id: "north-beach-yoga",
+    name: "North Beach Yoga Garden",
+    type: "Yoga",
+    area: "North Beach",
+    lat: 25.852, lng: -80.122,
+    rating: 4.7, reviewCount: 156, dropInPrice: 22,
+    description: "Outdoor garden classes. Bring sunscreen and a mat.",
+    amenities: ["Outdoor", "Garden", "Tea after"],
+    hours: "7:00 AM – 8:30 PM",
   },
-  {
-    id: "midbeach-run",
-    name: "Mid-Beach Run Club",
-    type: "Run Club",
-    area: "Mid-Beach",
-    lat: 25.812, lng: -80.128,
-    rating: 4.9, reviewCount: 189, dropInPrice: 0,
-    description: "Free social runs along the boardwalk. All paces welcome.",
-    amenities: ["Group runs", "Pacing groups", "Post-run coffee"],
-    hours: "Tue/Thu 6:30 AM, Sat 7:30 AM",
-  },
-  {
-    id: "bayfront-run",
-    name: "Bayfront Run Crew",
-    type: "Run Club",
-    area: "Downtown",
-    lat: 25.778, lng: -80.183,
-    rating: 4.7, reviewCount: 142, dropInPrice: 0,
-    description: "Tempo runs, hill repeats, weekend long runs.",
-    amenities: ["Group runs", "Track sessions", "Coaches"],
-    hours: "Mon/Wed/Fri 6:00 AM, Sat 6:30 AM",
-  },
-  {
-    id: "bayside-hiit",
-    name: "Bayside HIIT House",
-    type: "HIIT",
-    area: "Downtown",
-    lat: 25.7752, lng: -80.19,
-    rating: 4.8, reviewCount: 356, dropInPrice: 28,
-    description: "45-minute high-intensity intervals. Heart rate on screens.",
-    amenities: ["Heart rate monitors", "Towels", "Showers"],
-    hours: "5:30 AM – 9:30 PM",
-  },
-  {
-    id: "downtown-hiit",
-    name: "Downtown HIIT Lab",
-    type: "HIIT",
-    area: "Downtown",
-    lat: 25.7732, lng: -80.1934,
-    rating: 4.6, reviewCount: 211, dropInPrice: 26,
-    description: "Treadmill-and-floor format. Six-week challenges available.",
-    amenities: ["Treadmills", "Strength stations", "Locker rooms"],
-    hours: "6:00 AM – 9:00 PM",
-  },
+
+  /* CYCLING */
   {
     id: "brickell-cycle",
     name: "Brickell Bay Cycle",
@@ -212,81 +242,39 @@ export const SEARCH_GYMS: SearchGym[] = [
     hours: "6:00 AM – 8:00 PM",
   },
   {
-    id: "edgewater-boxing",
-    name: "Edgewater Boxing Gym",
-    type: "Boxing",
-    area: "Edgewater",
-    lat: 25.7916, lng: -80.1869,
-    rating: 4.7, reviewCount: 267, dropInPrice: 24,
-    description: "Old-school boxing gym. Heavy bags, sparring rings, real coaches.",
-    amenities: ["Heavy bags", "Sparring", "Mitt work"],
-    hours: "6:00 AM – 10:00 PM",
+    id: "south-beach-cycle",
+    name: "South Beach Cycle Co.",
+    type: "Cycling",
+    area: "South Beach",
+    lat: 25.781, lng: -80.135,
+    rating: 4.8, reviewCount: 401, dropInPrice: 30,
+    description: "Theme rides and live DJs. Beach-vibe boutique.",
+    amenities: ["Shoe rental", "Towels", "Smoothie bar"],
+    hours: "5:30 AM – 8:30 PM",
   },
+
+  /* RUN CLUB */
   {
-    id: "coral-way-boxing",
-    name: "Coral Way Boxing Club",
-    type: "Boxing",
-    area: "Little Havana",
-    lat: 25.7505, lng: -80.222,
-    rating: 4.8, reviewCount: 198, dropInPrice: 22,
-    description: "Cuban boxing tradition. Pro fighters train here.",
-    amenities: ["Heavy bags", "Speed bags", "Coaching"],
-    hours: "7:00 AM – 9:00 PM",
-  },
-  {
-    id: "mid-beach-strength",
-    name: "Mid-Beach Strength House",
-    type: "Lifting",
+    id: "midbeach-run",
+    name: "Mid-Beach Run Club",
+    type: "Run Club",
     area: "Mid-Beach",
-    lat: 25.811, lng: -80.135,
-    rating: 4.5, reviewCount: 156, dropInPrice: 20,
-    description: "No-frills strength gym. Just iron and chalk.",
-    amenities: ["Squat racks", "Deadlift platforms", "Chalk"],
-    hours: "5:00 AM – 11:00 PM",
+    lat: 25.812, lng: -80.128,
+    rating: 4.9, reviewCount: 189, dropInPrice: 0,
+    description: "Free social runs along the boardwalk. All paces welcome.",
+    amenities: ["Group runs", "Pacing groups", "Post-run coffee"],
+    hours: "Tue/Thu 6:30 AM, Sat 7:30 AM",
   },
   {
-    id: "coconut-grove-yoga",
-    name: "Coconut Grove Yoga Loft",
-    type: "Yoga",
-    area: "Coconut Grove",
-    lat: 25.7295, lng: -80.2435,
-    rating: 4.8, reviewCount: 278, dropInPrice: 24,
-    description: "Treetop yoga loft with skylight and breeze. Vinyasa & yin.",
-    amenities: ["Skylight studio", "Mats", "Tea bar"],
-    hours: "6:30 AM – 9:00 PM",
-  },
-  {
-    id: "design-district-pilates",
-    name: "Design District Pilates",
-    type: "Pilates",
-    area: "Design District",
-    lat: 25.8137, lng: -80.193,
-    rating: 4.7, reviewCount: 165, dropInPrice: 36,
-    description: "Reformer + tower combo classes in a gallery-style space.",
-    amenities: ["Reformers", "Towers", "Spring board"],
-    hours: "6:30 AM – 8:30 PM",
-  },
-  {
-    id: "brickell-yoga",
-    name: "Brickell Hot Yoga",
-    type: "Yoga",
-    area: "Brickell",
-    lat: 25.7665, lng: -80.1898,
-    rating: 4.6, reviewCount: 312, dropInPrice: 26,
-    description: "26 & 2, hot vinyasa, and breathwork. 90-minute classes.",
-    amenities: ["Hot studio", "Showers", "Lockers"],
-    hours: "6:00 AM – 9:30 PM",
-  },
-  {
-    id: "wynwood-cf",
-    name: "Wynwood CrossFit Co.",
-    type: "CrossFit",
-    area: "Wynwood",
-    lat: 25.7995, lng: -80.2001,
-    rating: 4.7, reviewCount: 224, dropInPrice: 27,
-    description: "Outdoor turf, indoor rig. Daily class plus open gym.",
-    amenities: ["Outdoor turf", "Rig", "Olympic lifting"],
-    hours: "5:30 AM – 9:00 PM",
+    id: "bayfront-run",
+    name: "Bayfront Run Crew",
+    type: "Run Club",
+    area: "Downtown",
+    lat: 25.778, lng: -80.183,
+    rating: 4.7, reviewCount: 142, dropInPrice: 0,
+    description: "Tempo runs, hill repeats, weekend long runs.",
+    amenities: ["Group runs", "Track sessions", "Coaches"],
+    hours: "Mon/Wed/Fri 6:00 AM, Sat 6:30 AM",
   },
   {
     id: "key-biscayne-run",
@@ -299,99 +287,108 @@ export const SEARCH_GYMS: SearchGym[] = [
     amenities: ["Group runs", "Beach finish", "Free coffee"],
     hours: "Sat 6:30 AM",
   },
+
+  /* WELLNESS */
   {
-    id: "south-beach-cycle",
-    name: "South Beach Cycle Co.",
-    type: "Cycling",
-    area: "South Beach",
-    lat: 25.781, lng: -80.135,
-    rating: 4.8, reviewCount: 401, dropInPrice: 30,
-    description: "Theme rides and live DJs. Beach-vibe boutique.",
-    amenities: ["Shoe rental", "Towels", "Smoothie bar"],
-    hours: "5:30 AM – 8:30 PM",
+    id: "edgewater-wellness",
+    name: "Edgewater Cold Plunge & Sauna",
+    type: "Wellness",
+    area: "Edgewater",
+    lat: 25.7916, lng: -80.1869,
+    rating: 4.8, reviewCount: 267, dropInPrice: 35,
+    description: "Cold plunges, infrared saunas, and contrast therapy.",
+    amenities: ["Cold plunge", "Infrared sauna", "Contrast"],
+    hours: "6:00 AM – 10:00 PM",
   },
   {
-    id: "downtown-climbing",
-    name: "Downtown Climbing Hub",
-    type: "Climbing",
+    id: "downtown-wellness",
+    name: "Downtown Wellness Spa",
+    type: "Wellness",
     area: "Downtown",
-    lat: 25.776, lng: -80.191,
-    rating: 4.6, reviewCount: 142, dropInPrice: 28,
-    description: "Bouldering only. Six-week route resets.",
-    amenities: ["Bouldering", "Training board", "Gear rental"],
-    hours: "11:00 AM – 11:00 PM",
+    lat: 25.7732, lng: -80.1934,
+    rating: 4.7, reviewCount: 211, dropInPrice: 40,
+    description: "Recovery-focused spa: red light, compression, IV drips.",
+    amenities: ["Red light", "Compression boots", "IV therapy"],
+    hours: "8:00 AM – 9:00 PM",
   },
   {
-    id: "midbeach-hiit",
-    name: "Mid-Beach HIIT Studio",
-    type: "HIIT",
+    id: "midbeach-recovery",
+    name: "Mid-Beach Recovery Lounge",
+    type: "Wellness",
     area: "Mid-Beach",
     lat: 25.815, lng: -80.13,
-    rating: 4.7, reviewCount: 168, dropInPrice: 28,
-    description: "Tabata blocks with kettlebells, ropes, and rower.",
-    amenities: ["Kettlebells", "Battle ropes", "Rowers"],
-    hours: "6:00 AM – 8:30 PM",
-  },
-  {
-    id: "miami-river-boxing",
-    name: "Miami River Boxing",
-    type: "Boxing",
-    area: "Downtown",
-    lat: 25.768, lng: -80.196,
-    rating: 4.6, reviewCount: 122, dropInPrice: 22,
-    description: "Group boxing classes with rotating stations. All levels.",
-    amenities: ["Heavy bags", "Mitt work", "Conditioning"],
-    hours: "6:00 AM – 9:30 PM",
-  },
-  {
-    id: "south-pointe-pilates",
-    name: "South Pointe Pilates",
-    type: "Pilates",
-    area: "South Beach",
-    lat: 25.7682, lng: -80.135,
-    rating: 4.8, reviewCount: 287, dropInPrice: 38,
-    description: "Reformer studio with ocean views. Small classes.",
-    amenities: ["Reformers", "Ocean views", "Spring board"],
-    hours: "6:30 AM – 8:00 PM",
-  },
-  {
-    id: "north-beach-yoga",
-    name: "North Beach Yoga Garden",
-    type: "Yoga",
-    area: "North Beach",
-    lat: 25.852, lng: -80.122,
-    rating: 4.7, reviewCount: 156, dropInPrice: 22,
-    description: "Outdoor garden classes. Bring sunscreen and a mat.",
-    amenities: ["Outdoor", "Garden", "Tea after"],
+    rating: 4.7, reviewCount: 168, dropInPrice: 32,
+    description: "Stretch sessions, massage guns, recovery on demand.",
+    amenities: ["Stretch", "Massage", "Cryo"],
     hours: "7:00 AM – 8:30 PM",
   },
+  {
+    id: "miami-river-mobility",
+    name: "Miami River Mobility Lab",
+    type: "Wellness",
+    area: "Downtown",
+    lat: 25.768, lng: -80.196,
+    rating: 4.6, reviewCount: 122, dropInPrice: 28,
+    description: "Mobility classes and bodywork. Helps you move better.",
+    amenities: ["Mobility", "Bodywork", "Coaching"],
+    hours: "7:00 AM – 9:00 PM",
+  },
+
+  /* HYROX */
+  {
+    id: "ocean-drive-hyrox",
+    name: "Ocean Drive Hyrox Box",
+    type: "Hyrox",
+    area: "South Beach",
+    lat: 25.78, lng: -80.13,
+    rating: 4.7, reviewCount: 298, dropInPrice: 28,
+    description: "Hyrox-format training: erg, sled, sandbag, run circuits.",
+    amenities: ["Sleds", "Rowers", "Wall balls", "Sandbags"],
+    hours: "5:30 AM – 9:00 PM",
+    touristPass: true,
+  },
+  {
+    id: "coral-way-hyrox",
+    name: "Coral Way Hyrox Co.",
+    type: "Hyrox",
+    area: "Little Havana",
+    lat: 25.749, lng: -80.226,
+    rating: 4.6, reviewCount: 176, dropInPrice: 25,
+    description: "Tight community vibe. Great coaching for race prep.",
+    amenities: ["Sleds", "Burpees zone", "Race simulations"],
+    hours: "6:00 AM – 9:00 PM",
+  },
+  {
+    id: "wynwood-hyrox",
+    name: "Wynwood Hyrox Hall",
+    type: "Hyrox",
+    area: "Wynwood",
+    lat: 25.7995, lng: -80.2001,
+    rating: 4.7, reviewCount: 224, dropInPrice: 27,
+    description: "Outdoor turf for sled work. Indoor erg + ski + bike.",
+    amenities: ["Outdoor turf", "Sleds", "Ergs"],
+    hours: "5:30 AM – 9:00 PM",
+  },
+  {
+    id: "bayside-hyrox",
+    name: "Bayside Hyrox Lab",
+    type: "Hyrox",
+    area: "Downtown",
+    lat: 25.7752, lng: -80.19,
+    rating: 4.8, reviewCount: 356, dropInPrice: 28,
+    description: "45-minute Hyrox-format sessions. Heart rate on screens.",
+    amenities: ["Heart rate monitors", "Sleds", "Rowers"],
+    hours: "5:30 AM – 9:30 PM",
+  },
 ];
 
-export const ACTIVITY_TYPES = [
-  "Lifting",
-  "Pilates",
-  "Yoga",
-  "CrossFit",
-  "HIIT",
-  "Cycling",
-  "Run Club",
-  "Boxing",
-  "Climbing",
-];
-
-// Search "center" for distance calculations — Miami midpoint between
-// Brickell and South Beach, same as the map default center.
 export const MIAMI_CENTER: [number, number] = [25.775, -80.18];
 
-/**
- * Haversine distance in miles between two lat/lng points.
- * Used to compute "X mi away" on each card.
- */
 export function distanceMiles(
   a: [number, number],
   b: [number, number]
 ): number {
-  const R = 3958.8; // Earth radius in miles
+  const R = 3958.8;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(b[0] - a[0]);
   const dLng = toRad(b[1] - a[1]);

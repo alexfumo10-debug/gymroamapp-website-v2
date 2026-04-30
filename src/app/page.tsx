@@ -108,6 +108,9 @@ export default function Home() {
                   <button onClick={handleJoin} disabled={loading}>{loading ? "Joining..." : "Join the Waitlist"}</button>
                 </div>
                 <p className={styles.note}>Be the first to know when GymRoam launches. No spam.</p>
+                <a href="/search" className={styles.previewLink}>
+                  Or preview the app experience &rarr;
+                </a>
               </div>
             ) : (
               <div className={styles.success}>
@@ -130,6 +133,34 @@ export default function Home() {
             <div className={`${styles.phone} ${styles.phone2}`}>
               <Image src="/screen-discover.png" alt="GymRoam discover" fill sizes="240px" style={{ objectFit: "cover" }} />
             </div>
+          </div>
+        </div>
+      </section>
+
+      <div className={styles.divider} />
+
+      {/* Try it now — preview /search */}
+      <section className={styles.tryNow}>
+        <div className={`${styles.tryNowInner} fade-up`}>
+          <div className={styles.tryNowTag}>Try it now</div>
+          <h2>
+            Browse Miami gyms <span className={styles.accent}>before launch</span>
+          </h2>
+          <p>
+            We built a live preview of the app experience. Filter by activity,
+            tap pins on the map, see what GymRoam will feel like.
+          </p>
+          <a href="/search" className={styles.tryNowBtn}>
+            Open the live preview &rarr;
+          </a>
+          <div className={styles.tryNowChips}>
+            <span className={styles.tryNowChip}>🏋️ Lifting</span>
+            <span className={styles.tryNowChip}>🌸 Pilates</span>
+            <span className={styles.tryNowChip}>🧘 Yoga</span>
+            <span className={styles.tryNowChip}>🚴 Cycling</span>
+            <span className={styles.tryNowChip}>🏃 Run Club</span>
+            <span className={styles.tryNowChip}>🌿 Wellness</span>
+            <span className={styles.tryNowChip}>⚡ Hyrox</span>
           </div>
         </div>
       </section>

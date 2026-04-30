@@ -8,9 +8,11 @@ import {
   SEARCH_GYMS,
   ACTIVITY_TYPES,
   MIAMI_CENTER,
+  CATEGORY_COLORS,
   distanceMiles,
   SearchGym,
 } from "@/lib/searchData";
+import CategoryIcon from "@/components/CategoryIcon";
 import styles from "./page.module.css";
 
 type MobileTab = "list" | "map";
@@ -114,16 +116,25 @@ export default function SearchPage() {
               className={`${styles.chip} ${activeFilter === null ? styles.chipActive : ""}`}
               onClick={() => setActiveFilter(null)}
             >
+              <CategoryIcon category="All" size={14} />
               All
             </button>
             {ACTIVITY_TYPES.filter((t) => counts[t]).map((type) => {
               const isActive = activeFilter === type;
+              const color = CATEGORY_COLORS[type];
               return (
                 <button
                   key={type}
                   className={`${styles.chip} ${isActive ? styles.chipActive : ""}`}
                   onClick={() => setActiveFilter(isActive ? null : type)}
+                  style={isActive ? { background: color, borderColor: color, color: "#0a0a0b" } : undefined}
                 >
+                  <span
+                    className={styles.chipIcon}
+                    style={!isActive ? { color } : undefined}
+                  >
+                    <CategoryIcon category={type} size={14} />
+                  </span>
                   {type}
                 </button>
               );
@@ -197,6 +208,12 @@ export default function SearchPage() {
                           background: `linear-gradient(135deg, ${gradientForType(gym.type)})`,
                         }}
                       >
+                        <span
+                          className={styles.cardThumbIcon}
+                          style={{ color: CATEGORY_COLORS[gym.type] }}
+                        >
+                          <CategoryIcon category={gym.type} size={26} />
+                        </span>
                         {gym.promo && (
                           <span className={styles.promoBadge}>{gym.promo}</span>
                         )}
@@ -204,7 +221,14 @@ export default function SearchPage() {
                       <div className={styles.cardBody}>
                         <div className={styles.cardName}>{gym.name}</div>
                         <div className={styles.cardMetaRow}>
-                          <span className={styles.activityPill}>
+                          <span
+                            className={styles.activityPill}
+                            style={{
+                              color: CATEGORY_COLORS[gym.type],
+                              background: `${CATEGORY_COLORS[gym.type]}22`,
+                            }}
+                          >
+                            <CategoryIcon category={gym.type} size={11} />
                             {gym.type}
                           </span>
                           {gym.touristPass && (
@@ -286,6 +310,12 @@ export default function SearchPage() {
                 background: `linear-gradient(135deg, ${gradientForType(selectedGym.type)})`,
               }}
             >
+              <span
+                className={styles.modalImageIcon}
+                style={{ color: CATEGORY_COLORS[selectedGym.type] }}
+              >
+                <CategoryIcon category={selectedGym.type} size={64} />
+              </span>
               {selectedGym.promo && (
                 <span className={styles.modalPromo}>{selectedGym.promo}</span>
               )}
@@ -299,7 +329,16 @@ export default function SearchPage() {
                 </div>
               </div>
               <div className={styles.modalPills}>
-                <span className={styles.activityPill}>{selectedGym.type}</span>
+                <span
+                  className={styles.activityPill}
+                  style={{
+                    color: CATEGORY_COLORS[selectedGym.type],
+                    background: `${CATEGORY_COLORS[selectedGym.type]}22`,
+                  }}
+                >
+                  <CategoryIcon category={selectedGym.type} size={11} />
+                  {selectedGym.type}
+                </span>
                 {selectedGym.touristPass && (
                   <span className={styles.touristPill}>Tourist day pass</span>
                 )}
