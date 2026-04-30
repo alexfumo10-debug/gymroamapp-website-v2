@@ -1,0 +1,92 @@
+.map {
+  height: 100%;
+  width: 100%;
+  background: #18181d;
+}
+
+.mapLoading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim, #8a8a99);
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: #18181d;
+}
+
+/* Pin styles */
+.pinWrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+.pinDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(232, 255, 60, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.pinCore {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent, #e8ff3c);
+  box-shadow: 0 0 0 2px #0a0a0b;
+  transition: width 0.2s, height 0.2s, box-shadow 0.2s;
+}
+
+/* Active variant — used when card is hovered or selected */
+.pinDotActive {
+  width: 32px;
+  height: 32px;
+  background: rgba(232, 255, 60, 0.35);
+  animation: pulse 1.6s ease-out infinite;
+}
+
+.pinCoreActive {
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 0 12px rgba(232, 255, 60, 0.7), 0 0 0 2px #0a0a0b;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(232, 255, 60, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(232, 255, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 255, 60, 0);
+  }
+}
+
+/* Leaflet chrome overrides for dark theme */
+.map :global(.leaflet-control-attribution) {
+  background: rgba(10, 10, 11, 0.7) !important;
+  color: var(--dim, #8a8a99) !important;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  backdrop-filter: blur(4px);
+}
+
+.map :global(.leaflet-control-attribution a) {
+  color: var(--muted, #b0b0bc) !important;
+}
+
+.map :global(.leaflet-control-zoom a) {
+  background: #18181d !important;
+  color: var(--text, #e8e8ee) !important;
+  border-color: var(--border, #1f1f26) !important;
+}
+
+.map :global(.leaflet-control-zoom a:hover) {
+  background: var(--surface2, #232329) !important;
+}
