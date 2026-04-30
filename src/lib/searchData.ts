@@ -22,6 +22,10 @@ export interface SearchGym {
   description: string;
   amenities: string[];
   hours: string;
+  /** Optional badge — shows the red PROMO ribbon on the card thumbnail */
+  promo?: string;
+  /** Optional tourist-day-pass flag — shown on the gym card */
+  touristPass?: boolean;
 }
 
 export const SEARCH_GYMS: SearchGym[] = [
@@ -35,6 +39,8 @@ export const SEARCH_GYMS: SearchGym[] = [
     description: "Heavy iron, classic powerlifting setup, sled pushes outside.",
     amenities: ["Squat racks", "Sled track", "Sauna"],
     hours: "5:00 AM – 11:00 PM",
+    promo: "PROMO",
+    touristPass: true,
   },
   {
     id: "brickell-strong",
@@ -90,6 +96,7 @@ export const SEARCH_GYMS: SearchGym[] = [
     description: "Vinyasa, hot yoga, and breathwork in a tropical loft.",
     amenities: ["Hot yoga", "Mats provided", "Showers"],
     hours: "6:00 AM – 9:30 PM",
+    promo: "PROMO",
   },
   {
     id: "sunrise-yoga",
@@ -101,6 +108,7 @@ export const SEARCH_GYMS: SearchGym[] = [
     description: "Beachfront flows at sunrise. Bring water, leave shoes.",
     amenities: ["Beach sessions", "Mats provided", "Outdoor"],
     hours: "5:30 AM – 8:30 PM",
+    touristPass: true,
   },
   {
     id: "ocean-drive-cf",
@@ -112,6 +120,7 @@ export const SEARCH_GYMS: SearchGym[] = [
     description: "Affiliate box with daily WODs and open gym hours.",
     amenities: ["Olympic lifting", "Gymnastics rig", "Outdoor turf"],
     hours: "5:30 AM – 9:00 PM",
+    touristPass: true,
   },
   {
     id: "coral-way-cf",
@@ -189,6 +198,7 @@ export const SEARCH_GYMS: SearchGym[] = [
     description: "High-energy indoor cycling with DJ-led playlists.",
     amenities: ["Clip-in shoes", "Towels", "Water"],
     hours: "5:30 AM – 8:30 PM",
+    promo: "PROMO",
   },
   {
     id: "beach-cycle",

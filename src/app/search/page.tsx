@@ -94,7 +94,7 @@ export default function SearchPage() {
             </svg>
             <input
               type="text"
-              placeholder="Search by name, neighborhood, or activity"
+              placeholder="Search gyms, area, or activity"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -115,7 +115,6 @@ export default function SearchPage() {
               onClick={() => setActiveFilter(null)}
             >
               All
-              <span className={styles.chipCount}>{SEARCH_GYMS.length}</span>
             </button>
             {ACTIVITY_TYPES.filter((t) => counts[t]).map((type) => {
               const isActive = activeFilter === type;
@@ -126,7 +125,6 @@ export default function SearchPage() {
                   onClick={() => setActiveFilter(isActive ? null : type)}
                 >
                   {type}
-                  <span className={styles.chipCount}>{counts[type]}</span>
                 </button>
               );
             })}
@@ -156,9 +154,11 @@ export default function SearchPage() {
           >
             <div className={styles.listHeader}>
               <span className={styles.resultCount}>
-                {visibleGyms.length} {visibleGyms.length === 1 ? "result" : "results"}
+                Trending Near You
               </span>
-              <span className={styles.resultArea}>in Miami</span>
+              <span className={styles.resultArea}>
+                {visibleGyms.length} {visibleGyms.length === 1 ? "gym" : "gyms"}
+              </span>
             </div>
 
             {visibleGyms.length === 0 ? (
@@ -192,33 +192,56 @@ export default function SearchPage() {
                       onClick={() => setSelectedGym(gym)}
                     >
                       <div
-                        className={styles.cardImage}
+                        className={styles.cardThumb}
                         style={{
                           background: `linear-gradient(135deg, ${gradientForType(gym.type)})`,
                         }}
                       >
-                        <span className={styles.cardImageLabel}>{gym.type}</span>
+                        {gym.promo && (
+                          <span className={styles.promoBadge}>{gym.promo}</span>
+                        )}
                       </div>
                       <div className={styles.cardBody}>
-                        <div className={styles.cardTopRow}>
-                          <h3 className={styles.cardName}>{gym.name}</h3>
-                          <div className={styles.cardRating}>
-                            ★ {gym.rating.toFixed(1)}
-                            <span className={styles.cardReviews}>({gym.reviewCount})</span>
-                          </div>
+                        <div className={styles.cardName}>{gym.name}</div>
+                        <div className={styles.cardMetaRow}>
+                          <span className={styles.activityPill}>
+                            {gym.type}
+                          </span>
+                          {gym.touristPass && (
+                            <span className={styles.touristPill}>
+                              Tourist day pass
+                            </span>
+                          )}
                         </div>
-                        <div className={styles.cardMeta}>
+                        <div className={styles.cardSubMeta}>
                           {gym.area} &middot; {gym.distance.toFixed(1)} mi
                         </div>
-                        <div className={styles.cardDesc}>{gym.description}</div>
-                        <div className={styles.cardFooter}>
-                          <span className={styles.cardPrice}>
-                            {gym.dropInPrice === 0
-                              ? "Free"
-                              : `$${gym.dropInPrice} drop-in`}
-                          </span>
-                          <span className={styles.cardCta}>View &rarr;</span>
+                      </div>
+                      <div className={styles.cardRight}>
+                        <div className={styles.cardRating}>
+                          <span className={styles.starIcon}>★</span>
+                          {gym.rating.toFixed(1)}
                         </div>
+                        <button
+                          className={styles.directionsBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(
+                              `https://maps.apple.com/?ll=${gym.lat},${gym.lng}&q=${encodeURIComponent(gym.name)}`,
+                              "_blank"
+                            );
+                          }}
+                        >
+                          <svg
+                            width="11"
+                            height="11"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M21.71 11.29l-9-9a1 1 0 00-1.41 0l-9 9a1 1 0 000 1.41l9 9a1 1 0 001.41 0l9-9a1 1 0 000-1.41zM14 14.5V12h-4v3H8v-4a1 1 0 011-1h5V7.5L17.5 11z" />
+                          </svg>
+                          Directions
+                        </button>
                       </div>
                     </div>
                   );
@@ -263,16 +286,26 @@ export default function SearchPage() {
                 background: `linear-gradient(135deg, ${gradientForType(selectedGym.type)})`,
               }}
             >
-              <span className={styles.cardImageLabel}>{selectedGym.type}</span>
+              {selectedGym.promo && (
+                <span className={styles.modalPromo}>{selectedGym.promo}</span>
+              )}
             </div>
             <div className={styles.modalBody}>
-              <h2 className={styles.modalName}>{selectedGym.name}</h2>
-              <div className={styles.modalMeta}>
-                <span>★ {selectedGym.rating.toFixed(1)}</span>
-                <span>({selectedGym.reviewCount} reviews)</span>
-                <span>·</span>
-                <span>{selectedGym.area}</span>
+              <div className={styles.modalTopRow}>
+                <h2 className={styles.modalName}>{selectedGym.name}</h2>
+                <div className={styles.modalRating}>
+                  <span className={styles.starIcon}>★</span>
+                  {selectedGym.rating.toFixed(1)}
+                </div>
               </div>
+              <div className={styles.modalPills}>
+                <span className={styles.activityPill}>{selectedGym.type}</span>
+                {selectedGym.touristPass && (
+                  <span className={styles.touristPill}>Tourist day pass</span>
+                )}
+                <span className={styles.modalArea}>{selectedGym.area}</span>
+              </div>
+
               <p className={styles.modalDesc}>{selectedGym.description}</p>
 
               <div className={styles.modalSection}>
@@ -300,9 +333,25 @@ export default function SearchPage() {
                       : `$${selectedGym.dropInPrice}`}
                   </div>
                 </div>
-                <a href="/" className={styles.modalCta}>
-                  Get the app to book
-                </a>
+                <button
+                  className={styles.modalCta}
+                  onClick={() =>
+                    window.open(
+                      `https://maps.apple.com/?ll=${selectedGym.lat},${selectedGym.lng}&q=${encodeURIComponent(selectedGym.name)}`,
+                      "_blank"
+                    )
+                  }
+                >
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M21.71 11.29l-9-9a1 1 0 00-1.41 0l-9 9a1 1 0 000 1.41l9 9a1 1 0 001.41 0l9-9a1 1 0 000-1.41zM14 14.5V12h-4v3H8v-4a1 1 0 011-1h5V7.5L17.5 11z" />
+                  </svg>
+                  Directions
+                </button>
               </div>
 
               <p className={styles.modalNote}>
