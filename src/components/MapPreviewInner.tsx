@@ -15,37 +15,21 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { MIAMI_GYMS } from "./mapData";
 import styles from "./MapPreview.module.css";
 
-interface MockGym {
-  name: string;
-  type: string;
-  area: string;
-  lat: number;
-  lng: number;
-}
-
-const MIAMI_GYMS: MockGym[] = [
-  { name: "Iron Forge Athletic Club", type: "Lifting", area: "South Beach", lat: 25.7825, lng: -80.134 },
-  { name: "Brickell Pilates Lab", type: "Pilates", area: "Brickell", lat: 25.7651, lng: -80.1922 },
-  { name: "Wynwood Wellness Studio", type: "Yoga", area: "Wynwood", lat: 25.801, lng: -80.199 },
-  { name: "Ocean Drive CrossFit", type: "CrossFit", area: "South Beach", lat: 25.78, lng: -80.13 },
-  { name: "Coral Gables Climbing Co.", type: "Climbing", area: "Coral Gables", lat: 25.7215, lng: -80.2684 },
-  { name: "Mid-Beach Run Club", type: "Run Club", area: "Mid-Beach", lat: 25.812, lng: -80.128 },
-  { name: "Bayside HIIT House", type: "HIIT", area: "Downtown", lat: 25.7752, lng: -80.19 },
-  { name: "Coconut Grove Pilates", type: "Pilates", area: "Coconut Grove", lat: 25.7282, lng: -80.2433 },
-  { name: "Brickell Bay Cycle", type: "Cycling", area: "Brickell", lat: 25.77, lng: -80.188 },
-  { name: "Edgewater Boxing Gym", type: "Boxing", area: "Edgewater", lat: 25.7916, lng: -80.1869 },
-];
-
-// Custom yellow accent pin built as an inline SVG data URL.
+// Custom yellow accent pin (full opacity, used when matching the active filter).
 const pinIcon = L.divIcon({
   className: styles.pinWrap,
-  html: `
-    <div class="${styles.pinDot}">
-      <div class="${styles.pinCore}"></div>
-    </div>
-  `,
+  html: `<div class="${styles.pinDot}"><div class="${styles.pinCore}"></div></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+// Dimmed variant — applied to pins that don't match the active filter.
+const pinIconDim = L.divIcon({
+  className: styles.pinWrap,
+  html: `<div class="${styles.pinDot} ${styles.pinDotDim}"><div class="${styles.pinCore} ${styles.pinCoreDim}"></div></div>`,
   iconSize: [24, 24],
   iconAnchor: [12, 12],
 });
@@ -54,7 +38,11 @@ const pinIcon = L.divIcon({
 const MIAMI_CENTER: [number, number] = [25.775, -80.18];
 const MIAMI_ZOOM = 12;
 
-export default function MapPreviewInner() {
+interface MapPreviewInnerProps {
+  activeFilter: string | null;
+}
+
+export default function MapPreviewInner({ activeFilter }: MapPreviewInnerProps) {
   return (
     <MapContainer
       center={MIAMI_CENTER}
@@ -69,17 +57,26 @@ export default function MapPreviewInner() {
         subdomains="abcd"
         maxZoom={19}
       />
-      {MIAMI_GYMS.map((gym) => (
-        <Marker key={gym.name} position={[gym.lat, gym.lng]} icon={pinIcon}>
-          <Popup className={styles.popup}>
-            <div className={styles.popupName}>{gym.name}</div>
-            <div className={styles.popupMeta}>
-              {gym.type} &middot; {gym.area}
-            </div>
-            <div className={styles.popupTag}>Available at launch</div>
-          </Popup>
-        </Marker>
-      ))}
+      {MIAMI_GYMS.map((gym) => {
+        const matches = !activeFilter || gym.type === activeFilter;
+        return (
+          <Marker
+            key={gym.name}
+            position={[gym.lat, gym.lng]}
+            icon={matches ? pinIcon : pinIconDim}
+            opacity={matches ? 1 : 0.45}
+            zIndexOffset={matches ? 100 : 0}
+          >
+            <Popup className={styles.popup}>
+              <div className={styles.popupName}>{gym.name}</div>
+              <div className={styles.popupMeta}>
+                {gym.type} &middot; {gym.area}
+              </div>
+              <div className={styles.popupTag}>Available at launch</div>
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 }

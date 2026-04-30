@@ -114,7 +114,7 @@ export default function Globe() {
           </p>
           <div className={`${styles.stats} fade-up`}>
             <div className={styles.stat}>
-              <span className={styles.statNum}>25+</span>
+              <span className={styles.statNum}>100+</span>
               <span className={styles.statLabel}>Cities</span>
             </div>
             <div className={styles.stat}>
