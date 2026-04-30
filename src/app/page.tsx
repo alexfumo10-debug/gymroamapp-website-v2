@@ -9,7 +9,6 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
 import Globe from "@/components/Globe";
-import MapPreview from "@/components/MapPreview";
 import Image from "next/image";
 import styles from "./page.module.css";
 
@@ -150,10 +149,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
-      <MapPreview />
-
-      <div className={styles.divider} />
 
       <Globe />
 
