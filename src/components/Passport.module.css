@@ -58,7 +58,7 @@
 }
 
 .pageHeader h2 {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-variation-settings: "opsz" 144;
   font-size: clamp(36px, 6vw, 56px);
   font-weight: 500;
@@ -94,7 +94,7 @@
 }
 
 .dividerNum {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-style: italic;
   font-size: 14px;
   color: var(--p-mute);
@@ -128,7 +128,7 @@
 }
 
 .frameLabel {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-style: italic;
   font-size: 13px;
   color: var(--p-mute);
@@ -252,7 +252,7 @@
 }
 
 .passportNum {
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 9px;
   letter-spacing: 0.18em;
   color: var(--p-faint);
@@ -260,7 +260,7 @@
 }
 
 .docHeader h1 {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-variation-settings: "opsz" 144;
   font-size: 38px;
   font-weight: 500;
@@ -341,7 +341,7 @@
 }
 
 .totalsNum {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-variation-settings: "opsz" 144;
   font-size: 48px;
   font-weight: 500;
@@ -378,7 +378,7 @@
 }
 
 .heroLabelRight {
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 9px;
   color: var(--p-faint);
   letter-spacing: 0.12em;
@@ -437,7 +437,7 @@
 }
 
 .heroCity {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 36px;
   font-weight: 600;
   letter-spacing: -0.03em;
@@ -445,7 +445,7 @@
 }
 
 .heroCountry {
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 10px;
   letter-spacing: 0.22em;
   margin-top: 6px;
@@ -460,7 +460,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 8px;
   letter-spacing: 0.1em;
   flex-direction: column;
@@ -483,7 +483,7 @@
   align-items: center;
   border-top: 1px dashed currentColor;
   padding-top: 10px;
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 9px;
   letter-spacing: 0.16em;
   opacity: 0.85;
@@ -526,7 +526,7 @@
 .r5 { transform: rotate(-1deg); }
 
 .stampCity {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -534,7 +534,7 @@
 }
 
 .stampCountry {
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 8px;
   letter-spacing: 0.22em;
   margin-top: 4px;
@@ -554,7 +554,7 @@
 }
 
 .stampDate {
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 8.5px;
   letter-spacing: 0.16em;
   border-top: 1px dashed currentColor;
@@ -578,7 +578,7 @@
 }
 
 .curatorBody {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-style: italic;
   font-size: 17px;
   line-height: 1.5;
@@ -598,7 +598,7 @@
 /* ============ MRZ footer ============ */
 .mrz {
   padding: 0 24px 18px;
-  font-family: var(--font-jetbrains), "SF Mono", monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   font-size: 9px;
   color: var(--p-faint);
   letter-spacing: 0.04em;

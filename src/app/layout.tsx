@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import PageViewTracker from "@/components/PageViewTracker";
 import "./globals.css";
 
@@ -7,19 +7,6 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-inter",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  style: ["normal", "italic"],
-  variable: "--font-fraunces",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-jetbrains",
 });
 
 export const metadata: Metadata = {
@@ -55,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.className} ${inter.variable} ${fraunces.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${inter.className} ${inter.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         <meta name="format-detection" content="telephone=no" />
