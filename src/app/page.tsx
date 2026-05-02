@@ -166,8 +166,6 @@ export default function Home() {
         </div>
       </section>
 
-      <Passport />
-
       <div className={styles.divider} />
 
       <section className={styles.features} id="features">
@@ -222,6 +220,8 @@ export default function Home() {
           <p className={styles.priceLine}>Gym Partner $99/month &middot; cancel anytime</p>
         </div>
       </section>
+
+      <Passport />
 
       <Footer />
       <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
