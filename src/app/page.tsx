@@ -9,6 +9,7 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
 import Globe from "@/components/Globe";
+import Passport from "@/components/Passport";
 import Image from "next/image";
 import styles from "./page.module.css";
 
@@ -164,6 +165,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Passport />
 
       <div className={styles.divider} />
 

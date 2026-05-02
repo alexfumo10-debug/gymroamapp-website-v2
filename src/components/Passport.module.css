@@ -1,0 +1,849 @@
+/* ====================================================================
+   PASSPORT FEATURE SECTION
+   - Cream-on-black surface to suggest paper, not LED
+   - IntersectionObserver adds .inView; CSS handles all animation
+   ==================================================================== */
+
+.section {
+  position: relative;
+  padding: 110px 24px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(232, 255, 60, 0.04), transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(232, 255, 60, 0.025), transparent 50%),
+    #0a0a0b;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Subtle paper grain — adds tactility */
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0.5) 1px, transparent 1px, transparent 4px),
+    repeating-radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.4) 0, rgba(255, 255, 255, 0.4) 1px, transparent 1px, transparent 5px);
+}
+
+.inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ----- Header ----- */
+.headerRow {
+  text-align: center;
+  margin-bottom: 64px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: 100px;
+  background: rgba(232, 255, 60, 0.1);
+  border: 1px solid rgba(232, 255, 60, 0.18);
+  color: var(--accent, #e8ff3c);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #e8ff3c);
+  box-shadow: 0 0 10px var(--accent, #e8ff3c);
+  animation: dotPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.headerRow h2 {
+  font-size: clamp(36px, 6.5vw, 64px);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0 0 18px;
+}
+
+.italic {
+  font-style: italic;
+  color: var(--accent, #e8ff3c);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.headerRow p {
+  font-size: 18px;
+  color: var(--dim, #8a8a99);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ----- Stage layout ----- */
+.stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+  margin-bottom: 80px;
+}
+
+/* ====================================================================
+   PASSPORT BOOK MOCKUP
+   ==================================================================== */
+
+.passportWrap {
+  position: relative;
+  perspective: 1400px;
+}
+
+.passport {
+  position: relative;
+  background: linear-gradient(160deg, #f8f5ec 0%, #ede8da 100%);
+  border-radius: 14px;
+  padding: 26px 28px 22px;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.55),
+    0 6px 16px rgba(232, 255, 60, 0.08);
+  color: #181612;
+  transform: rotate(-1.5deg);
+  transition: transform 0.6s ease;
+}
+
+.section:hover .passport {
+  transform: rotate(-0.5deg) translateY(-4px);
+}
+
+.section.inView .passport {
+  animation: passportEnter 1s ease-out 0.1s backwards;
+}
+
+@keyframes passportEnter {
+  from {
+    opacity: 0;
+    transform: rotate(-4deg) translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-1.5deg) translateY(0);
+  }
+}
+
+/* Paper grain overlay on the passport itself */
+.passport::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.012) 2px, rgba(0, 0, 0, 0.012) 3px),
+    radial-gradient(ellipse at 30% 20%, rgba(255, 230, 180, 0.18), transparent 70%);
+  mix-blend-mode: multiply;
+}
+
+.passportEdge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.18), transparent);
+  border-radius: 14px 0 0 14px;
+  pointer-events: none;
+}
+
+/* Header row inside passport */
+.passportHeader {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(24, 22, 18, 0.16);
+}
+
+.passportSeal {
+  width: 48px;
+  height: 48px;
+}
+
+.sealOuter {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, #e8ff3c 0%, #c5d934 80%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: sealRotate 24s linear infinite;
+  position: relative;
+}
+
+.sealOuter::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px dashed rgba(24, 22, 18, 0.4);
+}
+
+@keyframes sealRotate {
+  to { transform: rotate(360deg); }
+}
+
+.sealCenter {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 17px;
+  color: #181612;
+  letter-spacing: -0.02em;
+  /* Counter-rotate so the GR stays upright while the seal spins */
+  animation: sealRotateBack 24s linear infinite;
+}
+
+@keyframes sealRotateBack {
+  to { transform: rotate(-360deg); }
+}
+
+.passportLabel {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 600;
+  color: #181612;
+  letter-spacing: -0.01em;
+}
+
+.passportNo {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: rgba(24, 22, 18, 0.55);
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+.passportClass {
+  text-align: right;
+}
+
+.classLabel {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: rgba(24, 22, 18, 0.55);
+  text-transform: uppercase;
+  margin-bottom: 1px;
+}
+
+.classValue {
+  font-size: 11px;
+  font-weight: 800;
+  color: #181612;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Stats */
+.statsRow {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr 1px 1fr;
+  gap: 0;
+  padding: 22px 0 16px;
+  border-bottom: 1px solid rgba(24, 22, 18, 0.16);
+}
+
+.stat {
+  text-align: center;
+}
+
+.statNum {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 38px;
+  font-weight: 800;
+  color: #181612;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: rgba(24, 22, 18, 0.55);
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.statDiv {
+  background: rgba(24, 22, 18, 0.16);
+  margin: 6px 0;
+}
+
+/* Stamps grid */
+.stampsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 18px 0 12px;
+  padding: 0 2px;
+}
+
+.stampsHeader > span:first-child {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: rgba(24, 22, 18, 0.55);
+  text-transform: uppercase;
+}
+
+.stampsCount {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: rgba(24, 22, 18, 0.45);
+  letter-spacing: 0.5px;
+}
+
+.stampsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.stamp {
+  aspect-ratio: 1;
+  position: relative;
+  opacity: 0;
+}
+
+.section.inView .stamp {
+  animation: stampDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes stampDrop {
+  0% {
+    opacity: 0;
+    transform: rotate(-15deg) scale(1.6) translateY(-30px);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(2deg) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-3deg) scale(1);
+  }
+}
+
+.stamp:nth-child(2n) {
+  animation-name: stampDropAlt;
+}
+
+@keyframes stampDropAlt {
+  0% {
+    opacity: 0;
+    transform: rotate(15deg) scale(1.6) translateY(-30px);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(-2deg) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(3deg) scale(1);
+  }
+}
+
+.stampInner {
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(24, 22, 18, 0.65);
+  border-radius: 6px;
+  background: rgba(232, 255, 60, 0.08);
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  position: relative;
+}
+
+.stampInner::after {
+  /* faint stamp impression — circular ink mark behind text */
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed rgba(24, 22, 18, 0.18);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.stampFlag {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.stampCity {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: #181612;
+  letter-spacing: -0.01em;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.stampMeta {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: rgba(24, 22, 18, 0.55);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.passportFooter {
+  border-top: 1px solid rgba(24, 22, 18, 0.16);
+  padding-top: 12px;
+  text-align: center;
+}
+
+.mrz {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(24, 22, 18, 0.45);
+  word-break: break-all;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* "New stamp earned" floating toast */
+.newStampToast {
+  position: absolute;
+  bottom: -18px;
+  right: -18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #161618;
+  border: 1px solid rgba(232, 255, 60, 0.4);
+  border-radius: 14px;
+  padding: 10px 16px 10px 12px;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(232, 255, 60, 0.15);
+  opacity: 0;
+  transform: translateY(20px) scale(0.9);
+  z-index: 5;
+}
+
+.section.inView .newStampToast {
+  animation: toastIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 1.6s forwards,
+             toastFloat 4s ease-in-out 2.4s infinite;
+}
+
+@keyframes toastIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.toastDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #e8ff3c);
+  box-shadow: 0 0 10px var(--accent, #e8ff3c);
+  animation: dotPulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.toastTitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.toastSub {
+  font-size: 10px;
+  color: var(--dim, #8a8a99);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+}
+
+/* ====================================================================
+   SHARE CARDS COLUMN
+   ==================================================================== */
+
+.cardsWrap {
+  position: relative;
+}
+
+.cardsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.cardsLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--accent, #e8ff3c);
+  text-transform: uppercase;
+}
+
+.cardsHint {
+  font-size: 11px;
+  color: var(--dim, #8a8a99);
+  font-weight: 600;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.shareCard {
+  aspect-ratio: 1;
+  background: #0d0d10;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 28px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.shareCard:hover {
+  border-color: rgba(232, 255, 60, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 60px rgba(232, 255, 60, 0.08);
+}
+
+.section.inView .shareCard {
+  animation: cardSlideIn 0.7s ease-out forwards;
+}
+
+.section.inView .shareCard:nth-child(1) { animation-delay: 0.6s; }
+.section.inView .shareCard:nth-child(2) { animation-delay: 0.8s; }
+.section.inView .shareCard:nth-child(3) { animation-delay: 1.0s; }
+
+@keyframes cardSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Float forever after intro */
+.section.inView .shareCard:nth-child(1) {
+  animation:
+    cardSlideIn 0.7s ease-out 0.6s forwards,
+    cardFloat 6s ease-in-out 1.5s infinite;
+}
+.section.inView .shareCard:nth-child(2) {
+  animation:
+    cardSlideIn 0.7s ease-out 0.8s forwards,
+    cardFloat 7s ease-in-out 1.8s infinite;
+}
+.section.inView .shareCard:nth-child(3) {
+  animation:
+    cardSlideIn 0.7s ease-out 1.0s forwards,
+    cardFloat 8s ease-in-out 2.1s infinite;
+}
+
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Per-card themed backgrounds */
+.cardYear {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(232, 255, 60, 0.12), transparent 60%),
+    linear-gradient(180deg, #0e0e10 0%, #08080a 100%);
+}
+
+.cardTrip {
+  background:
+    radial-gradient(ellipse at 0% 100%, rgba(160, 255, 222, 0.07), transparent 60%),
+    linear-gradient(180deg, #0e0e10 0%, #08080a 100%);
+}
+
+.cardMilestone {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 60, 110, 0.1), transparent 60%),
+    linear-gradient(180deg, #0e0e10 0%, #08080a 100%);
+}
+
+.cardEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--accent, #e8ff3c);
+}
+
+.cardDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #e8ff3c);
+}
+
+/* Year in Roam — flagship */
+.cardHero {
+  text-align: left;
+  margin-top: 8px;
+}
+
+.cardHeroNumber {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(72px, 14vw, 120px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.cardHeroLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted, #b0b0bc);
+  letter-spacing: -0.01em;
+  margin-top: 4px;
+}
+
+.cardSplit {
+  display: flex;
+  gap: 24px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.cardSplitNum {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.cardSplitLabel {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  color: var(--dim, #8a8a99);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.cardFooter {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent, #e8ff3c);
+  letter-spacing: 0.5px;
+}
+
+/* Trip Recap card */
+.cardCity {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(48px, 9vw, 78px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+.cardSub {
+  font-size: 13px;
+  color: var(--muted, #b0b0bc);
+  font-weight: 600;
+  margin-top: 8px;
+  letter-spacing: -0.01em;
+}
+
+/* Milestone card */
+.cardMilestoneTag {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(72px, 16vw, 130px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  margin-top: 4px;
+}
+
+.cardMilestoneTag span {
+  font-size: 0.4em;
+  font-weight: 600;
+  vertical-align: super;
+  color: var(--accent, #e8ff3c);
+  letter-spacing: -0.03em;
+}
+
+.cardMilestoneCity {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+/* ====================================================================
+   FEATURE BULLETS BELOW THE STAGE
+   ==================================================================== */
+
+.featuresRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  padding-top: 44px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.featureIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(232, 255, 60, 0.1);
+  border: 1px solid rgba(232, 255, 60, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent, #e8ff3c);
+}
+
+.featureTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.featureDesc {
+  font-size: 13px;
+  color: var(--dim, #8a8a99);
+  line-height: 1.55;
+}
+
+/* ====================================================================
+   RESPONSIVE
+   ==================================================================== */
+
+@media (max-width: 960px) {
+  .stage {
+    grid-template-columns: 1fr;
+    gap: 60px;
+  }
+
+  .passportWrap {
+    max-width: 460px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .cardsWrap {
+    max-width: 460px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .shareCard:nth-child(3) {
+    grid-column: span 2;
+    aspect-ratio: 2 / 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 80px 18px;
+  }
+
+  .featuresRow {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .stampsGrid {
+    gap: 6px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .shareCard:nth-child(3) {
+    grid-column: auto;
+    aspect-ratio: 1;
+  }
+
+  .newStampToast {
+    bottom: -10px;
+    right: 8px;
+  }
+}
