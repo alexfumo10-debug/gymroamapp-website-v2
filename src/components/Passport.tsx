@@ -104,7 +104,7 @@ export default function Passport() {
                 <span className={styles.passportNum}>№ 0114-2026</span>
               </div>
               <h1>
-                Alex Fumo, <span className={styles.accent}><em>roamer</em></span>
+                Issued to a <span className={styles.accent}><em>roamer</em></span>
               </h1>
               <div className={styles.metaLine}>
                 <div className={styles.metaItem}>
@@ -220,7 +220,7 @@ export default function Passport() {
             {/* MRZ footer */}
             <div className={styles.mrz}>
               <div className={styles.mrzLine}>
-                P&lt;USAFUMO&lt;&lt;ALEX&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+                P&lt;USAROAMER&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
               </div>
               <div className={styles.mrzLine}>
                 A0114202612USA0008300047&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
