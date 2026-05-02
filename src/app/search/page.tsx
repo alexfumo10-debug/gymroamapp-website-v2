@@ -7,17 +7,44 @@ import SearchMap from "@/components/SearchMap";
 import {
   SEARCH_GYMS,
   ACTIVITY_TYPES,
-  MIAMI_CENTER,
   CATEGORY_COLORS,
   distanceMiles,
   SearchGym,
 } from "@/lib/searchData";
+import { CITY_PRESETS, CityPreset, findPreset } from "@/lib/cityPresets";
+import { geocodeCity } from "@/lib/geocode";
+import { generateGymsForCity } from "@/lib/cityGenerator";
 import CategoryIcon from "@/components/CategoryIcon";
 import styles from "./page.module.css";
 
 type MobileTab = "list" | "map";
 
+interface ActiveCity {
+  name: string;
+  region: string;
+  lat: number;
+  lng: number;
+  /** Curated Miami uses the full SEARCH_GYMS dataset; others are generated */
+  gyms: SearchGym[];
+}
+
+const MIAMI_PRESET = CITY_PRESETS[0];
+
+const DEFAULT_CITY: ActiveCity = {
+  name: MIAMI_PRESET.name,
+  region: MIAMI_PRESET.region,
+  lat: MIAMI_PRESET.lat,
+  lng: MIAMI_PRESET.lng,
+  gyms: SEARCH_GYMS,
+};
+
 export default function SearchPage() {
+  const [city, setCity] = useState<ActiveCity>(DEFAULT_CITY);
+  const [cityModalOpen, setCityModalOpen] = useState(false);
+  const [cityInput, setCityInput] = useState("");
+  const [cityLoading, setCityLoading] = useState(false);
+  const [cityError, setCityError] = useState("");
+
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -25,23 +52,78 @@ export default function SearchPage() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("list");
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  // Filter + sort gyms by query, type, and distance from center.
+  /** Switch the active city — re-generate gyms (or use Miami's curated set). */
+  const setActiveCity = (
+    name: string,
+    region: string,
+    lat: number,
+    lng: number
+  ) => {
+    const preset = findPreset(name);
+    let gyms: SearchGym[];
+    if (preset?.id === "miami") {
+      gyms = SEARCH_GYMS;
+    } else {
+      gyms = generateGymsForCity(name, lat, lng, preset?.neighborhoods);
+    }
+    setCity({ name, region, lat, lng, gyms });
+    setQuery("");
+    setActiveFilter(null);
+    setCityModalOpen(false);
+    setCityInput("");
+    setCityError("");
+  };
+
+  const pickPreset = (preset: CityPreset) => {
+    setActiveCity(preset.name, preset.region, preset.lat, preset.lng);
+  };
+
+  const submitCustomCity = async () => {
+    const q = cityInput.trim();
+    if (!q) return;
+    // Check presets first
+    const preset = CITY_PRESETS.find(
+      (c) => c.name.toLowerCase() === q.toLowerCase()
+    );
+    if (preset) {
+      pickPreset(preset);
+      return;
+    }
+    setCityLoading(true);
+    setCityError("");
+    try {
+      const res = await geocodeCity(q);
+      if (!res) {
+        setCityError("Couldn't find that city. Try a more specific name.");
+        return;
+      }
+      setActiveCity(res.shortName, res.fullName.split(",").slice(0, 3).join(","), res.lat, res.lng);
+    } catch {
+      setCityError("Lookup failed. Try again in a moment.");
+    } finally {
+      setCityLoading(false);
+    }
+  };
+
+  // Filter + sort gyms by query, type, and distance from city center.
   const visibleGyms = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return SEARCH_GYMS.filter((g) => {
-      if (activeFilter && g.type !== activeFilter) return false;
-      if (q) {
-        const haystack = `${g.name} ${g.area} ${g.type}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    })
+    const center: [number, number] = [city.lat, city.lng];
+    return city.gyms
+      .filter((g) => {
+        if (activeFilter && g.type !== activeFilter) return false;
+        if (q) {
+          const haystack = `${g.name} ${g.area} ${g.type}`.toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      })
       .map((g) => ({
         ...g,
-        distance: distanceMiles(MIAMI_CENTER, [g.lat, g.lng]),
+        distance: distanceMiles(center, [g.lat, g.lng]),
       }))
       .sort((a, b) => a.distance - b.distance);
-  }, [query, activeFilter]);
+  }, [query, activeFilter, city]);
 
   // Scroll to and briefly highlight a card when its pin is clicked.
   const handlePinClick = (id: string) => {
@@ -55,60 +137,82 @@ export default function SearchPage() {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
-    SEARCH_GYMS.forEach((g) => {
+    city.gyms.forEach((g) => {
       c[g.type] = (c[g.type] || 0) + 1;
     });
     return c;
-  }, []);
+  }, [city]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
-    if (selectedGym) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    const open = !!selectedGym || cityModalOpen;
+    document.body.style.overflow = open ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [selectedGym]);
+  }, [selectedGym, cityModalOpen]);
 
   return (
     <>
       <Nav />
       <main className={styles.page}>
-        {/* Search header */}
+        {/* Sticky search header */}
         <div className={styles.searchHeader}>
-          <div className={styles.searchBar}>
-            <svg
-              className={styles.searchIcon}
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {/* City selector + search bar row */}
+          <div className={styles.locationRow}>
+            <button
+              className={styles.cityButton}
+              onClick={() => setCityModalOpen(true)}
             >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search gyms, area, or activity"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            {query && (
-              <button
-                className={styles.clearBtn}
-                onClick={() => setQuery("")}
-                aria-label="Clear search"
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2c-3.87 0-7 3.13-7 7 0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+              </svg>
+              <span className={styles.cityName}>{city.name}</span>
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                ×
-              </button>
-            )}
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            <div className={styles.searchBar}>
+              <svg
+                className={styles.searchIcon}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                type="text"
+                placeholder={`Search gyms in ${city.name}`}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {query && (
+                <button
+                  className={styles.clearBtn}
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
 
           <div className={styles.filterRow}>
@@ -168,7 +272,7 @@ export default function SearchPage() {
                 Trending Near You
               </span>
               <span className={styles.resultArea}>
-                {visibleGyms.length} {visibleGyms.length === 1 ? "gym" : "gyms"}
+                {visibleGyms.length} {visibleGyms.length === 1 ? "gym" : "gyms"} in {city.name}
               </span>
             </div>
 
@@ -282,10 +386,89 @@ export default function SearchPage() {
               hoveredId={hoveredId}
               selectedId={selectedGym?.id || null}
               onPinClick={handlePinClick}
+              center={[city.lat, city.lng]}
             />
           </div>
         </div>
       </main>
+
+      {/* City picker modal */}
+      {cityModalOpen && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setCityModalOpen(false)}
+        >
+          <div
+            className={styles.cityModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className={styles.modalClose}
+              onClick={() => setCityModalOpen(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h3 className={styles.cityModalTitle}>Pick a city</h3>
+            <p className={styles.cityModalSub}>
+              Type any city or pick one of the popular ones below.
+            </p>
+
+            <div className={styles.cityInputRow}>
+              <svg
+                className={styles.searchIcon}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                autoFocus
+                type="text"
+                placeholder="e.g. Bali, Berlin, Austin"
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitCustomCity();
+                }}
+              />
+              <button
+                className={styles.cityGoBtn}
+                onClick={submitCustomCity}
+                disabled={cityLoading || !cityInput.trim()}
+              >
+                {cityLoading ? "…" : "Go"}
+              </button>
+            </div>
+            {cityError && (
+              <div className={styles.cityError}>{cityError}</div>
+            )}
+
+            <div className={styles.cityPresetLabel}>Popular</div>
+            <div className={styles.cityPresets}>
+              {CITY_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  className={`${styles.cityPreset} ${city.name === preset.name ? styles.cityPresetActive : ""}`}
+                  onClick={() => pickPreset(preset)}
+                >
+                  <div className={styles.cityPresetName}>{preset.name}</div>
+                  <div className={styles.cityPresetRegion}>
+                    {preset.region}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail modal */}
       {selectedGym && (
@@ -406,21 +589,15 @@ export default function SearchPage() {
   );
 }
 
-/**
- * Each activity gets its own gradient so cards have visual variety
- * without needing real photos.
- */
 function gradientForType(type: string): string {
   const gradients: Record<string, string> = {
     Lifting: "#3a3a48, #1a1a22",
     Pilates: "#4a3a5c, #2a1d3a",
     Yoga: "#3a5c4a, #1d3a2a",
-    CrossFit: "#5c3a3a, #3a1d1d",
-    HIIT: "#5c4a3a, #3a2d1d",
-    Cycling: "#3a4a5c, #1d2d3a",
-    "Run Club": "#5c5c3a, #3a3a1d",
-    Boxing: "#5c3a4a, #3a1d2d",
-    Climbing: "#3a5c5c, #1d3a3a",
+    Cycling: "#5c4a3a, #3a2d1d",
+    "Run Club": "#5c3a3a, #3a1d1d",
+    Wellness: "#3a4a5c, #1d2d3a",
+    Hyrox: "#5c3a4a, #3a1d2d",
   };
   return gradients[type] || "#2a2a32, #18181d";
 }

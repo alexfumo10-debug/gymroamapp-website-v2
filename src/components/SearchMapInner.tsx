@@ -9,7 +9,7 @@ import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { SearchGym, MIAMI_CENTER } from "@/lib/searchData";
+import { SearchGym } from "@/lib/searchData";
 import styles from "./SearchMap.module.css";
 
 interface SearchMapInnerProps {
@@ -17,6 +17,7 @@ interface SearchMapInnerProps {
   hoveredId: string | null;
   selectedId: string | null;
   onPinClick: (id: string) => void;
+  center: [number, number];
 }
 
 const standardIcon = L.divIcon({
@@ -33,18 +34,28 @@ const activeIcon = L.divIcon({
   iconAnchor: [16, 16],
 });
 
-// Recenter map to fit all visible gyms whenever the gym list changes.
-function FitBounds({ gyms }: { gyms: SearchGym[] }) {
+// Recenter map to fit all visible gyms; falls back to the city center
+// when the filtered list is empty.
+function FitBounds({
+  gyms,
+  center,
+}: {
+  gyms: SearchGym[];
+  center: [number, number];
+}) {
   const map = useMap();
   useEffect(() => {
-    if (gyms.length === 0) return;
+    if (gyms.length === 0) {
+      map.setView(center, 12);
+      return;
+    }
     if (gyms.length === 1) {
       map.setView([gyms[0].lat, gyms[0].lng], 14);
       return;
     }
     const bounds = L.latLngBounds(gyms.map((g) => [g.lat, g.lng]));
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-  }, [gyms, map]);
+  }, [gyms, center, map]);
   return null;
 }
 
@@ -53,12 +64,13 @@ export default function SearchMapInner({
   hoveredId,
   selectedId,
   onPinClick,
+  center,
 }: SearchMapInnerProps) {
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
 
   return (
     <MapContainer
-      center={MIAMI_CENTER}
+      center={center}
       zoom={12}
       scrollWheelZoom
       className={styles.map}
@@ -70,7 +82,7 @@ export default function SearchMapInner({
         subdomains="abcd"
         maxZoom={19}
       />
-      <FitBounds gyms={gyms} />
+      <FitBounds gyms={gyms} center={center} />
       {gyms.map((gym) => {
         const isHighlighted = gym.id === hoveredId || gym.id === selectedId;
         return (

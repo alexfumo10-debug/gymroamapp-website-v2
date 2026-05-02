@@ -14,6 +14,7 @@ interface SearchMapProps {
   hoveredId: string | null;
   selectedId: string | null;
   onPinClick: (id: string) => void;
+  center: [number, number];
 }
 
 export default function SearchMap(props: SearchMapProps) {

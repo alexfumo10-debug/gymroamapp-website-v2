@@ -23,20 +23,200 @@
   padding: 14px 20px 10px;
 }
 
+/* City + search bar row */
+.locationRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: stretch;
+}
+
+.cityButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: #16161a;
+  border: 1px solid #2a2a32;
+  border-radius: 14px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.cityButton:hover {
+  border-color: var(--accent, #e8ff3c);
+}
+
+.cityButton svg:first-child {
+  color: var(--accent, #e8ff3c);
+}
+
+.cityButton svg:last-child {
+  color: #6b6b78;
+  margin-left: 2px;
+}
+
+.cityName {
+  letter-spacing: -0.01em;
+}
+
 .searchBar {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
   background: #16161a;
   border: 1px solid transparent;
   border-radius: 14px;
   padding: 0 14px;
-  margin-bottom: 12px;
+  min-width: 0;
   transition: border-color 0.15s;
 }
 
 .searchBar:focus-within {
   border-color: var(--accent, #e8ff3c);
+}
+
+/* City picker modal */
+.cityModal {
+  background: #0d0d10;
+  border: 1px solid #1f1f26;
+  border-radius: 22px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+  padding: 28px;
+}
+
+.cityModalTitle {
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0 0 6px;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.cityModalSub {
+  font-size: 13px;
+  color: #6b6b78;
+  margin: 0 0 22px;
+}
+
+.cityInputRow {
+  display: flex;
+  align-items: center;
+  background: #16161a;
+  border: 1px solid #2a2a32;
+  border-radius: 12px;
+  padding: 0 12px;
+  gap: 8px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+
+.cityInputRow:focus-within {
+  border-color: var(--accent, #e8ff3c);
+}
+
+.cityInputRow input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  padding: 13px 0;
+}
+
+.cityInputRow input::placeholder {
+  color: #6b6b78;
+}
+
+.cityGoBtn {
+  background: var(--accent, #e8ff3c);
+  color: #0a0a0b;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cityGoBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cityError {
+  font-size: 12px;
+  color: #ff4d6d;
+  margin: 0 0 14px 4px;
+}
+
+.cityPresetLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: #6b6b78;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin: 18px 0 10px;
+}
+
+.cityPresets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.cityPreset {
+  text-align: left;
+  background: #16161a;
+  border: 1px solid #2a2a32;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cityPreset:hover {
+  border-color: var(--accent, #e8ff3c);
+  background: #1a1a1f;
+}
+
+.cityPresetActive {
+  border-color: var(--accent, #e8ff3c);
+  background: rgba(232, 255, 60, 0.06);
+}
+
+.cityPresetName {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.cityPresetActive .cityPresetName {
+  color: var(--accent, #e8ff3c);
+}
+
+.cityPresetRegion {
+  font-size: 11px;
+  color: #6b6b78;
+  font-weight: 600;
 }
 
 .searchIcon {
@@ -662,5 +842,24 @@
 
   .modalImage {
     height: 180px;
+  }
+
+  .cityPresets {
+    grid-template-columns: 1fr;
+  }
+
+  .cityModal {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 600px) {
+  .locationRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cityButton {
+    align-self: flex-start;
+    padding: 10px 14px;
   }
 }
