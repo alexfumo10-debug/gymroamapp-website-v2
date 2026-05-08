@@ -236,8 +236,6 @@ export default function CareersPage() {
                   <span className={styles.marqueeDot}>●</span>
                   <span>HONEST</span>
                   <span className={styles.marqueeDot}>●</span>
-                  <span>SHIP</span>
-                  <span className={styles.marqueeDot}>●</span>
                 </div>
               ))}
             </div>
