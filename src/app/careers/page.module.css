@@ -262,6 +262,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
+  align-items: start;
 }
 
 .roleCard {
@@ -307,6 +308,10 @@
   line-height: 1.55;
   margin: 0 0 22px;
   letter-spacing: -0.01em;
+  /* Reserve 2 lines so cards stay vertically aligned regardless of
+     whether the pitch wraps. Without this, a 1-line pitch shifts
+     every section below it up by ~25px relative to the other card. */
+  min-height: 50px;
 }
 
 /* Compensation disclosure banner — required for FLSA compliance */
