@@ -32,7 +32,7 @@ const ROLES: Role[] = [
       "Use AI tools (ChatGPT, Claude, etc.) to ship faster",
     ],
     requirements: [
-      "Live in or visit Miami often",
+      "Based in Miami or Atlanta (or visit often)",
       "Deep on Instagram, TikTok, or both",
       "Shipped your own content or run someone else's account",
       "Comfortable using AI tools for research, drafting, ideation",
@@ -43,9 +43,9 @@ const ROLES: Role[] = [
     id: "videographer",
     title: "Videographer / Editor",
     formLabel: "Videographer / Editor",
-    pitch: "Capture and cut the visual story of GymRoam — Miami fitness, on the road.",
+    pitch: "Capture and cut the visual story of GymRoam — fitness on the road.",
     duties: [
-      "Film on-location at gyms, run clubs, and wellness studios across Miami",
+      "Film on-location at gyms, run clubs, and wellness studios in your city",
       "Edit short-form content for Reels and TikTok — the kind that stops the scroll",
       "Build a b-roll library for partners and ad creatives",
       "Use AI tools (CapCut AI, ElevenLabs, Runway) to speed up production",
@@ -56,7 +56,7 @@ const ROLES: Role[] = [
       "Own your own gear (camera or iPhone + gimbal, mic, editing software)",
       "Comfortable on-site and meeting strangers",
       "Use AI editing tools — or eager to learn them",
-      "Live in or visit Miami often",
+      "Based in Miami or Atlanta (or visit often)",
     ],
   },
 ];
@@ -154,14 +154,14 @@ export default function CareersPage() {
               Build GymRoam <span className={styles.accent}>with us.</span>
             </h1>
             <p>
-              We&apos;re a small Miami-based team building the way travelers
-              find a place to train anywhere in the world. Two openings to
-              start. Real ownership, real shipping, real launch.
+              We&apos;re a small team building the way travelers find a place
+              to train anywhere in the world. Two openings to start. Real
+              ownership, real shipping, real launch.
             </p>
             <div className={styles.heroFacts}>
               <div className={styles.fact}>
                 <div className={styles.factValue}>Hybrid</div>
-                <div className={styles.factLabel}>Miami + remote</div>
+                <div className={styles.factLabel}>Multi-city + remote</div>
               </div>
               <div className={styles.factDiv} />
               <div className={styles.fact}>
@@ -179,6 +179,60 @@ export default function CareersPage() {
 
         <div className={styles.divider} />
 
+        {/* Manifesto / creative filler */}
+        <section className={styles.manifesto}>
+          <div className={styles.manifestoGrain} />
+          <div className={`${styles.manifestoInner} fade-up`}>
+            <div className={styles.manifestoSmall}>A short note</div>
+            <h2 className={styles.manifestoLine}>
+              We&apos;re not hiring résumés.
+            </h2>
+            <h2 className={styles.manifestoLine}>
+              We&apos;re hiring people who{" "}
+              <span className={styles.accent}>ship.</span>
+            </h2>
+            <p className={styles.manifestoBody}>
+              If you&apos;ve been waiting for permission to make the thing —
+              this is it. Pick up a camera. Open a doc. Send the DM. We&apos;ll
+              hand you the keys, point at the city, and meet you back here at
+              launch.
+            </p>
+          </div>
+
+          {/* Kinetic value marquee */}
+          <div className={styles.marquee}>
+            <div className={styles.marqueeTrack}>
+              {/* Duplicated content so the loop seams are invisible */}
+              {[0, 1].map((i) => (
+                <div className={styles.marqueeRow} key={i}>
+                  <span>SHIP</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>STORY</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>STAMPS</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>COMMUNITY</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>CONTENT</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>FOUNDERSHIP</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>AI&#8209;NATIVE</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>ON&#8209;THE&#8209;ROAD</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>HONEST</span>
+                  <span className={styles.marqueeDot}>●</span>
+                  <span>SHIP</span>
+                  <span className={styles.marqueeDot}>●</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div className={styles.divider} />
+
         {/* Roles */}
         <section className={styles.roles}>
           <div className={styles.rolesHeader}>
@@ -189,23 +243,10 @@ export default function CareersPage() {
           <div className={styles.rolesGrid}>
             {ROLES.map((role) => (
               <article key={role.id} className={styles.roleCard}>
-                <div className={styles.roleCardTop}>
-                  <div className={styles.roleIcon}>
-                    {role.id === "marketing-intern" ? (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 11v2h4l5 4V7L7 11H3zm13.5 1c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 4.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                      </svg>
-                    ) : (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className={styles.roleHeading}>
-                    <h3>{role.title}</h3>
-                    <div className={styles.roleMeta}>
-                      Hybrid · 1–3 months · Unpaid
-                    </div>
+                <div className={styles.roleHeading}>
+                  <h3>{role.title}</h3>
+                  <div className={styles.roleMeta}>
+                    Hybrid · 1–3 months · Unpaid
                   </div>
                 </div>
 

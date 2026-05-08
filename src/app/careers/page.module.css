@@ -113,6 +113,124 @@
   background: var(--border, #1f1f26);
 }
 
+/* ---------------- MANIFESTO ---------------- */
+.manifesto {
+  position: relative;
+  padding: 96px 24px 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 70% 30%, rgba(232, 255, 60, 0.05), transparent 55%),
+    var(--bg, #0a0a0b);
+}
+
+.manifestoGrain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0, rgba(255, 255, 255, 0.4) 1px, transparent 1px, transparent 4px),
+    repeating-radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0, rgba(255, 255, 255, 0.3) 1px, transparent 1px, transparent 5px);
+}
+
+.manifestoInner {
+  max-width: 980px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.manifestoSmall {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--dim, #6b6b78);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.manifestoLine {
+  font-size: clamp(40px, 8vw, 88px);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  margin: 0;
+  color: var(--text, #e8e8ee);
+}
+
+.manifestoLine + .manifestoLine {
+  margin-top: 4px;
+}
+
+.manifestoBody {
+  margin-top: 32px;
+  font-size: 16px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.7;
+  max-width: 580px;
+}
+
+/* ---------------- VALUE MARQUEE ---------------- */
+.marquee {
+  margin-top: 72px;
+  padding: 28px 0;
+  border-top: 1px solid var(--border, #1f1f26);
+  border-bottom: 1px solid var(--border, #1f1f26);
+  background: rgba(232, 255, 60, 0.02);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  /* Soft fade at the edges so words enter/exit cleanly */
+  mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+}
+
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 40s linear infinite;
+}
+
+.marqueeRow {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding-right: 28px;
+  flex-shrink: 0;
+}
+
+.marqueeRow span {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--text, #e8e8ee);
+  white-space: nowrap;
+}
+
+.marqueeDot {
+  font-size: 12px !important;
+  color: var(--accent, #e8ff3c) !important;
+  font-weight: 900;
+}
+
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Pause on hover for accessibility (lets people read it) */
+.marquee:hover .marqueeTrack {
+  animation-play-state: paused;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack {
+    animation: none;
+  }
+}
+
 /* ---------------- ROLES ---------------- */
 .roles {
   padding: 80px 24px;
@@ -165,24 +283,8 @@
   box-shadow: 0 24px 60px rgba(232, 255, 60, 0.08);
 }
 
-.roleCardTop {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.roleHeading {
   margin-bottom: 14px;
-}
-
-.roleIcon {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(232, 255, 60, 0.1);
-  border: 1px solid rgba(232, 255, 60, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent, #e8ff3c);
 }
 
 .roleHeading h3 {
