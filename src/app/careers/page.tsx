@@ -49,11 +49,11 @@ const ROLES: Role[] = [
     formLabel: "Marketing Intern",
     pitch: "Help us grow the community finding GymRoam every day.",
     learning: [
-      "Social-first content marketing — by creating Instagram Reels, carousels, and Stories under founder mentorship",
-      "Community engagement — by managing DMs, comments, and replies with weekly review and feedback",
-      "B2B partnership outreach — by drafting and sending pitches to gyms, trainers, and creators with founder oversight",
-      "Email campaign design — by composing and distributing newsletters to the GymRoam community",
-      "AI-augmented marketing workflows — by integrating tools like Claude and ChatGPT into research, drafting, and analysis",
+      "Social-first content marketing. You'll create Instagram Reels, carousels, and Stories with founder mentorship.",
+      "Community engagement. You'll manage DMs, comments, and replies with weekly review and feedback.",
+      "B2B partnership outreach. You'll draft and send pitches to gyms, trainers, and creators with founder oversight.",
+      "Email campaign design. You'll compose and distribute newsletters to the GymRoam community.",
+      "AI-augmented marketing workflows. You'll integrate tools like Claude and ChatGPT into research, drafting, and analysis.",
     ],
     requirements: [
       "Currently enrolled in a college or university program (Marketing, Business, Communications, Digital Media, or related field)",
@@ -65,8 +65,8 @@ const ROLES: Role[] = [
       "Genuine curiosity about startups, brand-building, and travel-fitness culture",
     ],
     mentorship: [
-      "Direct 1:1 mentorship from the founder — weekly strategy sessions",
-      "Designated site supervisor: Alessandro Fumo",
+      "Direct weekly 1:1 mentorship sessions with the founder",
+      "Designated site supervisor: Founder, Leve AI Studios LLC",
       "Bi-quarterly performance reviews to track growth and feedback (satisfies your school's internship-office requirements)",
       "Real participation in founder-level decisions on growth strategy, brand direction, and partner selection",
     ],
@@ -75,28 +75,28 @@ const ROLES: Role[] = [
     id: "videographer",
     title: "Videographer / Editor Intern",
     formLabel: "Videographer / Editor Intern",
-    pitch: "Capture and cut the visual story of GymRoam — fitness on the road.",
+    pitch: "Capture and cut the visual story of GymRoam. Fitness on the road.",
     learning: [
-      "Brand-led video production — by filming founder content and gym B-roll on-location around Miami under creative direction",
-      "Short-form social editing — by cutting Reels, TikToks, and Story-format video against an established brand kit",
-      "B-roll library development — by capturing reusable footage for future ads, partner content, and campaigns",
-      "AI-augmented post-production — by integrating AI editing tools (Descript, Runway, CapCut AI features) into your workflow",
-      "Campaign-led production — by collaborating on visual content rollouts for partner and growth campaigns",
+      "Brand-led video production. You'll film founder content and gym B-roll on-location around Miami under creative direction.",
+      "Short-form social editing. You'll cut Reels, TikToks, and Story-format video against an established brand kit.",
+      "B-roll library development. You'll capture reusable footage for future ads, partner content, and campaigns.",
+      "AI-augmented post-production. You'll integrate AI editing tools (Descript, Runway, CapCut AI features) into your workflow.",
+      "Campaign-led production. You'll collaborate on visual content rollouts for partner and growth campaigns.",
     ],
     requirements: [
-      "Currently enrolled in a college or university program (Film, Video Production, Digital Media, Cinema, Communications, or related field — MDC's School of Entertainment & Design Technology is an excellent fit)",
+      "Currently enrolled in a college or university program (Film, Video Production, Digital Media, Cinema, Communications, or related field; MDC's School of Entertainment & Design Technology is a great fit)",
       "Eligible to receive academic credit for this internship through your school",
       "Portfolio of recent video work (link in your application)",
-      "Own equipment — camera or iPhone with stabilization, lighting accessories, editing software (Premiere / DaVinci / Final Cut / CapCut Pro)",
+      "Own equipment: camera or iPhone with stabilization, lighting accessories, and editing software (Premiere, DaVinci, Final Cut, or CapCut Pro)",
       "Comfortable working on-location at gyms and fitness venues, sometimes with new people",
-      "Experience with — or willingness to learn — AI editing tools",
+      "Experience with AI editing tools, or willingness to learn",
       "Based in Miami or Atlanta (or a frequent visitor)",
     ],
     mentorship: [
-      "Direct 1:1 mentorship from the founder — weekly creative reviews",
-      "Designated site supervisor: Alessandro Fumo",
+      "Direct weekly 1:1 creative reviews with the founder",
+      "Designated site supervisor: Founder, Leve AI Studios LLC",
       "Bi-quarterly performance reviews (satisfies your school's internship-office requirements)",
-      "Full creative input — your voice and edit choices shape the visual story of the brand",
+      "Full creative input. Your voice and edit choices shape the brand's visual story.",
     ],
   },
 ];
@@ -346,7 +346,7 @@ export default function CareersPage() {
                   <div className={styles.roleFactRow}>
                     <span className={styles.roleFactLabel}>Reports to</span>
                     <span className={styles.roleFactValue}>
-                      Alessandro Fumo, Founder &amp; Managing Member, Leve AI Studios LLC
+                      Founder &amp; Managing Member, Leve AI Studios LLC
                     </span>
                   </div>
                   <div className={styles.roleFactRow}>
@@ -358,8 +358,8 @@ export default function CareersPage() {
                   <div className={styles.roleFactRow}>
                     <span className={styles.roleFactLabel}>Location</span>
                     <span className={styles.roleFactValue}>
-                      Hybrid — Miami or Atlanta preferred. Some on-location
-                      activity in Miami.
+                      Hybrid. Miami or Atlanta preferred, with some
+                      on-location activity in Miami.
                     </span>
                   </div>
                 </div>
@@ -580,7 +580,7 @@ export default function CareersPage() {
                       onChange={(e) => setForm({ ...form, portfolioLink: e.target.value })}
                       placeholder={
                         currentRole.id === "videographer"
-                          ? "Vimeo, YouTube, IG Reels, Drive — anything"
+                          ? "Vimeo, YouTube, IG Reels, Drive…"
                           : "Notion, Drive, Substack, content account"
                       }
                     />
@@ -604,7 +604,7 @@ export default function CareersPage() {
                       rows={4}
                       value={form.why}
                       onChange={(e) => setForm({ ...form, why: e.target.value })}
-                      placeholder="What pulls you to this — even a few sentences. We don't need a cover letter."
+                      placeholder="What pulls you to this. A few sentences is plenty. No cover letter needed."
                     />
                   </label>
                 </div>
