@@ -100,6 +100,12 @@ interface CareerApplication {
   instagramHandle?: string;
   portfolioLink?: string;
   aiTools?: string;
+  /** Replaced startDate in the FLSA-compliant version */
+  semester?: string;
+  schoolName?: string;
+  coordinatorName?: string;
+  creditEligible?: boolean;
+  /** Legacy field — kept for backwards compat with old applications */
   startDate?: string;
   createdAt?: FirestoreTimestamp;
 }
@@ -1668,6 +1674,32 @@ export default function AdminPanel() {
                     <div className={styles.appField}>
                       <div className={styles.appFieldLabel}>City</div>
                       {a.city}
+                    </div>
+                  )}
+                  {a.schoolName && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>School</div>
+                      {a.schoolName}
+                    </div>
+                  )}
+                  {a.coordinatorName && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Coordinator</div>
+                      {a.coordinatorName}
+                    </div>
+                  )}
+                  {a.semester && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Semester</div>
+                      {a.semester}
+                    </div>
+                  )}
+                  {a.creditEligible !== undefined && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Credit eligible</div>
+                      <span style={{ color: a.creditEligible ? "var(--green)" : "var(--red)", fontWeight: 700 }}>
+                        {a.creditEligible ? "✓ Yes" : "✗ No"}
+                      </span>
                     </div>
                   )}
                   {a.startDate && (

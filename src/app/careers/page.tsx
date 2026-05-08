@@ -1,5 +1,20 @@
 "use client";
 
+/**
+ * Careers page — FLSA-compliant unpaid internship listings.
+ *
+ * Copy mirrors the compliance doc at:
+ *   ~/Desktop/Donna/Compliance/Internship Listings - FLSA-Compliant Copy.md
+ *
+ * Closes three Primary Beneficiary Test gaps the original listings had:
+ *   1. Explicit unpaid disclosure + non-monetary compensation framing
+ *   2. Academic credit requirement
+ *   3. Responsibilities reframed as learning outcomes with mentorship
+ *
+ * Also includes EEO statement and tightened duration ("one academic
+ * semester · 10–15 hrs/week") to satisfy FLSA Factors 4 and 5.
+ */
+
 import { useState, useEffect, useRef } from "react";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
@@ -17,11 +32,14 @@ import styles from "./page.module.css";
 interface Role {
   id: string;
   title: string;
-  pitch: string;
-  duties: string[];
-  requirements: string[];
-  /** label shown on the application form when this role is selected */
   formLabel: string;
+  pitch: string;
+  /** "What you'll learn" bullets — framed as learning outcomes */
+  learning: string[];
+  /** "Required qualifications" — incl. academic credit eligibility */
+  requirements: string[];
+  /** "Mentorship & supervision" structure */
+  mentorship: string[];
 }
 
 const ROLES: Role[] = [
@@ -30,39 +48,55 @@ const ROLES: Role[] = [
     title: "Marketing Intern",
     formLabel: "Marketing Intern",
     pitch: "Help us grow the community finding GymRoam every day.",
-    duties: [
-      "Plan and ship Instagram content — Reels, carousels, stories",
-      "Manage our community across DMs, comments, and replies",
-      "Reach out to gyms, trainers, and creators for partnerships",
-      "Write and send email campaigns to our growing waitlist",
-      "Use AI tools (ChatGPT, Claude, etc.) to ship faster",
+    learning: [
+      "Social-first content marketing — by creating Instagram Reels, carousels, and Stories under founder mentorship",
+      "Community engagement — by managing DMs, comments, and replies with weekly review and feedback",
+      "B2B partnership outreach — by drafting and sending pitches to gyms, trainers, and creators with founder oversight",
+      "Email campaign design — by composing and distributing newsletters to the GymRoam community",
+      "AI-augmented marketing workflows — by integrating tools like Claude and ChatGPT into research, drafting, and analysis",
     ],
     requirements: [
-      "Based in Miami or Atlanta (or visit often)",
-      "Deep on Instagram, TikTok, or both",
-      "Shipped your own content or run someone else's account",
-      "Comfortable using AI tools for research, drafting, ideation",
-      "Want to learn how a startup goes from 0 to 10K users",
+      "Currently enrolled in a college or university program (Marketing, Business, Communications, Digital Media, or related field)",
+      "Eligible to receive academic credit for this internship through your school",
+      "Based in Miami or Atlanta (or a frequent visitor)",
+      "Active on Instagram and/or TikTok",
+      "Some prior experience creating content or managing accounts (personal or professional)",
+      "Familiarity with AI tools like ChatGPT or Claude",
+      "Genuine curiosity about startups, brand-building, and travel-fitness culture",
+    ],
+    mentorship: [
+      "Direct 1:1 mentorship from the founder — weekly strategy sessions",
+      "Designated site supervisor: Alessandro Fumo",
+      "Bi-quarterly performance reviews to track growth and feedback (satisfies your school's internship-office requirements)",
+      "Real participation in founder-level decisions on growth strategy, brand direction, and partner selection",
     ],
   },
   {
     id: "videographer",
-    title: "Videographer / Editor",
-    formLabel: "Videographer / Editor",
+    title: "Videographer / Editor Intern",
+    formLabel: "Videographer / Editor Intern",
     pitch: "Capture and cut the visual story of GymRoam — fitness on the road.",
-    duties: [
-      "Film on-location at gyms, run clubs, and wellness studios in your city",
-      "Edit short-form content for Reels and TikTok — the kind that stops the scroll",
-      "Build a b-roll library for partners and ad creatives",
-      "Use AI tools (CapCut AI, ElevenLabs, Runway) to speed up production",
-      "Collaborate with the marketing intern on campaign-ready assets",
+    learning: [
+      "Brand-led video production — by filming founder content and gym B-roll on-location around Miami under creative direction",
+      "Short-form social editing — by cutting Reels, TikToks, and Story-format video against an established brand kit",
+      "B-roll library development — by capturing reusable footage for future ads, partner content, and campaigns",
+      "AI-augmented post-production — by integrating AI editing tools (Descript, Runway, CapCut AI features) into your workflow",
+      "Campaign-led production — by collaborating on visual content rollouts for partner and growth campaigns",
     ],
     requirements: [
-      "Have a reel of recent work — even messy, even iPhone-shot",
-      "Own your own gear (camera or iPhone + gimbal, mic, editing software)",
-      "Comfortable on-site and meeting strangers",
-      "Use AI editing tools — or eager to learn them",
-      "Based in Miami or Atlanta (or visit often)",
+      "Currently enrolled in a college or university program (Film, Video Production, Digital Media, Cinema, Communications, or related field — MDC's School of Entertainment & Design Technology is an excellent fit)",
+      "Eligible to receive academic credit for this internship through your school",
+      "Portfolio of recent video work (link in your application)",
+      "Own equipment — camera or iPhone with stabilization, lighting accessories, editing software (Premiere / DaVinci / Final Cut / CapCut Pro)",
+      "Comfortable working on-location at gyms and fitness venues, sometimes with new people",
+      "Experience with — or willingness to learn — AI editing tools",
+      "Based in Miami or Atlanta (or a frequent visitor)",
+    ],
+    mentorship: [
+      "Direct 1:1 mentorship from the founder — weekly creative reviews",
+      "Designated site supervisor: Alessandro Fumo",
+      "Bi-quarterly performance reviews (satisfies your school's internship-office requirements)",
+      "Full creative input — your voice and edit choices shape the visual story of the brand",
     ],
   },
 ];
@@ -77,14 +111,16 @@ export default function CareersPage() {
     instagramHandle: "",
     portfolioLink: "",
     aiTools: "",
-    startDate: "",
+    schoolName: "",
+    coordinatorName: "",
+    semester: "",
+    creditEligible: false,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "" });
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Scroll-into-view helper for "Apply" buttons on role cards
   const scrollToForm = (roleId: string) => {
     setSelectedRole(roleId);
     setTimeout(() => {
@@ -92,15 +128,13 @@ export default function CareersPage() {
     }, 80);
   };
 
-  // Hide-on-revisit if they already applied + wire fade-up observer
+  // Hide-on-revisit + wire fade-up observer
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (localStorage.getItem("gymroam_careers_applied") === "true") {
       setSubmitted(true);
     }
 
-    // .fade-up elements start at opacity 0; add .visible when they
-    // scroll into view. Same pattern the homepage uses.
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -123,12 +157,27 @@ export default function CareersPage() {
       setToast({ show: true, message: "Please enter a valid email" });
       return;
     }
+    if (!form.schoolName.trim()) {
+      setToast({ show: true, message: "Please enter the name of your school" });
+      return;
+    }
+    if (!form.creditEligible) {
+      setToast({
+        show: true,
+        message:
+          "Academic credit eligibility is required. Confirm with your school's internship office before applying.",
+      });
+      return;
+    }
     if (!form.why.trim()) {
       setToast({ show: true, message: "Tell us why you want to join, even briefly" });
       return;
     }
     if (selectedRole === "videographer" && !form.portfolioLink.trim()) {
-      setToast({ show: true, message: "Videographers need to share a reel or portfolio link" });
+      setToast({
+        show: true,
+        message: "Videographers need to share a reel or portfolio link",
+      });
       return;
     }
     setSubmitting(true);
@@ -145,23 +194,15 @@ export default function CareersPage() {
         instagramHandle: form.instagramHandle.trim().replace(/^@/, ""),
         portfolioLink: form.portfolioLink.trim(),
         aiTools: form.aiTools.trim(),
-        startDate: form.startDate.trim(),
+        schoolName: form.schoolName.trim(),
+        coordinatorName: form.coordinatorName.trim(),
+        semester: form.semester.trim(),
+        creditEligible: form.creditEligible,
         createdAt: serverTimestamp(),
       });
 
-      /**
-       * Email notification to gymroamapp@gmail.com via EmailJS.
-       * Silent-fails so a flaky email service can't break the submit.
-       *
-       * Setup (one-time): create an EmailJS template that sends to
-       * gymroamapp@gmail.com and uses these variable names — then
-       * paste the new template ID into EMAILJS_CAREERS_TEMPLATE_ID
-       * in src/lib/emailjs.ts.
-       *
-       * Variables used: applicant_name, applicant_email, role_title,
-       *   city, start_date, instagram_handle, portfolio_link,
-       *   ai_tools, why, to_email
-       */
+      // Best-effort email notification — silent-fails so flaky email
+      // service can't break the submit. Source of truth = Firestore.
       try {
         if (
           EMAILJS_CAREERS_TEMPLATE_ID &&
@@ -176,8 +217,12 @@ export default function CareersPage() {
               applicant_email: form.email.trim().toLowerCase(),
               role_title: roleObj?.formLabel || selectedRole,
               city: form.city.trim() || "—",
-              start_date: form.startDate.trim() || "—",
-              instagram_handle: form.instagramHandle.trim().replace(/^@/, "") || "—",
+              school_name: form.schoolName.trim() || "—",
+              coordinator_name: form.coordinatorName.trim() || "—",
+              semester: form.semester.trim() || "—",
+              credit_eligible: form.creditEligible ? "Yes" : "No",
+              instagram_handle:
+                form.instagramHandle.trim().replace(/^@/, "") || "—",
               portfolio_link: form.portfolioLink.trim() || "—",
               ai_tools: form.aiTools.trim() || "—",
               why: form.why.trim(),
@@ -186,7 +231,7 @@ export default function CareersPage() {
           );
         }
       } catch {
-        /* email notification is best-effort; Firestore write is the source of truth */
+        /* email best-effort */
       }
 
       localStorage.setItem("gymroam_careers_applied", "true");
@@ -216,17 +261,17 @@ export default function CareersPage() {
             <div className={styles.heroFacts}>
               <div className={styles.fact}>
                 <div className={styles.factValue}>Hybrid</div>
-                <div className={styles.factLabel}>Multi-city + remote</div>
+                <div className={styles.factLabel}>Miami + Atlanta</div>
               </div>
               <div className={styles.factDiv} />
               <div className={styles.fact}>
-                <div className={styles.factValue}>1–3 months</div>
-                <div className={styles.factLabel}>Flexible hours</div>
+                <div className={styles.factValue}>10–15 hrs/wk</div>
+                <div className={styles.factLabel}>One academic semester</div>
               </div>
               <div className={styles.factDiv} />
               <div className={styles.fact}>
-                <div className={styles.factValue}>Early team</div>
-                <div className={styles.factLabel}>Real ownership · real ship</div>
+                <div className={styles.factValue}>Unpaid</div>
+                <div className={styles.factLabel}>Academic credit eligible</div>
               </div>
             </div>
           </div>
@@ -239,7 +284,6 @@ export default function CareersPage() {
           <div className={styles.manifestoGrain} />
           <div className={styles.marquee}>
             <div className={styles.marqueeTrack}>
-              {/* Duplicated content so the loop seams are invisible */}
               {[0, 1].map((i) => (
                 <div className={styles.marqueeRow} key={i}>
                   <span>SHIP</span>
@@ -281,26 +325,73 @@ export default function CareersPage() {
                 <div className={styles.roleHeading}>
                   <h3>{role.title}</h3>
                   <div className={styles.roleMeta}>
-                    Hybrid · 1–3 months
+                    Hybrid · 10–15 hrs/week · One semester
                   </div>
                 </div>
 
                 <p className={styles.rolePitch}>{role.pitch}</p>
 
+                {/* COMPENSATION DISCLOSURE — required for FLSA Factor 1 */}
+                <div className={styles.compBanner}>
+                  <div className={styles.compTitle}>This is an unpaid internship.</div>
+                  <p>
+                    Compensation is in the form of professional experience,
+                    portfolio building, direct founder mentorship, and (where
+                    applicable) <strong>academic credit</strong> through your
+                    college or university.
+                  </p>
+                </div>
+
+                <div className={styles.roleFacts}>
+                  <div className={styles.roleFactRow}>
+                    <span className={styles.roleFactLabel}>Reports to</span>
+                    <span className={styles.roleFactValue}>
+                      Alessandro Fumo, Founder &amp; Managing Member, Leve AI Studios LLC
+                    </span>
+                  </div>
+                  <div className={styles.roleFactRow}>
+                    <span className={styles.roleFactLabel}>Available semesters</span>
+                    <span className={styles.roleFactValue}>
+                      Summer 2026 · Fall 2026 · Spring 2027
+                    </span>
+                  </div>
+                  <div className={styles.roleFactRow}>
+                    <span className={styles.roleFactLabel}>Location</span>
+                    <span className={styles.roleFactValue}>
+                      Hybrid — Miami or Atlanta preferred. Some on-location
+                      activity in Miami.
+                    </span>
+                  </div>
+                </div>
+
                 <div className={styles.roleSection}>
-                  <h4>What you&apos;ll do</h4>
+                  <h4>What you&apos;ll learn</h4>
+                  <p className={styles.roleSectionLead}>
+                    Real exposure to how an early-stage consumer brand grows from
+                    zero. You&apos;ll graduate from this internship with hands-on
+                    experience in:
+                  </p>
                   <ul>
-                    {role.duties.map((d) => (
+                    {role.learning.map((d) => (
                       <li key={d}>{d}</li>
                     ))}
                   </ul>
                 </div>
 
                 <div className={styles.roleSection}>
-                  <h4>You probably</h4>
+                  <h4>Required qualifications</h4>
                   <ul>
                     {role.requirements.map((r) => (
                       <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className={styles.roleSection}>
+                  <h4>Mentorship &amp; supervision</h4>
+                  <ul>
+                    {role.mentorship.map((m) => (
+                      <li key={m}>{m}</li>
                     ))}
                   </ul>
                 </div>
@@ -318,7 +409,7 @@ export default function CareersPage() {
 
         <div className={styles.divider} />
 
-        {/* What you get */}
+        {/* What you get — non-monetary value (still valuable) */}
         <section className={styles.deal}>
           <div className={`${styles.dealInner} fade-up`}>
             <div className={styles.dealTag}>What you get</div>
@@ -334,16 +425,16 @@ export default function CareersPage() {
                 <div className={styles.dealNum}>01</div>
                 <h4>Real ownership</h4>
                 <p>
-                  Your work ships. You&apos;ll see your Reels live and your
-                  DMs in the comments.
+                  Your work ships. You&apos;ll see your Reels live and your DMs
+                  in the comments.
                 </p>
               </div>
               <div className={styles.dealCard}>
                 <div className={styles.dealNum}>02</div>
                 <h4>Founder mentorship</h4>
                 <p>
-                  Work directly with us. You&apos;ll see how a startup gets
-                  built — strategy, execution, decisions, all of it.
+                  Work directly with us. Weekly 1:1 sessions, bi-quarterly
+                  reviews, and a real seat at the table.
                 </p>
               </div>
               <div className={styles.dealCard}>
@@ -412,24 +503,62 @@ export default function CareersPage() {
                       placeholder="you@email.com"
                     />
                   </label>
+
+                  <label className={styles.field}>
+                    <span>School *</span>
+                    <input
+                      type="text"
+                      value={form.schoolName}
+                      onChange={(e) => setForm({ ...form, schoolName: e.target.value })}
+                      placeholder="University of Miami, MDC, FAMU…"
+                    />
+                  </label>
+                  <label className={styles.field}>
+                    <span>School internship coordinator</span>
+                    <input
+                      type="text"
+                      value={form.coordinatorName}
+                      onChange={(e) => setForm({ ...form, coordinatorName: e.target.value })}
+                      placeholder="Name + email if known"
+                    />
+                  </label>
+
+                  <label className={styles.field}>
+                    <span>Anticipated semester *</span>
+                    <select
+                      value={form.semester}
+                      onChange={(e) => setForm({ ...form, semester: e.target.value })}
+                    >
+                      <option value="">Select…</option>
+                      <option value="Summer 2026">Summer 2026</option>
+                      <option value="Fall 2026">Fall 2026</option>
+                      <option value="Spring 2027">Spring 2027</option>
+                    </select>
+                  </label>
                   <label className={styles.field}>
                     <span>City</span>
                     <input
                       type="text"
                       value={form.city}
                       onChange={(e) => setForm({ ...form, city: e.target.value })}
-                      placeholder="Miami, FL"
+                      placeholder="Miami / Atlanta / other"
                     />
                   </label>
-                  <label className={styles.field}>
-                    <span>Earliest start date</span>
+
+                  <label className={`${styles.creditField} ${styles.fieldFull}`}>
                     <input
-                      type="text"
-                      value={form.startDate}
-                      onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                      placeholder="ASAP / a few weeks / specific date"
+                      type="checkbox"
+                      checked={form.creditEligible}
+                      onChange={(e) =>
+                        setForm({ ...form, creditEligible: e.target.checked })
+                      }
                     />
+                    <span>
+                      I confirm I am currently enrolled and eligible to receive
+                      academic credit for this internship through my school. *
+                    </span>
                   </label>
+
                   <label className={`${styles.field} ${styles.fieldFull}`}>
                     <span>Instagram or TikTok handle</span>
                     <input
@@ -492,6 +621,20 @@ export default function CareersPage() {
                 </p>
               </>
             )}
+          </div>
+        </section>
+
+        {/* EEO statement — required to round out the listings */}
+        <section className={styles.eeo}>
+          <div className={styles.eeoInner}>
+            <div className={styles.eeoTag}>Equal Opportunity</div>
+            <p>
+              <strong>Leve AI Studios LLC is an equal-opportunity employer.</strong>{" "}
+              We welcome applicants of all backgrounds, identities, abilities, and
+              experience levels. Internships are awarded based on demonstrated
+              interest, fit with the role&apos;s learning objectives, and ability
+              to commit to the agreed schedule.
+            </p>
           </div>
         </section>
       </main>

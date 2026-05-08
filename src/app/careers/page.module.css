@@ -309,6 +309,76 @@
   letter-spacing: -0.01em;
 }
 
+/* Compensation disclosure banner — required for FLSA compliance */
+.compBanner {
+  background: rgba(232, 255, 60, 0.06);
+  border: 1px solid rgba(232, 255, 60, 0.22);
+  border-left: 3px solid var(--accent, #e8ff3c);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+}
+
+.compTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent, #e8ff3c);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.compBanner p {
+  font-size: 13px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.compBanner strong {
+  color: var(--text, #e8e8ee);
+}
+
+/* Quick-fact rows under each role */
+.roleFacts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  border: 1px solid var(--border, #1f1f26);
+}
+
+.roleFactRow {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.roleFactLabel {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--dim, #6b6b78);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.roleFactValue {
+  font-size: 13px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.5;
+}
+
+/* Lead paragraph inside a role section */
+.roleSectionLead {
+  font-size: 13px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
 .roleSection {
   margin-bottom: 20px;
 }
@@ -548,7 +618,8 @@
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   background: var(--surface, #18181d);
   border: 1px solid var(--border, #1f1f26);
   color: var(--text, #e8e8ee);
@@ -558,6 +629,15 @@
   outline: none;
   transition: border-color 0.15s;
   font-size: 16px !important; /* prevent iOS zoom */
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23b0b0bc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
 }
 
 .field input::placeholder,
@@ -573,6 +653,75 @@
 .field textarea {
   resize: vertical;
   min-height: 100px;
+}
+
+/* Academic credit checkbox — large tap target, prominent styling */
+.creditField {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(232, 255, 60, 0.05);
+  border: 1px solid rgba(232, 255, 60, 0.18);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.creditField:hover {
+  border-color: rgba(232, 255, 60, 0.4);
+}
+
+.creditField input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--accent, #e8ff3c);
+  cursor: pointer;
+}
+
+.creditField span {
+  flex: 1;
+  font-size: 13px !important;
+  color: var(--text, #e8e8ee);
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* EEO statement — at the bottom of the page */
+.eeo {
+  padding: 48px 24px 80px;
+  border-top: 1px solid var(--border, #1f1f26);
+}
+
+.eeoInner {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eeoTag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--dim, #6b6b78);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.eeo p {
+  font-size: 14px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.eeo strong {
+  color: var(--text, #e8e8ee);
 }
 
 .submitBtn {
@@ -657,6 +806,10 @@
   }
   .field {
     grid-column: auto !important;
+  }
+  .roleFactRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
 
