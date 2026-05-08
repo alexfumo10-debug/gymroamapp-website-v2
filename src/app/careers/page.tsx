@@ -213,11 +213,6 @@ export default function CareersPage() {
             <h1>
               Build GymRoam <span className={styles.accent}>with us.</span>
             </h1>
-            <p>
-              We&apos;re a small team building the way travelers find a place
-              to train anywhere in the world. Two openings to start. Real
-              ownership, real shipping, real launch.
-            </p>
             <div className={styles.heroFacts}>
               <div className={styles.fact}>
                 <div className={styles.factValue}>Hybrid</div>
@@ -239,27 +234,9 @@ export default function CareersPage() {
 
         <div className={styles.divider} />
 
-        {/* Manifesto / creative filler */}
+        {/* Kinetic value marquee */}
         <section className={styles.manifesto}>
           <div className={styles.manifestoGrain} />
-          <div className={`${styles.manifestoInner} fade-up`}>
-            <div className={styles.manifestoSmall}>A short note</div>
-            <h2 className={styles.manifestoLine}>
-              We&apos;re not hiring résumés.
-            </h2>
-            <h2 className={styles.manifestoLine}>
-              We&apos;re hiring people who{" "}
-              <span className={styles.accent}>ship.</span>
-            </h2>
-            <p className={styles.manifestoBody}>
-              If you&apos;ve been waiting for permission to make the thing —
-              this is it. Pick up a camera. Open a doc. Send the DM. We&apos;ll
-              hand you the keys, point at the city, and meet you back here at
-              launch.
-            </p>
-          </div>
-
-          {/* Kinetic value marquee */}
           <div className={styles.marquee}>
             <div className={styles.marqueeTrack}>
               {/* Duplicated content so the loop seams are invisible */}

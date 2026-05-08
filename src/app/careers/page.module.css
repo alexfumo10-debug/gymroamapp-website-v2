@@ -113,14 +113,12 @@
   background: var(--border, #1f1f26);
 }
 
-/* ---------------- MANIFESTO ---------------- */
+/* ---------------- MANIFESTO (now just the marquee band) ---------------- */
 .manifesto {
   position: relative;
-  padding: 96px 24px 0;
+  padding: 0;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 70% 30%, rgba(232, 255, 60, 0.05), transparent 55%),
-    var(--bg, #0a0a0b);
+  background: var(--bg, #0a0a0b);
 }
 
 .manifestoGrain {
@@ -173,9 +171,8 @@
 
 /* ---------------- VALUE MARQUEE ---------------- */
 .marquee {
-  margin-top: 72px;
+  margin-top: 0;
   padding: 28px 0;
-  border-top: 1px solid var(--border, #1f1f26);
   border-bottom: 1px solid var(--border, #1f1f26);
   background: rgba(232, 255, 60, 0.02);
   overflow: hidden;
