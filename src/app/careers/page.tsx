@@ -6,6 +6,12 @@ import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
 import { db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import emailjs from "@emailjs/browser";
+import {
+  EMAILJS_SERVICE_ID,
+  EMAILJS_CAREERS_TEMPLATE_ID,
+  EMAILJS_PUBLIC_KEY,
+} from "@/lib/emailjs";
 import styles from "./page.module.css";
 
 interface Role {
@@ -142,6 +148,47 @@ export default function CareersPage() {
         startDate: form.startDate.trim(),
         createdAt: serverTimestamp(),
       });
+
+      /**
+       * Email notification to gymroamapp@gmail.com via EmailJS.
+       * Silent-fails so a flaky email service can't break the submit.
+       *
+       * Setup (one-time): create an EmailJS template that sends to
+       * gymroamapp@gmail.com and uses these variable names — then
+       * paste the new template ID into EMAILJS_CAREERS_TEMPLATE_ID
+       * in src/lib/emailjs.ts.
+       *
+       * Variables used: applicant_name, applicant_email, role_title,
+       *   city, start_date, instagram_handle, portfolio_link,
+       *   ai_tools, why, to_email
+       */
+      try {
+        if (
+          EMAILJS_CAREERS_TEMPLATE_ID &&
+          !EMAILJS_CAREERS_TEMPLATE_ID.includes("REPLACE_ME")
+        ) {
+          await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_CAREERS_TEMPLATE_ID,
+            {
+              to_email: "gymroamapp@gmail.com",
+              applicant_name: form.fullName.trim(),
+              applicant_email: form.email.trim().toLowerCase(),
+              role_title: roleObj?.formLabel || selectedRole,
+              city: form.city.trim() || "—",
+              start_date: form.startDate.trim() || "—",
+              instagram_handle: form.instagramHandle.trim().replace(/^@/, "") || "—",
+              portfolio_link: form.portfolioLink.trim() || "—",
+              ai_tools: form.aiTools.trim() || "—",
+              why: form.why.trim(),
+            },
+            EMAILJS_PUBLIC_KEY
+          );
+        }
+      } catch {
+        /* email notification is best-effort; Firestore write is the source of truth */
+      }
+
       localStorage.setItem("gymroam_careers_applied", "true");
       setSubmitted(true);
     } catch {
@@ -183,8 +230,8 @@ export default function CareersPage() {
               </div>
               <div className={styles.factDiv} />
               <div className={styles.fact}>
-                <div className={styles.factValue}>Unpaid</div>
-                <div className={styles.factLabel}>Pre-launch · transparent</div>
+                <div className={styles.factValue}>Pre-launch</div>
+                <div className={styles.factLabel}>Real ownership · real ship</div>
               </div>
             </div>
           </div>
@@ -257,7 +304,7 @@ export default function CareersPage() {
                 <div className={styles.roleHeading}>
                   <h3>{role.title}</h3>
                   <div className={styles.roleMeta}>
-                    Hybrid · 1–3 months · Unpaid
+                    Hybrid · 1–3 months
                   </div>
                 </div>
 
@@ -294,16 +341,16 @@ export default function CareersPage() {
 
         <div className={styles.divider} />
 
-        {/* The deal — transparent about pay */}
+        {/* What you get */}
         <section className={styles.deal}>
           <div className={`${styles.dealInner} fade-up`}>
-            <div className={styles.dealTag}>The deal</div>
+            <div className={styles.dealTag}>What you get</div>
             <h2>
-              Unpaid for now. <span className={styles.accent}>Worth it anyway.</span>
+              Why this is <span className={styles.accent}>worth it.</span>
             </h2>
             <p>
-              We&apos;re pre-launch and pre-revenue, so we can&apos;t pay yet —
-              we&apos;re not going to dress that up. What we can offer:
+              You&apos;ll be in the room while a fitness app gets built from the
+              ground up. That experience is rare. Here&apos;s what comes with it:
             </p>
             <div className={styles.dealGrid}>
               <div className={styles.dealCard}>
@@ -327,7 +374,7 @@ export default function CareersPage() {
                 <h4>Reference + path forward</h4>
                 <p>
                   A strong reference from us for your next role. And a clear
-                  path to a paid spot if we raise and you&apos;re a fit.
+                  path to staying on the team as GymRoam grows.
                 </p>
               </div>
             </div>
