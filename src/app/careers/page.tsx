@@ -86,12 +86,25 @@ export default function CareersPage() {
     }, 80);
   };
 
-  // Hide-on-revisit if they already applied
+  // Hide-on-revisit if they already applied + wire fade-up observer
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (localStorage.getItem("gymroam_careers_applied") === "true") {
       setSubmitted(true);
     }
+
+    // .fade-up elements start at opacity 0; add .visible when they
+    // scroll into view. Same pattern the homepage uses.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add("visible");
+        });
+      },
+      { threshold: 0.15 }
+    );
+    document.querySelectorAll(".fade-up").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
   }, []);
 
   const submit = async () => {
