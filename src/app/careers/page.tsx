@@ -29,7 +29,7 @@ const ROLES: Role[] = [
     id: "marketing-intern",
     title: "Marketing Intern",
     formLabel: "Marketing Intern",
-    pitch: "Help build the audience that meets GymRoam at launch.",
+    pitch: "Help us grow the community finding GymRoam every day.",
     duties: [
       "Plan and ship Instagram content — Reels, carousels, stories",
       "Manage our community across DMs, comments, and replies",
@@ -55,7 +55,7 @@ const ROLES: Role[] = [
       "Edit short-form content for Reels and TikTok — the kind that stops the scroll",
       "Build a b-roll library for partners and ad creatives",
       "Use AI tools (CapCut AI, ElevenLabs, Runway) to speed up production",
-      "Collaborate with the marketing intern on launch-week assets",
+      "Collaborate with the marketing intern on campaign-ready assets",
     ],
     requirements: [
       "Have a reel of recent work — even messy, even iPhone-shot",
@@ -225,7 +225,7 @@ export default function CareersPage() {
               </div>
               <div className={styles.factDiv} />
               <div className={styles.fact}>
-                <div className={styles.factValue}>Pre-launch</div>
+                <div className={styles.factValue}>Early team</div>
                 <div className={styles.factLabel}>Real ownership · real ship</div>
               </div>
             </div>
@@ -334,8 +334,8 @@ export default function CareersPage() {
                 <div className={styles.dealNum}>01</div>
                 <h4>Real ownership</h4>
                 <p>
-                  Your work ships. You&apos;ll see your Reels in the launch
-                  campaign and your DMs in the comments.
+                  Your work ships. You&apos;ll see your Reels live and your
+                  DMs in the comments.
                 </p>
               </div>
               <div className={styles.dealCard}>
