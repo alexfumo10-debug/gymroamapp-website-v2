@@ -17,6 +17,7 @@ export default function Nav() {
           <li><Link href="/#features">Features</Link></li>
           <li><Link href="/#trainers">Trainers</Link></li>
           <li><Link href="/grow">Grow Your Gym</Link></li>
+          <li><Link href="/careers">Careers</Link></li>
           <li><Link href="/feedback">Feedback</Link></li>
           <li><a href="mailto:gymroamapp@gmail.com">Contact</a></li>
           <li>

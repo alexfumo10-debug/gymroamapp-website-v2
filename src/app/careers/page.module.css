@@ -1,0 +1,587 @@
+/* Careers page — match GymRoam aesthetic. Pure black, neon yellow accent,
+   Inter typeface, generous spacing. */
+
+.page {
+  background: var(--bg, #0a0a0b);
+  color: var(--text, #e8e8ee);
+  padding-top: 64px; /* clear the nav */
+}
+
+.divider {
+  height: 1px;
+  background: var(--border, #1f1f26);
+  margin: 0;
+}
+
+/* ---------------- HERO ---------------- */
+.hero {
+  padding: 96px 24px 72px;
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(232, 255, 60, 0.05), transparent 60%),
+    var(--bg, #0a0a0b);
+}
+
+.heroInner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: 100px;
+  background: rgba(232, 255, 60, 0.1);
+  border: 1px solid rgba(232, 255, 60, 0.18);
+  color: var(--accent, #e8ff3c);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #e8ff3c);
+  box-shadow: 0 0 10px var(--accent, #e8ff3c);
+  animation: pulseDot 1.8s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.hero h1 {
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0 0 20px;
+}
+
+.accent {
+  color: var(--accent, #e8ff3c);
+}
+
+.hero p {
+  color: var(--muted, #b0b0bc);
+  font-size: 17px;
+  line-height: 1.7;
+  margin: 0 auto 36px;
+  max-width: 580px;
+}
+
+.heroFacts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface, #18181d);
+  border: 1px solid var(--border, #1f1f26);
+  border-radius: 14px;
+  padding: 14px 22px;
+}
+
+.fact {
+  text-align: left;
+  padding: 0 18px;
+}
+
+.factValue {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text, #e8e8ee);
+  letter-spacing: -0.01em;
+}
+
+.factLabel {
+  font-size: 11px;
+  color: var(--dim, #6b6b78);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.factDiv {
+  width: 1px;
+  height: 32px;
+  background: var(--border, #1f1f26);
+}
+
+/* ---------------- ROLES ---------------- */
+.roles {
+  padding: 80px 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.rolesHeader {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.rolesTag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--accent, #e8ff3c);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.rolesHeader h2 {
+  font-size: clamp(28px, 4.5vw, 44px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.rolesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.roleCard {
+  background: var(--surface, #18181d);
+  border: 1px solid var(--border, #1f1f26);
+  border-radius: 18px;
+  padding: 32px;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.roleCard:hover {
+  transform: translateY(-3px);
+  border-color: rgba(232, 255, 60, 0.3);
+  box-shadow: 0 24px 60px rgba(232, 255, 60, 0.08);
+}
+
+.roleCardTop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.roleIcon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(232, 255, 60, 0.1);
+  border: 1px solid rgba(232, 255, 60, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent, #e8ff3c);
+}
+
+.roleHeading h3 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.roleMeta {
+  font-size: 11px;
+  color: var(--dim, #6b6b78);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.rolePitch {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent, #e8ff3c);
+  line-height: 1.55;
+  margin: 0 0 22px;
+  letter-spacing: -0.01em;
+}
+
+.roleSection {
+  margin-bottom: 20px;
+}
+
+.roleSection h4 {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--dim, #6b6b78);
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+
+.roleSection ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roleSection li {
+  font-size: 14px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.55;
+  padding-left: 18px;
+  position: relative;
+}
+
+.roleSection li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent, #e8ff3c);
+  opacity: 0.7;
+}
+
+.applyBtn {
+  margin-top: auto;
+  background: var(--accent, #e8ff3c);
+  color: #0a0a0b;
+  border: none;
+  padding: 14px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.15s, box-shadow 0.15s;
+  letter-spacing: -0.01em;
+  align-self: flex-start;
+}
+
+.applyBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(232, 255, 60, 0.2);
+}
+
+/* ---------------- THE DEAL ---------------- */
+.deal {
+  padding: 96px 24px;
+  background:
+    radial-gradient(ellipse at 0% 100%, rgba(232, 255, 60, 0.04), transparent 50%),
+    radial-gradient(ellipse at 100% 0%, rgba(232, 255, 60, 0.03), transparent 50%);
+}
+
+.dealInner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.dealTag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--accent, #e8ff3c);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.deal h2 {
+  font-size: clamp(28px, 4.5vw, 44px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0 0 18px;
+  line-height: 1.1;
+}
+
+.dealInner > p {
+  font-size: 16px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.7;
+  margin: 0 0 36px;
+  max-width: 580px;
+}
+
+.dealGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.dealCard {
+  background: var(--surface, #18181d);
+  border: 1px solid var(--border, #1f1f26);
+  border-radius: 16px;
+  padding: 28px 26px;
+}
+
+.dealNum {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--accent, #e8ff3c);
+  letter-spacing: 0.4px;
+  margin-bottom: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dealCard h4 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+.dealCard p {
+  font-size: 14px;
+  color: var(--muted, #b0b0bc);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ---------------- APPLY FORM ---------------- */
+.applySection {
+  padding: 96px 24px 120px;
+}
+
+.applyInner {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.applyHeader {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.applyTag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--accent, #e8ff3c);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.applyHeader h2 {
+  font-size: clamp(28px, 4.5vw, 44px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.applyHeader p {
+  font-size: 15px;
+  color: var(--muted, #b0b0bc);
+  margin: 0;
+}
+
+.roleToggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: var(--surface, #18181d);
+  border: 1px solid var(--border, #1f1f26);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.roleToggleBtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted, #b0b0bc);
+  padding: 12px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.roleToggleBtn:hover {
+  color: var(--text, #e8e8ee);
+}
+
+.roleToggleActive {
+  background: var(--accent, #e8ff3c);
+  color: #0a0a0b;
+}
+
+.roleToggleActive:hover {
+  color: #0a0a0b;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.field span {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--dim, #6b6b78);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.field input,
+.field textarea {
+  background: var(--surface, #18181d);
+  border: 1px solid var(--border, #1f1f26);
+  color: var(--text, #e8e8ee);
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  font-size: 16px !important; /* prevent iOS zoom */
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--dim, #6b6b78);
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--accent, #e8ff3c);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.submitBtn {
+  width: 100%;
+  background: var(--accent, #e8ff3c);
+  color: #0a0a0b;
+  border: none;
+  padding: 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(232, 255, 60, 0.2);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formNote {
+  font-size: 12px;
+  color: var(--dim, #6b6b78);
+  text-align: center;
+  margin-top: 14px;
+}
+
+/* Success state */
+.success {
+  display: flex;
+  background: var(--surface, #18181d);
+  border: 1px solid rgba(232, 255, 60, 0.3);
+  border-radius: 16px;
+  padding: 22px 24px;
+  align-items: center;
+  gap: 18px;
+}
+
+.successCheck {
+  width: 44px;
+  height: 44px;
+  background: var(--accent, #e8ff3c);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0a0a0b;
+  font-weight: 900;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.successTitle {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.successSub {
+  font-size: 13px;
+  color: var(--muted, #b0b0bc);
+  margin-top: 3px;
+}
+
+/* ---------------- RESPONSIVE ---------------- */
+@media (max-width: 880px) {
+  .rolesGrid {
+    grid-template-columns: 1fr;
+  }
+  .dealGrid {
+    grid-template-columns: 1fr;
+  }
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  .field {
+    grid-column: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 64px 18px 56px;
+  }
+  .heroFacts {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 4px;
+  }
+  .fact {
+    padding: 8px 14px;
+  }
+  .factDiv {
+    display: none;
+  }
+  .roles,
+  .deal,
+  .applySection {
+    padding: 64px 18px;
+  }
+  .roleCard {
+    padding: 24px;
+  }
+}

@@ -88,6 +88,22 @@ interface TrainerApplication {
   createdAt?: FirestoreTimestamp;
 }
 
+interface CareerApplication {
+  id: string;
+  status: "pending" | "reviewed";
+  roleId: string;
+  roleTitle: string;
+  fullName: string;
+  email: string;
+  city?: string;
+  why: string;
+  instagramHandle?: string;
+  portfolioLink?: string;
+  aiTools?: string;
+  startDate?: string;
+  createdAt?: FirestoreTimestamp;
+}
+
 interface WaitlistEntry {
   id: string;
   email: string;
@@ -164,6 +180,10 @@ export default function AdminPanel() {
 
   // Page views / traffic state
   const [pageViews, setPageViews] = useState<PageView[]>([]);
+
+  // Career applications
+  const [careerApps, setCareerApps] = useState<CareerApplication[]>([]);
+  const [careerTab, setCareerTab] = useState<"pending" | "reviewed">("pending");
 
   // Updates state
   const [updates, setUpdates] = useState<UpdatePost[]>([]);
@@ -272,6 +292,19 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const loadCareerApplications = useCallback(async () => {
+    try {
+      const snap = await getDocs(
+        query(collection(db, "careersApplications"), orderBy("createdAt", "desc"))
+      );
+      const apps: CareerApplication[] = [];
+      snap.forEach((d) => apps.push({ id: d.id, ...d.data() } as CareerApplication));
+      setCareerApps(apps);
+    } catch (e) {
+      console.error("Career apps load error:", e);
+    }
+  }, []);
+
   const loadPageViews = useCallback(async () => {
     try {
       // Last 7 days only — keeps reads cheap
@@ -363,6 +396,7 @@ export default function AdminPanel() {
     setUpdates([]);
     setTasks([]);
     setPageViews([]);
+    setCareerApps([]);
   };
 
   // Load data after login
@@ -375,6 +409,7 @@ export default function AdminPanel() {
       loadPageViews();
       loadUpdates();
       loadTasks();
+      loadCareerApplications();
     }
   }, [
     isLoggedIn,
@@ -385,6 +420,7 @@ export default function AdminPanel() {
     loadPageViews,
     loadUpdates,
     loadTasks,
+    loadCareerApplications,
   ]);
 
   // --- Derived stats ---
@@ -399,6 +435,12 @@ export default function AdminPanel() {
   const trainerApprovedCount = trainerApps.filter(
     (a) => a.status === "approved"
   ).length;
+  const careerPendingCount = careerApps.filter(
+    (a) => a.status === "pending" || !a.status
+  ).length;
+  const filteredCareers = careerApps.filter(
+    (a) => (careerTab === "pending" ? !a.status || a.status === "pending" : a.status === careerTab)
+  );
 
   const weekAgo = Date.now() / 1000 - 7 * 24 * 60 * 60;
   const recentSignups = waitlistEntries.filter(
@@ -795,6 +837,29 @@ export default function AdminPanel() {
     }
   };
 
+  // --- Career applications actions ---
+
+  const markCareerReviewed = async (
+    appId: string,
+    next: "pending" | "reviewed"
+  ) => {
+    try {
+      await updateDoc(doc(db, "careersApplications", appId), {
+        status: next,
+        reviewedAt: next === "reviewed" ? serverTimestamp() : null,
+      });
+      setCareerApps((prev) =>
+        prev.map((a) => (a.id === appId ? { ...a, status: next } : a))
+      );
+      showToast(
+        next === "reviewed" ? "Marked reviewed" : "Moved back to pending"
+      );
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+  };
+
   // --- Updates actions ---
 
   const postUpdate = async () => {
@@ -1062,6 +1127,15 @@ export default function AdminPanel() {
               {feedbackCount ?? "\u2014"}
             </div>
             <div className={styles.statSub}>Feature requests</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Career Apps</div>
+            <div className={styles.statValue}>
+              {careerPendingCount || "\u2014"}
+            </div>
+            <div className={styles.statSub}>
+              {careerApps.length} total
+            </div>
           </div>
         </div>
 
@@ -1518,6 +1592,154 @@ export default function AdminPanel() {
             )}
           </div>
         )}
+
+        {/* CAREER APPLICATIONS */}
+        <div className={styles.sectionHeader}>
+          <h2>Career Applications</h2>
+          {careerPendingCount > 0 && (
+            <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700 }}>
+              {careerPendingCount} pending
+            </span>
+          )}
+        </div>
+        <div className={styles.tabs}>
+          {(["pending", "reviewed"] as const).map((tab) => {
+            const isActive = careerTab === tab;
+            const count =
+              tab === "pending"
+                ? careerPendingCount
+                : careerApps.filter((a) => a.status === "reviewed").length;
+            return (
+              <button
+                key={tab}
+                className={`${styles.tab} ${isActive ? styles.tabActive : ""}`}
+                onClick={() => setCareerTab(tab)}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {count > 0 && (
+                  <span
+                    className={`${styles.badge} ${isActive ? styles.badgeActive : ""}`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className={styles.appList}>
+          {filteredCareers.length === 0 ? (
+            <div className={styles.empty}>No {careerTab} applications.</div>
+          ) : (
+            filteredCareers.map((a) => (
+              <div className={styles.appCard} key={a.id}>
+                <div className={styles.appTop}>
+                  <div>
+                    <div className={styles.appGym}>{a.fullName}</div>
+                    <div className={styles.appDate}>
+                      {a.roleTitle}
+                      {a.createdAt && (
+                        <>
+                          {" · "}
+                          {formatDate(a.createdAt, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className={`${styles.appStatus} ${a.status === "reviewed" ? styles.statusApproved : styles.statusPending}`}
+                  >
+                    {a.status || "pending"}
+                  </span>
+                </div>
+
+                <div className={styles.appDetails}>
+                  <div className={styles.appField}>
+                    <div className={styles.appFieldLabel}>Email</div>
+                    <a href={`mailto:${a.email}`} className={styles.websiteLink}>
+                      {a.email}
+                    </a>
+                  </div>
+                  {a.city && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>City</div>
+                      {a.city}
+                    </div>
+                  )}
+                  {a.startDate && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Earliest start</div>
+                      {a.startDate}
+                    </div>
+                  )}
+                  {a.instagramHandle && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Instagram</div>
+                      <a
+                        href={`https://instagram.com/${a.instagramHandle.replace(/^@/, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.websiteLink}
+                      >
+                        @{a.instagramHandle.replace(/^@/, "")}
+                      </a>
+                    </div>
+                  )}
+                  {a.portfolioLink && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Portfolio / reel</div>
+                      <a
+                        href={
+                          a.portfolioLink.startsWith("http")
+                            ? a.portfolioLink
+                            : `https://${a.portfolioLink}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.websiteLink}
+                      >
+                        {a.portfolioLink}
+                      </a>
+                    </div>
+                  )}
+                  {a.aiTools && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>AI tools</div>
+                      {a.aiTools}
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.appVerify}>
+                  <div className={styles.appFieldLabel}>Why GymRoam</div>
+                  <p>{a.why}</p>
+                </div>
+
+                <div className={styles.appActions}>
+                  {(!a.status || a.status === "pending") ? (
+                    <button
+                      className={`${styles.actionBtn} ${styles.btnApprove}`}
+                      onClick={() => markCareerReviewed(a.id, "reviewed")}
+                    >
+                      Mark Reviewed
+                    </button>
+                  ) : (
+                    <button
+                      className={`${styles.actionBtn} ${styles.btnReject}`}
+                      onClick={() => markCareerReviewed(a.id, "pending")}
+                    >
+                      Move to Pending
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
         </>
         )}

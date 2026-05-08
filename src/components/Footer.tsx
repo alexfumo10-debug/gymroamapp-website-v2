@@ -13,6 +13,7 @@ export default function Footer() {
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/grow">Grow Your Gym</Link>
+          <Link href="/careers">Careers</Link>
           <Link href="/feedback">Feedback</Link>
           <a href="mailto:gymroamapp@gmail.com">Contact</a>
           <a href="https://instagram.com/gymroamapp" target="_blank" rel="noopener noreferrer">Instagram</a>
