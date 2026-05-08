@@ -262,7 +262,11 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
-  align-items: start;
+  /* Stretch cards to equal height so the apply buttons (which use
+     margin-top: auto inside the flex-column card) line up at the
+     bottom. Top sections still align via min-height: 50px on the
+     pitch element. */
+  align-items: stretch;
 }
 
 .roleCard {
