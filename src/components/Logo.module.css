@@ -8,11 +8,26 @@
 .icon {
   width: 32px;
   height: 32px;
-  border-radius: 7px;
-  display: block;
-  /* Image's own pixels carry the rounded-square shape — radius is a
-     small safety in case the source image has anti-aliased edges */
-  flex-shrink: 0;
+  background: var(--accent);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 16px;
+  color: #0A0A0B;
+  position: relative;
+}
+
+.icon::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 4px;
+  height: 4px;
+  background: #0A0A0B;
+  border-radius: 50%;
 }
 
 .text {
