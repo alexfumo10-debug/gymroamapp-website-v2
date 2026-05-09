@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { MIN_INSTAGRAM_FOLLOWERS, TRAINER_PRO_PRICE } from "@/lib/subscription";
+import { MIN_INSTAGRAM_FOLLOWERS } from "@/lib/subscription";
 import styles from "./page.module.css";
 
 export default function TrainerPage() {
@@ -161,10 +161,10 @@ export default function TrainerPage() {
               </div>
               <h3 style="font-size:13px;color:#8A8A99;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">What happens next</h3>
               <ol style="color:#8A8A99;font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 24px;">
-                <li>We verify your Instagram account and follower count</li>
-                <li>You'll hear back within <strong style="color:#E8E8EE;">24-48 hours</strong></li>
-                <li>If approved, we email a passcode to sign into the GymRoam app</li>
-                <li>Subscribe to Trainer Pro (${TRAINER_PRO_PRICE}) through Apple — one tap with Face ID</li>
+                <li>We add you to the launch list and review every submission</li>
+                <li>GymRoam is <strong style="color:#E8FF3C;">launching soon</strong>; we'll reach out when we're ready to onboard trainers</li>
+                <li>If we move forward, we email a passcode to sign into the GymRoam app</li>
+                <li>Pricing details shared at activation</li>
               </ol>
               <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">Questions? Reply to this email.</p>
             </div>
@@ -190,14 +190,42 @@ export default function TrainerPage() {
       <main>
         {/* Hero */}
         <section className={styles.hero}>
-          <div className={styles.tag}>Trainer Pro &middot; {TRAINER_PRO_PRICE}</div>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "5px 14px",
+              borderRadius: 100,
+              background: "rgba(232, 255, 60, 0.1)",
+              border: "1px solid rgba(232, 255, 60, 0.18)",
+              color: "var(--accent)",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "1.8px",
+              textTransform: "uppercase",
+              marginBottom: 20,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "var(--accent)",
+                boxShadow: "0 0 10px var(--accent)",
+              }}
+            />
+            Launching soon
+          </div>
           <h1>
             Train travelers <span className={styles.accent}>anywhere</span>
           </h1>
           <p>
             Get discovered by travelers in your city. Post drop-in offers,
-            share your schedule, and receive messages from clients looking for
-            a session.
+            share your schedule, and receive messages from clients looking
+            for a session. Get on the launch list and we&apos;ll reach out
+            as we open trainer slots.
           </p>
         </section>
 
@@ -265,11 +293,11 @@ export default function TrainerPage() {
             <div className={styles.reqRow}>
               <div className={styles.reqCheck}>&#10003;</div>
               <div>
-                <h4>Trainer Pro subscription</h4>
+                <h4>Coming soon</h4>
                 <p>
-                  {TRAINER_PRO_PRICE}, billed through Apple. Cancel anytime
-                  from your iPhone settings. You only subscribe after
-                  we approve you and you&apos;re inside the app.
+                  Trainer Pro launches with the GymRoam app. Pricing details
+                  shared at activation. No payment today &mdash; we&apos;ll reach out
+                  when we&apos;re ready to onboard trainers.
                 </p>
               </div>
             </div>
@@ -285,23 +313,23 @@ export default function TrainerPage() {
             {[
               {
                 num: 1,
-                title: "Apply",
+                title: "Get on the launch list",
                 desc: "Tell us about yourself, your Instagram, and how you coach. Takes 5 minutes.",
               },
               {
                 num: 2,
-                title: "We verify",
-                desc: "We check your Instagram, follower count, and certs. Usually 24-48 hours.",
+                title: "We review",
+                desc: "We check your Instagram, follower count, and certs. We read every submission as we build the launch list.",
               },
               {
                 num: 3,
-                title: "Sign in",
-                desc: "Passcode arrives by email. Download GymRoam, sign in, set your password.",
+                title: "We onboard you at launch",
+                desc: "When we're ready, a passcode arrives by email. Download GymRoam, sign in, set your password.",
               },
               {
                 num: 4,
-                title: "Subscribe in-app",
-                desc: `Tap subscribe, confirm with Face ID. ${TRAINER_PRO_PRICE} through Apple. Profile goes live instantly.`,
+                title: "Profile goes live",
+                desc: "Trainer Pro details shared at activation. Profile activates as we onboard trainers.",
               },
             ].map((s) => (
               <div key={s.num} className={styles.step}>
@@ -560,9 +588,9 @@ export default function TrainerPage() {
                   onChange={(e) => setAgree(e.target.checked)}
                 />
                 <span>
-                  I understand Trainer Pro costs {TRAINER_PRO_PRICE} through
-                  Apple after approval, and I confirm my Instagram is public
-                  with at least {MIN_INSTAGRAM_FOLLOWERS.toLocaleString()}{" "}
+                  I understand GymRoam is launching soon and that I&apos;ll be
+                  contacted as we open trainer slots. I confirm my Instagram is
+                  public with at least {MIN_INSTAGRAM_FOLLOWERS.toLocaleString()}{" "}
                   followers.
                 </span>
               </label>
@@ -572,32 +600,31 @@ export default function TrainerPage() {
                 disabled={loading}
                 onClick={handleSubmit}
               >
-                {loading ? "Submitting..." : "Submit Application"}
+                {loading ? "Submitting..." : "Join the launch list"}
               </button>
               <p className={styles.formNote}>
-                No payment today. Subscribe inside the GymRoam app after
-                you&apos;re approved — billed through Apple.
+                No payment today. We&apos;ll reach out as we open slots.
+                Pricing details shared at activation.
               </p>
             </div>
           ) : (
             /* Success state */
             <div className={styles.success}>
               <div className={styles.successIcon}>&#10003;</div>
-              <h3>Application received</h3>
+              <h3>You&apos;re on the launch list</h3>
               <p>
-                We&apos;re verifying your Instagram and reviewing your
-                application. Expect to hear back within 24-48 hours.
+                We&apos;re building toward launch and reading every
+                submission. We&apos;ll reach out as we open trainer slots.
               </p>
               <div className={styles.nextSteps}>
                 <h4>What happens next</h4>
                 <ol>
-                  <li>We verify your Instagram account and follower count</li>
-                  <li>If approved, we email a temporary passcode</li>
+                  <li>We review your submission</li>
+                  <li>We verify your Instagram when we&apos;re ready to onboard you</li>
                   <li>
-                    Download GymRoam, sign in, subscribe via Apple (
-                    {TRAINER_PRO_PRICE})
+                    You&apos;ll get a passcode to sign into the GymRoam app
                   </li>
-                  <li>Your trainer profile goes live instantly</li>
+                  <li>Pricing details shared at activation</li>
                 </ol>
               </div>
             </div>

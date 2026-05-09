@@ -6,7 +6,6 @@ import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { GYM_PARTNER_PRICE } from "@/lib/subscription";
 import styles from "./page.module.css";
 
 export default function GrowPage() {
@@ -122,14 +121,14 @@ export default function GrowPage() {
               <div style="text-align:center;margin-bottom:24px;">
                 <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
               </div>
-              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;">Application Received</h2>
-              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">Thanks for applying to partner with GymRoam, ${ownerName.trim()}.</p>
+              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;">You're on the launch list</h2>
+              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">Thanks for the interest in partnering with GymRoam, ${ownerName.trim()}.</p>
               <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:24px;">
                 <p style="margin:0 0 4px;font-weight:700;">${gymName.trim()}</p>
                 <p style="margin:0;color:#8A8A99;font-size:13px;">${gymCity.trim()}, ${gymState.trim()}</p>
               </div>
-              <p style="color:#8A8A99;font-size:14px;text-align:center;margin:0 0 8px;">We'll review your documents and get back to you within <strong style="color:#E8E8EE;">24-48 hours</strong>.</p>
-              <p style="color:#8A8A99;font-size:14px;text-align:center;margin:0;">Once approved, you'll receive a temporary passcode to sign into the GymRoam app and access your Partner Dashboard.</p>
+              <p style="color:#8A8A99;font-size:14px;text-align:center;margin:0 0 8px;">GymRoam is <strong style="color:#E8FF3C;">launching soon</strong>. We'll reach out as we open partner slots in your city.</p>
+              <p style="color:#8A8A99;font-size:14px;text-align:center;margin:0;">When we onboard you, you'll receive a passcode to sign into the app and access your Partner Dashboard.</p>
             </div>
           `,
         },
@@ -153,12 +152,41 @@ export default function GrowPage() {
       <main>
         {/* Hero */}
         <section className={styles.hero}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "5px 14px",
+              borderRadius: 100,
+              background: "rgba(232, 255, 60, 0.1)",
+              border: "1px solid rgba(232, 255, 60, 0.18)",
+              color: "var(--accent)",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "1.8px",
+              textTransform: "uppercase",
+              marginBottom: 20,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "var(--accent)",
+                boxShadow: "0 0 10px var(--accent)",
+              }}
+            />
+            Launching soon
+          </div>
           <h1>
             Grow Your <span className={styles.accent}>Gym</span>
           </h1>
           <p>
             GymRoam sends travelers and locals to your door. Get listed, get
-            seen, get booked.
+            seen, get booked. Add your gym to the launch list now &mdash;
+            we&apos;ll reach out as we open partner slots in your city.
           </p>
           <p
             style={{
@@ -168,8 +196,7 @@ export default function GrowPage() {
               marginBottom: 48,
             }}
           >
-            Gym Partner &middot; <strong style={{ color: "var(--accent)" }}>{GYM_PARTNER_PRICE}</strong>{" "}
-            &middot; cancel anytime
+            No payment today &middot; pricing details shared at activation
           </p>
         </section>
 
@@ -223,18 +250,18 @@ export default function GrowPage() {
               },
               {
                 num: 2,
-                title: "We review and verify",
-                desc: "Our team reviews your documents and confirms ownership. Usually within 24-48 hours.",
+                title: "We add you to the launch list",
+                desc: "We read every submission and prioritize early applicants when we open partner slots in your city.",
               },
               {
                 num: 3,
-                title: "Receive your login",
-                desc: "Once approved, we send you a temporary passcode to sign into the GymRoam app as a verified partner.",
+                title: "We onboard you at launch",
+                desc: "When we're ready in your area, we verify ownership and send you a passcode to sign into the GymRoam app as a verified partner.",
               },
               {
                 num: 4,
                 title: "Manage your listing",
-                desc: "Set your own password, access your dashboard, update photos, hours, pricing, and start getting discovered.",
+                desc: "Set your own password, access your dashboard, update photos, hours, day-pass details, and start getting discovered.",
               },
             ].map((s) => (
               <div key={s.num} className={styles.step}>
@@ -475,37 +502,36 @@ export default function GrowPage() {
                 disabled={loading}
                 onClick={handleSubmit}
               >
-                {loading ? "Submitting..." : "Submit Application"}
+                {loading ? "Submitting..." : "Join the launch list"}
               </button>
               <p className={styles.formNote}>
-                We review every application personally. Expect to hear from us
-                within 24-48 hours.
+                We read every submission. We&apos;ll reach out as we open
+                slots in your city.
               </p>
             </div>
           ) : (
             /* Success state */
             <div className={styles.success}>
               <div className={styles.successIcon}>&#10003;</div>
-              <h3>Application received</h3>
+              <h3>You&apos;re on the launch list</h3>
               <p>
-                We&apos;re reviewing your submission. You&apos;ll hear from us
-                at the email you provided within 24-48 hours.
+                We&apos;re building toward launch and reading every
+                submission. You&apos;ll hear from us at the email you
+                provided as we open partner slots in your city.
               </p>
               <div className={styles.nextSteps}>
                 <h4>What happens next</h4>
                 <ol>
-                  <li>We verify your ownership documents</li>
+                  <li>We review your submission</li>
+                  <li>We verify your ownership when we&apos;re ready to onboard you</li>
                   <li>
-                    Once approved, we email you a temporary passcode
-                  </li>
-                  <li>
-                    Download GymRoam and sign in with your email + passcode
+                    You&apos;ll receive a passcode to sign into the GymRoam app
                   </li>
                   <li>
                     Set your own password and access your Partner Dashboard
                   </li>
                   <li>
-                    We&apos;ll send a billing link for Gym Partner ({GYM_PARTNER_PRICE})
+                    Pricing details shared at activation
                   </li>
                 </ol>
               </div>

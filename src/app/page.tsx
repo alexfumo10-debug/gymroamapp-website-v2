@@ -198,8 +198,8 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <a href="/trainer" className={styles.btn}>Apply now</a>
-          <p className={styles.priceLine}>Trainer Pro $24.99/month &middot; billed through Apple</p>
+          <a href="/trainer" className={styles.btn}>Get on the launch list</a>
+          <p className={styles.priceLine}>Coming soon &middot; we&apos;ll reach out as we onboard trainers</p>
         </div>
       </section>
 
@@ -216,8 +216,8 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <a href="/grow" className={styles.btnOutline}>Apply now</a>
-          <p className={styles.priceLine}>Gym Partner $99/month &middot; cancel anytime</p>
+          <a href="/grow" className={styles.btnOutline}>Get on the launch list</a>
+          <p className={styles.priceLine}>Coming soon &middot; we&apos;ll reach out as we open partner slots</p>
         </div>
       </section>
 
