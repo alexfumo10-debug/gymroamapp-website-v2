@@ -49,34 +49,33 @@
 }
 
 .kicker {
-  font-size: 10px;
-  letter-spacing: 0.32em;
+  font-size: 11px;
+  letter-spacing: 1.8px;
   color: var(--p-mute);
-  font-weight: 500;
-  margin-bottom: 18px;
+  font-weight: 800;
+  margin-bottom: 22px;
   text-transform: uppercase;
 }
 
 .pageHeader h2 {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-variation-settings: "opsz" 144;
   font-size: clamp(36px, 6vw, 56px);
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -0.02em;
-  color: var(--p-bone);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--text, #e8e8ee);
   margin: 0 0 18px;
 }
 
 .pageHeader h2 em {
-  font-style: italic;
-  font-weight: 400;
-  color: var(--p-cream);
+  font-style: normal;
+  font-weight: 900;
+  color: var(--accent, #e8ff3c);
 }
 
 .pageHeader p {
-  color: var(--p-cream);
-  font-size: 15px;
+  color: var(--muted, #b0b0bc);
+  font-size: 16px;
   line-height: 1.7;
   max-width: 540px;
   margin: 0 auto;
@@ -95,19 +94,19 @@
 
 .dividerNum {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-style: italic;
   font-size: 14px;
-  color: var(--p-mute);
+  font-weight: 800;
+  color: var(--accent, #e8ff3c);
   flex-shrink: 0;
   width: 32px;
 }
 
 .dividerTitle {
-  font-size: 12px;
-  letter-spacing: 0.24em;
+  font-size: 11px;
+  letter-spacing: 1.8px;
   text-transform: uppercase;
-  font-weight: 600;
-  color: var(--p-bone);
+  font-weight: 800;
+  color: var(--text, #e8e8ee);
   flex-shrink: 0;
 }
 
@@ -129,11 +128,11 @@
 
 .frameLabel {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-style: italic;
-  font-size: 13px;
-  color: var(--p-mute);
+  font-size: 12px;
+  color: var(--muted, #b0b0bc);
   margin-bottom: 22px;
-  font-weight: 400;
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 .iphone {
@@ -261,18 +260,17 @@
 
 .docHeader h1 {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-variation-settings: "opsz" 144;
-  font-size: 38px;
-  font-weight: 500;
-  line-height: 1.04;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.05;
   letter-spacing: -0.025em;
-  color: var(--p-bone);
+  color: var(--text, #e8e8ee);
   margin: 0;
 }
 
 .docHeader h1 em {
-  font-style: italic;
-  font-weight: 400;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .accent {
@@ -342,12 +340,11 @@
 
 .totalsNum {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-variation-settings: "opsz" 144;
-  font-size: 48px;
-  font-weight: 500;
+  font-size: 44px;
+  font-weight: 900;
   letter-spacing: -0.04em;
-  line-height: 0.92;
-  color: var(--p-bone);
+  line-height: 0.95;
+  color: var(--text, #e8e8ee);
   font-variant-numeric: tabular-nums;
 }
 
@@ -438,8 +435,8 @@
 
 .heroCity {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 36px;
-  font-weight: 600;
+  font-size: 34px;
+  font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 1;
 }
@@ -527,8 +524,8 @@
 
 .stampCity {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -579,11 +576,10 @@
 
 .curatorBody {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-style: italic;
-  font-size: 17px;
-  line-height: 1.5;
-  color: var(--p-cream);
-  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted, #b0b0bc);
+  font-weight: 500;
   max-width: 280px;
   margin: 0 auto;
   letter-spacing: -0.005em;
@@ -591,8 +587,8 @@
 
 .curatorBody strong {
   color: var(--p-accent);
-  font-weight: 500;
-  font-style: italic;
+  font-weight: 800;
+  font-style: normal;
 }
 
 /* ============ MRZ footer ============ */
