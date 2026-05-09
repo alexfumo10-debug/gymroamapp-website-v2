@@ -236,8 +236,22 @@ export default function CareersPage() {
 
       localStorage.setItem("gymroam_careers_applied", "true");
       setSubmitted(true);
-    } catch {
-      setToast({ show: true, message: "Something went wrong. Try again." });
+    } catch (e: unknown) {
+      // Log so we can debug from the browser console
+      console.error("Career application submit failed:", e);
+      const err = e as { code?: string; message?: string };
+      let message = "Something went wrong. Try again.";
+      if (err.code === "permission-denied") {
+        message =
+          "We couldn't save your application right now. Please try again or email gymroamapp@gmail.com directly.";
+      } else if (err.code === "unavailable") {
+        message =
+          "Connection issue — please check your network and try again.";
+      } else if (err.message?.toLowerCase().includes("network")) {
+        message =
+          "Network issue. Make sure you're online and try again.";
+      }
+      setToast({ show: true, message });
     }
     setSubmitting(false);
   };
