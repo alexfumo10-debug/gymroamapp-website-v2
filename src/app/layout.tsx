@@ -23,8 +23,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
   },
   icons: {
-    icon: "/favicon.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/gymroam-logo.png",
+    apple: "/gymroam-logo.png",
   },
   appleWebApp: {
     capable: true,
