@@ -1,0 +1,96 @@
+.fab {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  background: var(--accent, #e8ff3c);
+  color: #0a0a0b;
+  border-radius: 100px;
+  text-decoration: none;
+  box-shadow:
+    0 18px 36px rgba(232, 255, 60, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 24px 48px rgba(232, 255, 60, 0.35),
+    0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Pulsing presence dot (we're around) */
+.dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff4d6d;
+  border: 2px solid var(--accent, #e8ff3c);
+  animation: presencePulse 2s ease-in-out infinite;
+}
+
+@keyframes presencePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 77, 109, 0); }
+}
+
+.label {
+  /* Hidden by default; expands on hover.
+     Width animates from 0 → auto via max-width trick. */
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding-left: 0;
+  transition: max-width 0.3s ease, opacity 0.2s ease 0.05s, padding-left 0.3s ease;
+}
+
+.labelOpen {
+  max-width: 220px;
+  opacity: 1;
+  padding-left: 18px;
+}
+
+@media (max-width: 480px) {
+  .fab {
+    bottom: 16px;
+    right: 16px;
+  }
+  .icon {
+    width: 48px;
+    height: 48px;
+  }
+  /* On mobile keep the label collapsed always — tap the icon */
+  .label {
+    display: none;
+  }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}

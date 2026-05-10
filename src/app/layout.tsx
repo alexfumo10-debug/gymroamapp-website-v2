@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import PageViewTracker from "@/components/PageViewTracker";
+import LoadingIntro from "@/components/LoadingIntro";
+import InstagramDMButton from "@/components/InstagramDMButton";
 import "./globals.css";
 
 const inter = Inter({
@@ -48,8 +50,10 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body>
+        <LoadingIntro />
         <PageViewTracker />
         {children}
+        <InstagramDMButton />
       </body>
     </html>
   );

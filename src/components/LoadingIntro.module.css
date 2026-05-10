@@ -1,0 +1,150 @@
+/* Full-screen entrance loader. Hubtown-inspired premium "drop"
+   feeling — pure black, yellow accent, big tracked wordmark, clean
+   progress bar, monospace counter. */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #050505;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 32px;
+  transition: opacity 0.4s ease;
+  overflow: hidden;
+}
+
+.intro::before {
+  /* subtle radial glow that breathes */
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(232, 255, 60, 0.08), transparent 50%);
+  animation: introBreath 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.intro::after {
+  /* paper-grain noise overlay */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-radial-gradient(circle at 25% 30%, rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0.5) 1px, transparent 1px, transparent 4px);
+}
+
+@keyframes introBreath {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.introFading {
+  opacity: 0;
+}
+
+.inner {
+  position: relative;
+  text-align: center;
+  width: 100%;
+  max-width: 520px;
+  z-index: 1;
+}
+
+.wordmark {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--accent, #e8ff3c);
+  margin-bottom: 16px;
+  font-feature-settings: "tnum";
+}
+
+.dot {
+  display: inline-block;
+  margin: 0 8px;
+  color: #fff;
+  transform: translateY(-4px);
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 56px;
+}
+
+.barTrack {
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--accent, #e8ff3c);
+  box-shadow: 0 0 12px rgba(232, 255, 60, 0.6);
+  transition: width 16ms linear;
+}
+
+.pct {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 4px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.pctSuffix {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Document-style corner labels */
+.cornerTop {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.35);
+  z-index: 1;
+}
+
+.cornerBottom {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.35);
+  z-index: 1;
+}
+
+@media (max-width: 480px) {
+  .cornerTop, .cornerBottom {
+    left: 18px;
+  }
+  .cornerTop { top: 22px; }
+  .cornerBottom { bottom: 22px; }
+}
+
+/* Respect prefers-reduced-motion — skip the breathing animation */
+@media (prefers-reduced-motion: reduce) {
+  .intro::before {
+    animation: none;
+  }
+}
