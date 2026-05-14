@@ -11,6 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://gymroamapp.com"),
   title: "GymRoam — Find Your Sweat. Anywhere.",
   description: "GymRoam helps you find gyms, fitness studios, and wellness centers wherever you travel. Search any city, get directions, and never miss a workout.",
   keywords: "gym finder, travel fitness, gym near me, workout travel, fitness app, yoga studio finder",

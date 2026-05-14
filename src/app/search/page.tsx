@@ -80,7 +80,7 @@ export default function SearchPage() {
 
   /**
    * Deep-link support: read ?city=&category= from the URL on mount.
-   * Lets the /gyms-in-{slug} landing pages send users straight into
+   * Lets the /gyms-near-me/{slug} landing pages send users straight into
    * the live search with their city and (optionally) category
    * pre-selected.
    */

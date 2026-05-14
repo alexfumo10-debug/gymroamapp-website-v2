@@ -1,8 +1,8 @@
 /**
  * City landing pages — programmatic SEO.
  *
- * One static page per CITY_PRESET at /gyms-in-{slug}. Each page is
- * SEO-optimized for "gyms in [city]" search queries with:
+ * One static page per CITY_PRESET at /gyms-near-me/{slug}. Each page is
+ * SEO-optimized for "gyms near me" + "gyms in [city]" search queries with:
  *   - Unique title + meta description
  *   - Crawlable category + neighborhood content
  *   - JSON-LD schemas (WebPage, BreadcrumbList, FAQPage)
@@ -44,12 +44,12 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: `https://gymroamapp.com/gyms-in-${city.id}`,
+      canonical: `https://gymroamapp.com/gyms-near-me/${city.id}`,
     },
     openGraph: {
       title,
       description,
-      url: `https://gymroamapp.com/gyms-in-${city.id}`,
+      url: `https://gymroamapp.com/gyms-near-me/${city.id}`,
       type: "website",
     },
     twitter: {
@@ -125,7 +125,7 @@ export default async function CityPage({
     "@type": "WebPage",
     name: `Gyms in ${city.name}`,
     description: `Find gyms, fitness studios, and wellness centers in ${city.name} across Lifting, Pilates, Yoga, Cycling, Run Clubs, Wellness, and Hyrox.`,
-    url: `https://gymroamapp.com/gyms-in-${city.id}`,
+    url: `https://gymroamapp.com/gyms-near-me/${city.id}`,
     isPartOf: {
       "@type": "WebSite",
       name: "GymRoam",
@@ -137,12 +137,11 @@ export default async function CityPage({
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://gymroamapp.com" },
-      { "@type": "ListItem", position: 2, name: "Cities", item: "https://gymroamapp.com/cities" },
       {
         "@type": "ListItem",
-        position: 3,
+        position: 2,
         name: `Gyms in ${city.name}`,
-        item: `https://gymroamapp.com/gyms-in-${city.id}`,
+        item: `https://gymroamapp.com/gyms-near-me/${city.id}`,
       },
     ],
   };
@@ -163,8 +162,6 @@ export default async function CityPage({
         {/* Breadcrumb */}
         <nav className={styles.crumbs} aria-label="Breadcrumb">
           <Link href="/">Home</Link>
-          <span>/</span>
-          <span>Cities</span>
           <span>/</span>
           <span aria-current="page">Gyms in {city.name}</span>
         </nav>
@@ -311,7 +308,7 @@ export default async function CityPage({
           </div>
           <div className={styles.cityLinks}>
             {CITY_PRESETS.filter((c) => c.id !== city.id).map((c) => (
-              <Link key={c.id} href={`/gyms-in-${c.id}`} className={styles.cityLink}>
+              <Link key={c.id} href={`/gyms-near-me/${c.id}`} className={styles.cityLink}>
                 Gyms in {c.name} &rarr;
               </Link>
             ))}

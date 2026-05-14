@@ -24,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const cityRoutes: MetadataRoute.Sitemap = CITY_PRESETS.map((c) => ({
-    url: `${BASE}/gyms-in-${c.id}`,
+    url: `${BASE}/gyms-near-me/${c.id}`,
     lastModified: today,
     changeFrequency: "weekly",
     priority: 0.85,

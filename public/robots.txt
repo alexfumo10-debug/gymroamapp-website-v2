@@ -9,7 +9,7 @@ Allow: /trainer
 Allow: /grow
 Allow: /careers
 Allow: /join
-Allow: /gyms-in-
+Allow: /gyms-near-me
 
 Disallow: /gr-panel-7x9k
 Disallow: /gr-panel-7x9k/
