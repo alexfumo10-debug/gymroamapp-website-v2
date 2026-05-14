@@ -78,6 +78,46 @@ export default function SearchPage() {
     setActiveCity(preset.name, preset.region, preset.lat, preset.lng);
   };
 
+  /**
+   * Deep-link support: read ?city=&category= from the URL on mount.
+   * Lets the /gyms-in-{slug} landing pages send users straight into
+   * the live search with their city and (optionally) category
+   * pre-selected.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const cityParam = params.get("city");
+    const categoryParam = params.get("category");
+
+    if (cityParam) {
+      const preset = findPreset(cityParam);
+      if (preset) {
+        const gyms =
+          preset.id === "miami"
+            ? SEARCH_GYMS
+            : generateGymsForCity(
+                preset.name,
+                preset.lat,
+                preset.lng,
+                preset.neighborhoods
+              );
+        setCity({
+          name: preset.name,
+          region: preset.region,
+          lat: preset.lat,
+          lng: preset.lng,
+          gyms,
+        });
+      }
+    }
+    if (categoryParam && ACTIVITY_TYPES.includes(categoryParam)) {
+      setActiveFilter(categoryParam);
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const submitCustomCity = async () => {
     const q = cityInput.trim();
     if (!q) return;

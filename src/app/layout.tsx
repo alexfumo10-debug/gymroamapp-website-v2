@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import PageViewTracker from "@/components/PageViewTracker";
+import SiteJsonLd from "@/components/SiteJsonLd";
 import "./globals.css";
 
 const inter = Inter({
@@ -48,6 +49,7 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body>
+        <SiteJsonLd />
         <PageViewTracker />
         {children}
       </body>

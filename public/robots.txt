@@ -1,10 +1,15 @@
 # GymRoam — robots.txt
-# Public marketing pages may be indexed; admin and feedback paths must not.
+# Public marketing + city landing pages may be indexed. Admin and
+# API paths must not.
 
 User-agent: *
 Allow: /
-Allow: /join
+Allow: /search
+Allow: /trainer
 Allow: /grow
+Allow: /careers
+Allow: /join
+Allow: /gyms-in-
 
 Disallow: /gr-panel-7x9k
 Disallow: /gr-panel-7x9k/
