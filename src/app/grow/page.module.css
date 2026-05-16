@@ -159,7 +159,7 @@
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: var(--dim);
+  color: var(--text);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
