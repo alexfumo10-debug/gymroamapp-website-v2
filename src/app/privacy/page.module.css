@@ -1,0 +1,78 @@
+/* Privacy Policy — clean, readable legal page on GymRoam brand palette
+   (neon yellow #E8FF3C accent, near-black background). */
+
+.page {
+  background: #0a0a0b;
+  color: #c8c8d0;
+  min-height: 100vh;
+  padding: 120px 20px 80px;
+  line-height: 1.7;
+}
+
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.container h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #e8ff3c;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #55555f;
+  font-size: 14px;
+  margin-bottom: 40px;
+}
+
+.container h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+.container p,
+.container li {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.container ul {
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+
+.container li {
+  margin-bottom: 6px;
+}
+
+.container a {
+  color: #e8ff3c;
+  text-decoration: none;
+}
+
+.container a:hover {
+  text-decoration: underline;
+}
+
+.container strong {
+  color: #ffffff;
+}
+
+.footerNote {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #1f1f26;
+  color: #55555f;
+  font-size: 13px;
+}
+
+.footerNote p {
+  font-size: 13px;
+  margin-bottom: 0;
+}
