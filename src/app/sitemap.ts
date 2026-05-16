@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/trainer`, lastModified: today, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/careers`, lastModified: today, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/join`, lastModified: today, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/privacy`, lastModified: today, changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const cityRoutes: MetadataRoute.Sitemap = CITY_PRESETS.map((c) => ({
