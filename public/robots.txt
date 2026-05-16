@@ -10,10 +10,12 @@ Allow: /grow
 Allow: /careers
 Allow: /join
 Allow: /gyms-near-me
+Allow: /feedback
+Allow: /terms
+Allow: /privacy
 
 Disallow: /gr-panel-7x9k
 Disallow: /gr-panel-7x9k/
-Disallow: /feedback
 Disallow: /api/
 Disallow: /_next/
 

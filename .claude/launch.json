@@ -5,8 +5,7 @@
       "name": "dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000,
-      "cwd": "/Users/alessandro/Desktop/gymroamapp-website"
+      "port": 3000
     }
   ]
 }

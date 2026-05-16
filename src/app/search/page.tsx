@@ -196,6 +196,9 @@ export default function SearchPage() {
     <>
       <Nav />
       <main className={styles.page}>
+        <h1 className="sr-only">
+          Search gyms, studios, and wellness centers in {city.name}
+        </h1>
         {/* Sticky search header */}
         <div className={styles.searchHeader}>
           {/* City selector + search bar row */}
