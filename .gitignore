@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local working notes (audits, scratch docs) — never committed
+/.notes/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

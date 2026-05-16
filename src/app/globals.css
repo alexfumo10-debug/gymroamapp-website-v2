@@ -80,3 +80,17 @@ nextjs-portal {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
+
+/* Visually hidden — accessible to screen readers and search engines,
+   invisible on screen. Use for SEO-only headings and skip-links. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
