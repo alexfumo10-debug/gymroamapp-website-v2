@@ -10,8 +10,20 @@
  *
  * Each card renders as an iPhone-shaped frame with rounded corners and
  * a dark bezel. Front-facing card is fully opaque; cards rotating
- * toward the back fade out so only ~3 cards read at once. Respects
- * `prefers-reduced-motion`.
+ * toward the back fade out so only ~3 cards read at once.
+ *
+ * Implementation note: the rotation loop writes the orbit transform
+ * and each card's opacity DIRECTLY to the DOM via refs instead of
+ * going through React state. This is the iOS-Safari-safe pattern for
+ * rAF-driven 3D animation:
+ *   - No 60fps React re-renders → no reconciliation overhead.
+ *   - No state batching / scheduler quirks that on iOS Safari were
+ *     causing the orbit transform to read as unchanged each frame
+ *     (the "static carousel on mobile" bug Kevin saw).
+ *   - The `translateZ(0)` GPU hint hack — which was breaking the
+ *     preserve-3d context on iOS and flattening the cards onto the
+ *     orbit's plane (causing the "fading without moving" symptom)
+ *     is gone. The orbit transform is a pure rotateY now.
  */
 
 "use client";
@@ -44,8 +56,15 @@ function getSizes(width: number) {
 }
 
 export function PhoneCarousel({ items, autoRotateSpeed = 0.15 }: Props) {
-  const [rotation, setRotation] = useState(0);
+  // Sizes still live in React state — they affect element dimensions
+  // and need to re-render the JSX when the viewport breakpoint changes.
   const [sizes, setSizes] = useState(() => getSizes(1200));
+
+  // Refs for direct DOM access in the rAF loop. Rotation itself is
+  // a ref (not state) so we don't trigger React re-renders every frame.
+  const orbitRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const rotationRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
 
   // Responsive sizing — runs on mount + on resize.
@@ -57,22 +76,44 @@ export function PhoneCarousel({ items, autoRotateSpeed = 0.15 }: Props) {
   }, []);
 
   // Auto-rotation loop. Runs unconditionally so the carousel stays
-  // alive on iOS Low Power Mode and other situations that flip the
-  // `prefers-reduced-motion: reduce` flag — the product showcase
-  // shouldn't go static there. (CSS-driven animations elsewhere on
-  // the site still respect reduced-motion via globals.css.)
+  // alive on iOS Low Power Mode (which silently sets prefers-reduced-
+  // motion: reduce). The product showcase shouldn't go static there.
+  //
+  // The transform and per-card opacity are written DIRECTLY to the
+  // DOM via refs — no React state updates per frame. This is what
+  // finally fixed the carousel on mobile Safari: with state updates,
+  // iOS Safari was somehow not repainting the orbit transform.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const anglePerItem = 360 / items.length;
 
     const tick = () => {
-      setRotation((prev) => prev + autoRotateSpeed);
+      rotationRef.current += autoRotateSpeed;
+      const rotation = rotationRef.current;
+
+      if (orbitRef.current) {
+        orbitRef.current.style.transform = `rotateY(${rotation}deg)`;
+      }
+
+      // Per-card opacity — same falloff curve as before, just applied
+      // via direct style mutation instead of React props.
+      for (let i = 0; i < cardRefs.current.length; i++) {
+        const cardEl = cardRefs.current[i];
+        if (!cardEl) continue;
+        const itemAngle = i * anglePerItem;
+        const relative = (itemAngle + rotation) % 360;
+        const normalized = Math.abs(relative > 180 ? 360 - relative : relative);
+        const opacity = Math.max(0.4, 1 - normalized / 240);
+        cardEl.style.opacity = String(opacity);
+      }
+
       animationFrameRef.current = requestAnimationFrame(tick);
     };
     animationFrameRef.current = requestAnimationFrame(tick);
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [autoRotateSpeed]);
+  }, [autoRotateSpeed, items.length]);
 
   const anglePerItem = 360 / items.length;
   const { radius, cardW, cardH } = sizes;
@@ -83,27 +124,18 @@ export function PhoneCarousel({ items, autoRotateSpeed = 0.15 }: Props) {
       role="region"
       aria-label="GymRoam app screenshots"
     >
-      <div
-        className={styles.orbit}
-        style={{
-          // translateZ(0) forces a GPU compositing layer on iOS Safari
-          // so the JS-driven rotation actually animates frame-by-frame
-          // (the static-on-mobile bug).
-          transform: `rotateY(${rotation}deg) translateZ(0)`,
-        }}
-      >
+      {/* Orbit: rotation set by rAF directly on this element's transform
+          style — no `style={{ transform: ... }}` here, so React doesn't
+          ever try to "manage" the transform. */}
+      <div ref={orbitRef} className={styles.orbit}>
         {items.map((item, i) => {
           const itemAngle = i * anglePerItem;
-          // How far this card is from the front-facing position (0° relative).
-          // Softer falloff than the demo so cards near the back stay readable
-          // instead of dropping to near-invisible.
-          const relative = (itemAngle + rotation) % 360;
-          const normalized = Math.abs(relative > 180 ? 360 - relative : relative);
-          const opacity = Math.max(0.4, 1 - normalized / 240);
-
           return (
             <div
               key={item.src}
+              ref={(el) => {
+                cardRefs.current[i] = el;
+              }}
               className={styles.card}
               aria-hidden="true"
               style={{
@@ -111,8 +143,13 @@ export function PhoneCarousel({ items, autoRotateSpeed = 0.15 }: Props) {
                 height: cardH,
                 marginLeft: -cardW / 2,
                 marginTop: -cardH / 2,
+                // Each card's position in the orbit — fixed for the
+                // card's lifetime. The orbit's rotation is what spins
+                // the whole arrangement past the camera.
                 transform: `rotateY(${itemAngle}deg) translateZ(${radius}px)`,
-                opacity,
+                // Initial opacity — overwritten by the rAF tick on the
+                // very first frame so there's no visible "snap-in."
+                opacity: 1,
               }}
             >
               {/* Front face — visible when this card is on the camera-facing
