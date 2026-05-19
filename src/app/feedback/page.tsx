@@ -17,6 +17,7 @@ import {
   orderBy,
   doc,
 } from "firebase/firestore";
+import { CaretUp } from "@phosphor-icons/react/dist/ssr";
 import styles from "./page.module.css";
 
 interface Feature {
@@ -334,7 +335,7 @@ export default function FeedbackPage() {
                   onClick={() => handleVote(f.id, voted)}
                   title={voted ? "You voted" : "Upvote"}
                 >
-                  <span className={styles.voteArrow}>&#9650;</span>
+                  <span className={styles.voteArrow}><CaretUp size={12} weight="bold" /></span>
                   <span className={styles.voteCount}>{f.votes || 0}</span>
                 </button>
                 <div className={styles.featureContent}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Gear, MapPin, ShieldCheck, TrendUp } from "@phosphor-icons/react/dist/ssr";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
@@ -203,7 +204,7 @@ export default function GrowPage() {
         {/* Value props */}
         <section className={styles.values}>
           <div className={styles.valueCard}>
-            <div className={styles.valueIcon}>&#9906;</div>
+            <div className={styles.valueIcon}><MapPin size={20} weight="regular" /></div>
             <h3>Get discovered</h3>
             <p>
               Travelers search for gyms in your area daily. Your listing appears
@@ -211,7 +212,7 @@ export default function GrowPage() {
             </p>
           </div>
           <div className={styles.valueCard}>
-            <div className={styles.valueIcon}>&#9733;</div>
+            <div className={styles.valueIcon}><ShieldCheck size={20} weight="regular" /></div>
             <h3>Build trust</h3>
             <p>
               Verified Partner badge on your listing. Respond to reviews. Show
@@ -219,7 +220,7 @@ export default function GrowPage() {
             </p>
           </div>
           <div className={styles.valueCard}>
-            <div className={styles.valueIcon}>&#8599;</div>
+            <div className={styles.valueIcon}><TrendUp size={20} weight="regular" /></div>
             <h3>See your impact</h3>
             <p>
               Track how many people view your gym, save it, tap directions, and
@@ -227,7 +228,7 @@ export default function GrowPage() {
             </p>
           </div>
           <div className={styles.valueCard}>
-            <div className={styles.valueIcon}>&#9881;</div>
+            <div className={styles.valueIcon}><Gear size={20} weight="regular" /></div>
             <h3>Control your listing</h3>
             <p>
               Update hours, photos, amenities, day pass pricing, and visitor
@@ -512,7 +513,7 @@ export default function GrowPage() {
           ) : (
             /* Success state */
             <div className={styles.success}>
-              <div className={styles.successIcon}>&#10003;</div>
+              <div className={styles.successIcon}><Check size={32} weight="bold" /></div>
               <h3>You&apos;re on the launch list</h3>
               <p>
                 We&apos;re building toward launch and reading every

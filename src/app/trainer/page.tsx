@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
@@ -268,7 +269,7 @@ export default function TrainerPage() {
           <h2>Requirements</h2>
           <div className={styles.reqCard}>
             <div className={styles.reqRow}>
-              <div className={styles.reqCheck}>&#10003;</div>
+              <div className={styles.reqCheck}><Check size={14} weight="bold" /></div>
               <div>
                 <h4>
                   {MIN_INSTAGRAM_FOLLOWERS.toLocaleString()}+ Instagram followers
@@ -280,7 +281,7 @@ export default function TrainerPage() {
               </div>
             </div>
             <div className={styles.reqRow}>
-              <div className={styles.reqCheck}>&#10003;</div>
+              <div className={styles.reqCheck}><Check size={14} weight="bold" /></div>
               <div>
                 <h4>Certification or proven experience</h4>
                 <p>
@@ -291,7 +292,7 @@ export default function TrainerPage() {
               </div>
             </div>
             <div className={styles.reqRow}>
-              <div className={styles.reqCheck}>&#10003;</div>
+              <div className={styles.reqCheck}><Check size={14} weight="bold" /></div>
               <div>
                 <h4>Coming soon</h4>
                 <p>
@@ -610,7 +611,7 @@ export default function TrainerPage() {
           ) : (
             /* Success state */
             <div className={styles.success}>
-              <div className={styles.successIcon}>&#10003;</div>
+              <div className={styles.successIcon}><Check size={32} weight="bold" /></div>
               <h3>You&apos;re on the launch list</h3>
               <p>
                 We&apos;re building toward launch and reading every

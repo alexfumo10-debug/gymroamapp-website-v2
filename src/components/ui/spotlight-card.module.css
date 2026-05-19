@@ -1,0 +1,80 @@
+/* Spotlight glow card. Two stacked layers:
+   - `.card` is the outer wrapper; 1px padding around `.inner` is the
+     border zone where the brand-yellow spotlight reads as a "lit edge."
+   - `.inner` is the actual visible card body, with its own softer
+     spotlight gradient inside. */
+
+.card {
+  position: relative;
+  padding: 1px; /* border thickness */
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08); /* default subtle border */
+  isolation: isolate;
+  /* CSS vars updated per-card from the JS pointermove handler. The
+     fallbacks center the spotlight before the first cursor event. */
+  --mx: 50%;
+  --my: 50%;
+}
+
+/* The "lit border" — only the 1px around .inner shows this gradient
+   through, since .inner covers the rest of the card. */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    240px circle at var(--mx) var(--my),
+    rgba(232, 255, 60, 0.75) 0%,
+    rgba(232, 255, 60, 0) 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+/* The solid card body — sits on top of the gradient and lets only the
+   1px outline glow show. */
+.inner {
+  position: relative;
+  z-index: 2;
+  background: rgb(17, 17, 20); /* matches --surface so cards feel native */
+  border-radius: 15px; /* card radius minus the 1px padding */
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Soft interior spotlight — a low-opacity yellow fill that follows the
+   cursor inside the card body. Adds depth on hover without overpowering
+   the content. */
+.inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    340px circle at var(--mx) var(--my),
+    rgba(232, 255, 60, 0.08) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.card:hover .inner::before {
+  opacity: 1;
+}
+
+/* Respect motion preferences — instant on/off, no fade. */
+@media (prefers-reduced-motion: reduce) {
+  .card::before,
+  .inner::before {
+    transition: none;
+  }
+}

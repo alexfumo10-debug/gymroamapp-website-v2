@@ -3,35 +3,98 @@
 import { useEffect, useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import emailjs from "@emailjs/browser";
+import {
+  Airplane,
+  Check,
+  Compass,
+  ListBullets,
+  MapPin,
+  Sparkle,
+  Stamp,
+} from "@phosphor-icons/react/dist/ssr";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+import Image from "next/image";
 import { db } from "@/lib/firebase";
 import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from "@/lib/emailjs";
+import { LIQUID_GLASS_DISPLACEMENT_MAP } from "@/lib/liquid-glass-map";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
 import Globe from "@/components/Globe";
-import Passport from "@/components/Passport";
-import Image from "next/image";
+import CardTopo from "@/components/CardTopo";
+import HeroTopo from "@/components/HeroTopo";
+import PhoneCarousel from "@/components/ui/phone-carousel";
+import { GlowCard } from "@/components/ui/spotlight-card";
 import styles from "./page.module.css";
 
-const FEATURES = [
-  { num: "01", title: "Search any city", desc: "Type a city name or let GPS do the work. Gyms, studios, and wellness centers populate automatically within your radius." },
-  { num: "02", title: "Contact info at a glance", desc: "See phone numbers, websites, and addresses. Call the gym or get directions with one tap." },
-  { num: "03", title: "Filter by what you do", desc: "Lifting, yoga, pilates, cycling, CrossFit, run clubs, HIIT, wellness. Find exactly what fits your routine." },
-  { num: "04", title: "Save and compare", desc: "Shortlist gyms, mark the ones you've visited, and let AI rank your options based on how you train." },
-  { num: "05", title: "Train with friends", desc: "See where your friends work out across the world. Like their activity. Track your own cities and achievements." },
+/** Hero carousel — ordered for a natural product story:
+ *  Discover the app → Browse map → Scan list → Ask Scout → Plan trip →
+ *  Collect stamps. */
+const HERO_SCREENS = [
+  { src: "/app-screens/discover.png", alt: "GymRoam Discover screen — Hi GymRoam home with Ask Scout card and Trending Near You" },
+  { src: "/app-screens/map.png", alt: "GymRoam Map screen — Miami gyms with category filters and yellow location pins" },
+  { src: "/app-screens/list.png", alt: "GymRoam Trending Near You list — gym cards with directions buttons" },
+  { src: "/app-screens/scout.png", alt: "GymRoam Scout AI travel guide — ask about gyms in any city" },
+  { src: "/app-screens/trips.png", alt: "GymRoam Trips dossier — plan gym workouts around a trip itinerary" },
+  { src: "/app-screens/passport.png", alt: "GymRoam Passport — roamer profile with collected city stamps" },
 ];
 
-const TRAINER_POINTS = [
-  "Post promotions and drop-in offers",
-  "Share your class schedule and pricing",
-  "Public profile with bio, photos, and Instagram",
-  "Receive and respond to messages from interested clients",
-];
+interface Feature {
+  icon: PhosphorIcon;
+  /** Path to the screenshot in /public/app-screens/. */
+  screen: string;
+  /** Alt text + secondary header label for the screen. */
+  screenLabel: string;
+  title: string;
+  desc: string;
+}
 
-const GROW_CARDS = [
-  { title: "Get listed", desc: "Your gym shows up for every traveler searching nearby" },
-  { title: "Showcase", desc: "Photos, schedule, and pricing right in the app" },
-  { title: "Connect", desc: "Receive messages from travelers looking for drop-ins" },
+/** Six product screens, ordered as the user would naturally experience
+ *  them: Discover (home) → Map (browse) → List (trending) →
+ *  Scout (AI) → Trips (planning) → Passport (collecting). */
+const FEATURES: Feature[] = [
+  {
+    icon: Compass,
+    screen: "/app-screens/discover.png",
+    screenLabel: "Discover",
+    title: "Your daily home base",
+    desc: "Open GymRoam and see what's near you — trending picks, run clubs this week, and Scout one tap away.",
+  },
+  {
+    icon: MapPin,
+    screen: "/app-screens/map.png",
+    screenLabel: "Map",
+    title: "Search any city",
+    desc: "Every gym, studio, and wellness center on a single map. Filter by activity, tap a pin for details.",
+  },
+  {
+    icon: ListBullets,
+    screen: "/app-screens/list.png",
+    screenLabel: "Trending",
+    title: "All your options, one tap away",
+    desc: "Trending gyms with ratings, distance, and one-tap directions. The list adapts to wherever you land.",
+  },
+  {
+    icon: Sparkle,
+    screen: "/app-screens/scout.png",
+    screenLabel: "Scout",
+    title: "Ask Scout, your AI travel guide",
+    desc: "Drop a city, neighborhood, or hotel and Scout finds your gyms. Ask anything about how GymRoam works.",
+  },
+  {
+    icon: Airplane,
+    screen: "/app-screens/trips.png",
+    screenLabel: "Trips",
+    title: "Plan workouts around your trip",
+    desc: "Pin your stay, light up nearby gyms, and build a trip dossier of where you'll train each day.",
+  },
+  {
+    icon: Stamp,
+    screen: "/app-screens/passport.png",
+    screenLabel: "Passport",
+    title: "Collect stamps as you go",
+    desc: "Every gym you visit becomes a stamp. Track cities, countries, and continents — proof of every workout.",
+  },
 ];
 
 const USER_TYPES = ["Gym Goer", "Trainer", "Gym Owner", "Influencer"];
@@ -88,7 +151,39 @@ export default function Home() {
   return (
     <>
       <Nav />
+      {/* Liquid glass SVG filter — referenced by the waitlist email
+          tile's backdrop-filter. Defined once for the whole page.
+          primitiveUnits="objectBoundingBox" lets the 1x1 displacement
+          map stretch to any element size without JS calculation. */}
+      <svg
+        aria-hidden="true"
+        style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none" }}
+      >
+        <filter id="liquid-glass-waitlist" primitiveUnits="objectBoundingBox">
+          <feImage
+            result="map"
+            width="100%"
+            height="100%"
+            x="0"
+            y="0"
+            href={LIQUID_GLASS_DISPLACEMENT_MAP}
+            preserveAspectRatio="none"
+          />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.01" result="blur" />
+          {/* Low displacement scale — refraction reads as a faint warp,
+              not a fishbowl. Higher values look cartoonish on a wide
+              input tile. */}
+          <feDisplacementMap
+            in="blur"
+            in2="map"
+            scale="0.12"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </svg>
       <section className={styles.hero} id="top">
+        <HeroTopo />
         <div className={styles.heroInner}>
           <div className={`${styles.heroText} fade-up`}>
             <div className={styles.badge}>
@@ -105,6 +200,19 @@ export default function Home() {
                   ))}
                 </div>
                 <div className={styles.inputRow}>
+                  {/* Empty "lens" layer — carries the backdrop-filter +
+                      box-shadow stack. Must stay completely empty so
+                      Chrome's backdrop-filter only samples the page
+                      behind the tile (no text-ghosting). Lives behind
+                      the input/button via z-index. */}
+                  <span
+                    className={styles.inputRowLens}
+                    aria-hidden="true"
+                    style={{
+                      backdropFilter: "blur(14px) url(#liquid-glass-waitlist) saturate(140%)",
+                      WebkitBackdropFilter: "blur(14px) saturate(140%)",
+                    }}
+                  />
                   <input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleJoin()} />
                   <button onClick={handleJoin} disabled={loading}>{loading ? "Joining..." : "Join the Waitlist"}</button>
                 </div>
@@ -115,7 +223,9 @@ export default function Home() {
               </div>
             ) : (
               <div className={styles.success}>
-                <div className={styles.successCheck}>&#10003;</div>
+                <div className={styles.successCheck}>
+                  <Check size={18} weight="bold" />
+                </div>
                 <div>
                   <div className={styles.successTitle}>You&apos;re on the list</div>
                   <div className={styles.successSub}>We&apos;ll email you when GymRoam launches.</div>
@@ -125,43 +235,7 @@ export default function Home() {
           </div>
           <div className={`${styles.heroPhones} fade-up`}>
             <div className={styles.phoneGlow} />
-            <div className={`${styles.phone} ${styles.phone3}`}>
-              <Image src="/screen-list.png" alt="GymRoam gym list" fill sizes="240px" style={{ objectFit: "cover" }} />
-            </div>
-            <div className={`${styles.phone} ${styles.phone1}`}>
-              <Image src="/screen-map.png" alt="GymRoam map view" fill sizes="240px" style={{ objectFit: "cover" }} />
-            </div>
-            <div className={`${styles.phone} ${styles.phone2}`}>
-              <Image src="/screen-discover.png" alt="GymRoam discover" fill sizes="240px" style={{ objectFit: "cover" }} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.divider} />
-
-      {/* Try it now — preview /search */}
-      <section className={styles.tryNow}>
-        <div className={`${styles.tryNowInner} fade-up`}>
-          <div className={styles.tryNowTag}>Try it now</div>
-          <h2>
-            Browse Miami gyms <span className={styles.accent}>before launch</span>
-          </h2>
-          <p>
-            We built a live preview of the app experience. Filter by activity,
-            tap pins on the map, see what GymRoam will feel like.
-          </p>
-          <a href="/search" className={styles.tryNowBtn}>
-            Open the live preview &rarr;
-          </a>
-          <div className={styles.tryNowChips}>
-            <span className={styles.tryNowChip}>🏋️ Lifting</span>
-            <span className={styles.tryNowChip}>🌸 Pilates</span>
-            <span className={styles.tryNowChip}>🧘 Yoga</span>
-            <span className={styles.tryNowChip}>🚴 Cycling</span>
-            <span className={styles.tryNowChip}>🏃 Run Club</span>
-            <span className={styles.tryNowChip}>🌿 Wellness</span>
-            <span className={styles.tryNowChip}>⚡ Hyrox</span>
+            <PhoneCarousel items={HERO_SCREENS} />
           </div>
         </div>
       </section>
@@ -169,59 +243,41 @@ export default function Home() {
       <div className={styles.divider} />
 
       <section className={styles.features} id="features">
-        <div className={styles.featuresList}>
-          {FEATURES.map((f) => (
-            <div key={f.num} className={`${styles.featureRow} fade-up`}>
-              <span className={styles.featureNum}>{f.num}</span>
-              <div>
-                <h3>{f.title}</h3>
-                <p>{f.desc}</p>
+        <div className={styles.featuresGrid}>
+          {FEATURES.map(({ icon: Icon, screen, screenLabel, title, desc }) => (
+            <GlowCard key={screen} className={`${styles.featureCard} fade-up`}>
+              {/* Subtle topo backdrop inside each card. Stacks below the
+                  content via z-index defined in page.module.css. */}
+              <CardTopo />
+              {/* Mini phone-frame mockup of the actual app screen, cropped
+                  to the top so the card stays compact. The peek gradient
+                  fades the bottom into the card surface. */}
+              <div className={styles.featurePhone}>
+                <Image
+                  src={screen}
+                  alt={`GymRoam ${screenLabel} screen`}
+                  fill
+                  sizes="220px"
+                  style={{ objectFit: "cover", objectPosition: "top" }}
+                />
+                <span className={styles.featurePhonePeek} aria-hidden="true" />
               </div>
-            </div>
+              <div className={styles.featureBody}>
+                <div className={styles.featureLabelRow}>
+                  <span className={styles.featureIcon}>
+                    <Icon size={18} weight="regular" />
+                  </span>
+                  <span className={styles.featureLabel}>{screenLabel}</span>
+                </div>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+              </div>
+            </GlowCard>
           ))}
         </div>
       </section>
 
       <Globe />
-
-      <div className={styles.divider} />
-
-      <section className={styles.trainers} id="trainers">
-        <div className={styles.trainersInner}>
-          <h2 className="fade-up">For trainers and coaches</h2>
-          <p className="fade-up">Get discovered by travelers visiting your city.</p>
-          <div className={`${styles.trainerPoints} fade-up`}>
-            {TRAINER_POINTS.map((point) => (
-              <div key={point} className={styles.trainerPoint}>
-                <div className={styles.check}>&#10003;</div>
-                <span>{point}</span>
-              </div>
-            ))}
-          </div>
-          <a href="/trainer" className={styles.btn}>Get on the launch list</a>
-          <p className={styles.priceLine}>Coming soon &middot; we&apos;ll reach out as we onboard trainers</p>
-        </div>
-      </section>
-
-      <section className={styles.growCta} id="grow">
-        <div className={`${styles.growInner} fade-up`}>
-          <div className={styles.growTag}>For Gym Owners</div>
-          <h2>Grow your gym with<br /><span className={styles.accent}>GymRoam</span></h2>
-          <p>Get your gym in front of thousands of traveling fitness enthusiasts. List your space, attract drop-in visitors, and fill empty class spots.</p>
-          <div className={styles.growGrid}>
-            {GROW_CARDS.map((card) => (
-              <div key={card.title} className={styles.growCard}>
-                <h4>{card.title}</h4>
-                <p>{card.desc}</p>
-              </div>
-            ))}
-          </div>
-          <a href="/grow" className={styles.btnOutline}>Get on the launch list</a>
-          <p className={styles.priceLine}>Coming soon &middot; we&apos;ll reach out as we open partner slots</p>
-        </div>
-      </section>
-
-      <Passport />
 
       <Footer />
       <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
