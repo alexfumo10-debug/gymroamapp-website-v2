@@ -9,6 +9,10 @@
    Mobile (<640px) overrides white-space below so it wraps cleanly
    instead of overflowing the viewport. */
 .heroText > p { font-size: 17px; color: var(--muted); max-width: 100%; margin-bottom: 36px; white-space: nowrap; }
+/* The <br> inside the hero subline is hidden on desktop (sentence
+   stays on one line) and shown on mobile (forces "Never miss a
+   workout." onto its own line cleanly). */
+.mobileBreak { display: none; }
 .heroText h1 { font-size: clamp(36px, 4.5vw, 54px); font-weight: 900; line-height: 1.08; letter-spacing: -2px; margin-bottom: 20px; }
 .accent { color: var(--accent); }
 
@@ -325,6 +329,8 @@
   /* Mobile: allow the subline to wrap so it doesn't overflow narrow
      viewports. (Single-line behavior is desktop-only by design.) */
   .heroText > p { font-size: 15px; white-space: normal; }
+  /* Force the second sentence onto its own line on mobile. */
+  .mobileBreak { display: inline; }
   .heroPhones { min-height: 420px; }
 
   /* Waitlist — stack input and button */

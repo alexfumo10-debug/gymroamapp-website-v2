@@ -56,12 +56,13 @@ export function PhoneCarousel({ items, autoRotateSpeed = 0.1 }: Props) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // Auto-rotation loop. Disabled entirely for users with
-  // prefers-reduced-motion: reduce.
+  // Auto-rotation loop. Runs unconditionally so the carousel stays
+  // alive on iOS Low Power Mode and other situations that flip the
+  // `prefers-reduced-motion: reduce` flag — the product showcase
+  // shouldn't go static there. (CSS-driven animations elsewhere on
+  // the site still respect reduced-motion via globals.css.)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mq.matches) return;
 
     const tick = () => {
       setRotation((prev) => prev + autoRotateSpeed);

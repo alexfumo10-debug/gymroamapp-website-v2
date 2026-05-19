@@ -56,7 +56,7 @@ export default function Footer() {
   return (
     <section className="relative w-full overflow-hidden">
       <footer className="border-t border-border bg-bg mt-20 relative">
-        <div className="max-w-7xl mx-auto flex flex-col justify-between min-h-[33rem] sm:min-h-[40rem] md:min-h-[46rem] relative p-4 py-10">
+        <div className="max-w-7xl mx-auto flex flex-col justify-between min-h-[37rem] sm:min-h-[44rem] md:min-h-[50rem] relative p-4 py-10">
           {/* Top block: brand, tagline, socials, nav */}
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
