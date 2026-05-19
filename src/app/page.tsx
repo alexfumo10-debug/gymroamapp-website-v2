@@ -191,7 +191,7 @@ export default function Home() {
               Coming Soon to iOS
             </div>
             <h1>Find Your Sweat.<br /><span className={styles.accent}>Anywhere.</span></h1>
-            <p>Search any city. Get directions. Never miss a workout.</p>
+            <p>Search any city. Get directions.<br className={styles.mobileBreak} /> Never miss a workout.</p>
             {!joined ? (
               <div className={styles.waitlist}>
                 <div className={styles.typeRow}>
