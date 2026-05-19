@@ -41,15 +41,19 @@ async function loadInter(filename: string): Promise<ArrayBuffer> {
 }
 
 export default async function Image() {
-  // Load assets in parallel: Inter at 3 weights + the phone screenshot.
-  const [interRegular, interBold, interBlack, phoneBuffer] = await Promise.all([
-    loadInter("Inter-Regular.ttf"),
-    loadInter("Inter-Bold.ttf"),
-    loadInter("Inter-Black.ttf"),
-    readFile(join(process.cwd(), "public/app-screens/discover.png")),
-  ]);
+  // Load assets in parallel: Inter at 3 weights + the phone screenshot +
+  // the real GymRoam G-icon used everywhere else on the site.
+  const [interRegular, interBold, interBlack, phoneBuffer, logoBuffer] =
+    await Promise.all([
+      loadInter("Inter-Regular.ttf"),
+      loadInter("Inter-Bold.ttf"),
+      loadInter("Inter-Black.ttf"),
+      readFile(join(process.cwd(), "public/app-screens/map.png")),
+      readFile(join(process.cwd(), "public/gymroam-logo.png")),
+    ]);
 
   const phoneSrc = `data:image/png;base64,${phoneBuffer.toString("base64")}`;
+  const logoSrc = `data:image/png;base64,${logoBuffer.toString("base64")}`;
 
   return new ImageResponse(
     (
@@ -80,48 +84,21 @@ export default async function Image() {
           }}
         />
 
-        {/* Left column — badge, headline, tagline, wordmark */}
+        {/* Left column — headline, tagline, wordmark. Headline now sits
+            higher in the layout since the Coming Soon badge above it
+            was removed. */}
         <div
           style={{
             position: "relative",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "72px 0 72px 80px",
+            justifyContent: "center",
+            gap: 56,
+            padding: "0 0 0 80px",
             width: 720,
             height: "100%",
           }}
         >
-          {/* Coming Soon badge */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              alignSelf: "flex-start",
-              background: "#0A0A0B",
-              border: "1px solid rgba(232, 255, 60, 0.55)",
-              borderRadius: 100,
-              padding: "10px 22px",
-              color: "#E8FF3C",
-              fontSize: 18,
-              fontWeight: 700,
-              boxShadow:
-                "0 0 14px rgba(232, 255, 60, 0.38), 0 0 32px rgba(232, 255, 60, 0.18)",
-            }}
-          >
-            <div
-              style={{
-                width: 9,
-                height: 9,
-                borderRadius: 5,
-                background: "#E8FF3C",
-                display: "flex",
-              }}
-            />
-            Coming Soon to iOS
-          </div>
-
           {/* Headline + tagline */}
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div
@@ -160,7 +137,9 @@ export default async function Image() {
             </div>
           </div>
 
-          {/* Wordmark */}
+          {/* Wordmark — uses the real /public/gymroam-logo.png G-icon
+              (the same brand mark in the Nav, Footer, favicon, etc.)
+              embedded as base64 so it always ships with the OG output. */}
           <div
             style={{
               display: "flex",
@@ -168,26 +147,16 @@ export default async function Image() {
               gap: 12,
             }}
           >
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                background: "#E8FF3C",
-                borderRadius: 9,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#0A0A0B",
-                fontWeight: 900,
-                fontSize: 22,
-                fontFamily: "Inter",
-              }}
-            >
-              G
-            </div>
+            <img
+              src={logoSrc}
+              alt="GymRoam logo"
+              width={40}
+              height={40}
+              style={{ width: 40, height: 40, borderRadius: 9 }}
+            />
             <span
               style={{
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: 800,
                 letterSpacing: 4,
                 color: "#E8E8EE",
@@ -225,7 +194,7 @@ export default async function Image() {
           >
             <img
               src={phoneSrc}
-              alt="GymRoam app — Discover screen"
+              alt="GymRoam app — Map screen"
               width={280}
               height={600}
               style={{

@@ -27,7 +27,7 @@ export interface PhoneCarouselItem {
 
 interface Props {
   items: PhoneCarouselItem[];
-  /** Degrees rotated per animation frame (~60fps). 0.1 ≈ 60s per full spin. */
+  /** Degrees rotated per animation frame (~60fps). 0.15 ≈ 40s per full spin. */
   autoRotateSpeed?: number;
 }
 
@@ -43,7 +43,7 @@ function getSizes(width: number) {
   return { radius: 220, cardW: 200, cardH: 430 };
 }
 
-export function PhoneCarousel({ items, autoRotateSpeed = 0.1 }: Props) {
+export function PhoneCarousel({ items, autoRotateSpeed = 0.15 }: Props) {
   const [rotation, setRotation] = useState(0);
   const [sizes, setSizes] = useState(() => getSizes(1200));
   const animationFrameRef = useRef<number | null>(null);
@@ -85,7 +85,12 @@ export function PhoneCarousel({ items, autoRotateSpeed = 0.1 }: Props) {
     >
       <div
         className={styles.orbit}
-        style={{ transform: `rotateY(${rotation}deg)` }}
+        style={{
+          // translateZ(0) forces a GPU compositing layer on iOS Safari
+          // so the JS-driven rotation actually animates frame-by-frame
+          // (the static-on-mobile bug).
+          transform: `rotateY(${rotation}deg) translateZ(0)`,
+        }}
       >
         {items.map((item, i) => {
           const itemAngle = i * anglePerItem;
