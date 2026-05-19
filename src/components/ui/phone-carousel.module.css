@@ -10,8 +10,14 @@
   align-items: center;
   justify-content: center;
   /* Perspective creates the 3D depth effect. Higher value = subtler
-     parallax; lower = more dramatic. 2000px is a measured-feeling middle. */
+     parallax; lower = more dramatic. 2000px is a measured-feeling middle.
+     iOS Safari needs the -webkit- prefix on perspective + transform-style
+     in some versions or the 3D context flattens when an ancestor has
+     overflow: hidden. */
+  -webkit-perspective: 2000px;
   perspective: 2000px;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
 }
 
 .orbit {
@@ -19,11 +25,15 @@
   width: 100%;
   height: 100%;
   /* preserve-3d is required so child cards keep their own 3D position
-     when the parent rotates. */
+     when the parent rotates. -webkit-transform-style is the iOS Safari
+     fix that prevents the 3D context from collapsing on mobile. */
+  -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
-  /* Smooth tick-to-tick rotation — every animation frame the inline
-     transform updates by `autoRotateSpeed` degrees and CSS interpolates. */
   will-change: transform;
+  /* translateZ(0) hint forces a GPU compositing layer on iOS Safari so
+     the rAF-driven rotateY transform actually animates instead of
+     getting stuck (the bug Kevin saw — carousel static on mobile). */
+  transform: translateZ(0);
 }
 
 .card {
