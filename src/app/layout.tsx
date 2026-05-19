@@ -19,7 +19,10 @@ export const metadata: Metadata = {
     title: "GymRoam — Find Your Sweat. Anywhere.",
     description: "Search any city and instantly discover nearby gyms with directions and details.",
     type: "website",
-    images: ["/og-image.png"],
+    // Image is provided by src/app/opengraph-image.tsx — Next.js
+    // generates it at build time from JSX (hero-like preview with the
+    // brand-yellow accent on "Anywhere." and the Discover screen
+    // mockup). Don't list a static path here, or it overrides.
   },
   twitter: {
     card: "summary_large_image",
