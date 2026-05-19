@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { CellSignalFull } from "@phosphor-icons/react/dist/ssr";
 import styles from "./Passport.module.css";
 
 export default function Passport() {
@@ -89,9 +90,7 @@ export default function Passport() {
           <div className={styles.statusBar}>
             <span>9:41</span>
             <div className={styles.statusIcons}>
-              <svg width="14" height="14" viewBox="0 0 24 24">
-                <path d="M2 17h2v-7H2v7zm4 0h2V8H6v9zm4 0h2V5h-2v12zm4 0h2V2h-2v15zm4 0h2v-9h-2v9z" fill="currentColor" />
-              </svg>
+              <CellSignalFull size={14} weight="fill" />
               <span style={{ fontSize: 11 }}>100%</span>
             </div>
           </div>

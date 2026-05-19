@@ -1,0 +1,71 @@
+/* Hero topographic background — sits absolute behind hero content.
+   Low opacity for subtlety; a radial mask fades the center so it never
+   competes with the hero text/phones for legibility. */
+
+.topo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Subtle — sits in the background, doesn't compete with the hero
+     text or the carousel for attention. */
+  opacity: 0.08;
+  /* Radial mask hides the topo behind the hero content. The ellipse
+     is wider than tall to cover the side-by-side layout of text
+     (left half) and phone carousel (right half) on desktop.
+     - 0–50%: transparent in the mask → topo HIDDEN behind content.
+     - 50–95%: fades to black → topo gradually re-emerges.
+     - 95%+ (outer edges and corners): black → topo fully visible.
+     Net effect: content area sits on a clean dark stage; topo reads
+     as a backdrop bleeding in from the edges. */
+  mask-image: radial-gradient(
+    ellipse 72% 64% at center,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 50%,
+    black 95%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 72% 64% at center,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 50%,
+    black 95%
+  );
+}
+
+@media (max-width: 900px) {
+  /* On stacked mobile/tablet layout the content fills more of the
+     viewport vertically, so the mask grows to keep the topo out of
+     the content path. */
+  .topo {
+    mask-image: radial-gradient(
+      ellipse 88% 70% at center,
+      transparent 0%,
+      rgba(0, 0, 0, 0.55) 55%,
+      black 95%
+    );
+    -webkit-mask-image: radial-gradient(
+      ellipse 88% 70% at center,
+      transparent 0%,
+      rgba(0, 0, 0, 0.55) 55%,
+      black 95%
+    );
+  }
+}
+
+@media (max-width: 640px) {
+  /* Slightly stronger opacity on small viewports so the edges still
+     read despite the smaller visible area. */
+  .topo {
+    opacity: 0.10;
+  }
+}
+
+/* Respect reduced motion preference. The lines are static (no
+   animation) but if a future iteration adds motion this is the
+   correct place to disable it. Kept here for parity with globals.css. */
+@media (prefers-reduced-motion: reduce) {
+  .topo {
+    /* no-op today; kept as a hook for any future animated variant. */
+  }
+}

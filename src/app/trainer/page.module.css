@@ -2,7 +2,10 @@
 .hero {
   max-width: 720px;
   margin: 0 auto;
-  padding: 64px 24px 0;
+  /* Top padding clears the fixed Nav (~68px tall) plus a comfortable
+     breathing buffer. Matches the spacing rhythm used on /privacy
+     and /terms. */
+  padding: 120px 24px 0;
   text-align: center;
 }
 

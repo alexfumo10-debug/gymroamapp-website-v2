@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import emailjs from "@emailjs/browser";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 import { db } from "@/lib/firebase";
 import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from "@/lib/emailjs";
 import Link from "next/link";
@@ -80,7 +81,9 @@ export default function JoinPage() {
           </div>
         ) : (
           <div className={styles.success}>
-            <div className={styles.successCheck}>&#10003;</div>
+            <div className={styles.successCheck}>
+              <Check size={18} weight="bold" />
+            </div>
             <div className={styles.successTitle}>You&apos;re on the list</div>
             <div className={styles.successSub}>
               We&apos;ll email you the moment GymRoam launches. Follow{" "}

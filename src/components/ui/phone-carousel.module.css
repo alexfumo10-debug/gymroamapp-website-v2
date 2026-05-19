@@ -1,0 +1,91 @@
+/* 3D carousel of phone-shaped cards.
+   Geometry is driven by inline styles (responsive sizing in JS); these
+   styles only handle the bezel / shadow / 3D context. */
+
+.scene {
+  position: relative;
+  width: 100%;
+  height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Perspective creates the 3D depth effect. Higher value = subtler
+     parallax; lower = more dramatic. 2000px is a measured-feeling middle. */
+  perspective: 2000px;
+}
+
+.orbit {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* preserve-3d is required so child cards keep their own 3D position
+     when the parent rotates. */
+  transform-style: preserve-3d;
+  /* Smooth tick-to-tick rotation — every animation frame the inline
+     transform updates by `autoRotateSpeed` degrees and CSS interpolates. */
+  will-change: transform;
+}
+
+.card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* preserve-3d so the two face divs inside (front + back) retain
+     their own 3D rotation relative to this card. */
+  transform-style: preserve-3d;
+  /* Smooth the per-frame opacity changes so cards fade in/out rather
+     than stepping. Short duration so it still feels responsive. */
+  transition: opacity 0.3s linear;
+}
+
+/* Each face of a card holds a copy of the same screenshot. Only the
+   face whose normal currently points toward the camera renders, via
+   backface-visibility. This keeps the card visible from any orbital
+   angle (no "card disappears when it rotates to the back" gap). */
+.cardFace {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* The back face is rotated 180° around Y so its surface normal points
+   the opposite direction. The image inside is mirrored (scaleX(-1) in
+   the inline style) to cancel that flip — so the screenshot reads
+   correctly whether you're looking at the front or back of the orbit. */
+.cardBack {
+  transform: rotateY(180deg);
+}
+
+@media (max-width: 1024px) {
+  .scene {
+    height: 500px;
+  }
+  .cardFace {
+    border-radius: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .scene {
+    height: 420px;
+  }
+  .cardFace {
+    border-radius: 28px;
+    border-width: 1px;
+  }
+}
+
+/* If the user prefers reduced motion, lock the orbit at its initial
+   angle. The JS effect already skips the rotation loop; this is a
+   belt-and-braces guard in case the JS path ever changes. */
+@media (prefers-reduced-motion: reduce) {
+  .orbit {
+    transform: rotateY(0deg) !important;
+  }
+}

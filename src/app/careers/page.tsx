@@ -16,6 +16,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
@@ -470,7 +471,9 @@ export default function CareersPage() {
           <div className={styles.applyInner}>
             {submitted ? (
               <div className={styles.success}>
-                <div className={styles.successCheck}>&#10003;</div>
+                <div className={styles.successCheck}>
+                  <Check size={18} weight="bold" />
+                </div>
                 <div>
                   <div className={styles.successTitle}>Application received</div>
                   <div className={styles.successSub}>
