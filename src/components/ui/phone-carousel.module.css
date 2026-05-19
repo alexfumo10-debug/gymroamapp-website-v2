@@ -26,14 +26,14 @@
   height: 100%;
   /* preserve-3d is required so child cards keep their own 3D position
      when the parent rotates. -webkit-transform-style is the iOS Safari
-     fix that prevents the 3D context from collapsing on mobile. */
+     fix that prevents the 3D context from collapsing on mobile.
+     IMPORTANT: do NOT add `transform: translateZ(0)` here as a GPU
+     hint — on iOS Safari it breaks the preserve-3d context for the
+     descendant cards (they flatten onto this element's plane). The
+     rAF loop sets `transform: rotateY(...)` here directly via ref. */
   -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
   will-change: transform;
-  /* translateZ(0) hint forces a GPU compositing layer on iOS Safari so
-     the rAF-driven rotateY transform actually animates instead of
-     getting stuck (the bug Kevin saw — carousel static on mobile). */
-  transform: translateZ(0);
 }
 
 .card {
@@ -91,11 +91,12 @@
   }
 }
 
-/* If the user prefers reduced motion, lock the orbit at its initial
-   angle. The JS effect already skips the rotation loop; this is a
-   belt-and-braces guard in case the JS path ever changes. */
-@media (prefers-reduced-motion: reduce) {
-  .orbit {
-    transform: rotateY(0deg) !important;
-  }
-}
+/* NOTE: We intentionally do NOT add a `prefers-reduced-motion: reduce`
+   override on `.orbit` here. iOS Low Power Mode silently enables that
+   media query, and an `!important` transform override would defeat the
+   rAF loop's inline `style.transform` (inline styles do NOT beat
+   `!important` in a stylesheet). The product showcase needs to stay
+   alive on LPM, and a forced static orbit while the per-card opacity
+   loop still runs produces a "fading-but-not-moving" bug. The rotation
+   speed is gentle and constant (no acceleration / parallax), which is
+   acceptable under the WCAG reduced-motion intent. */
