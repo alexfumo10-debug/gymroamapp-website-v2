@@ -397,6 +397,50 @@
   color: var(--red);
 }
 
+/* ── Feedback board status pills ──
+   Color tokens intentionally match the public /feedback page's status
+   colors (statusReview/Planned/Progress/Shipped in feedback/page.module.css)
+   so a "Planned" item reads the same blue in the admin as it does on the
+   public board. Class names are prefixed with `fb` to avoid colliding
+   with the app-application `statusPending` / `statusApproved` etc. above. */
+.fbStatusReview {
+  background: rgba(138, 138, 153, 0.12);
+  color: #8a8a99;
+}
+.fbStatusPlanned {
+  background: rgba(74, 158, 255, 0.12);
+  color: #4a9eff;
+}
+.fbStatusProgress {
+  background: rgba(232, 255, 60, 0.12);
+  color: #e8ff3c;
+}
+.fbStatusShipped {
+  background: rgba(78, 205, 196, 0.12);
+  color: #4ecdc4;
+}
+
+/* Inline status changer on feedback admin cards. Styled to match the
+   admin's existing form selects (compact, surface-toned) so it doesn't
+   feel like a foreign control bolted into the card. */
+.fbStatusSelect {
+  background: var(--surface2, #1a1a1f);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.fbStatusSelect:hover,
+.fbStatusSelect:focus {
+  border-color: var(--accent);
+}
+
 .appDetails {
   display: grid;
   grid-template-columns: 1fr 1fr;
