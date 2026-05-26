@@ -148,6 +148,24 @@ interface Task {
   completedAt?: FirestoreTimestamp;
 }
 
+// Public-facing feedback submissions from /feedback. Mirrors the shape
+// written by feedback/page.tsx's handleSubmit. `status` follows the same
+// four-stage lifecycle as the public board so admin status changes are
+// reflected back to users immediately.
+type FeedbackStatus = "under review" | "planned" | "in progress" | "shipped";
+
+interface FeedbackItem {
+  id: string;
+  title: string;
+  description?: string;
+  category?: string;       // "Feature" | "Improvement" | "Bug Fix" | "Design"
+  submittedBy?: string;    // "Anonymous" if no name was given
+  votes?: number;
+  status: FeedbackStatus;
+  createdAt?: FirestoreTimestamp;
+  reviewedAt?: FirestoreTimestamp;
+}
+
 function generatePasscode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -182,7 +200,13 @@ export default function AdminPanel() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [trainerApps, setTrainerApps] = useState<TrainerApplication[]>([]);
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
-  const [feedbackCount, setFeedbackCount] = useState<number | null>(null);
+  // Feedback board submissions — full list (admin view), not just a count.
+  // The stat card derives its number from feedbackItems.length so we stay
+  // single-source-of-truth.
+  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [feedbackTab, setFeedbackTab] = useState<
+    "all" | FeedbackStatus
+  >("all");
 
   // Page views / traffic state
   const [pageViews, setPageViews] = useState<PageView[]>([]);
@@ -330,13 +354,22 @@ export default function AdminPanel() {
     }
   }, []);
 
-  const loadFeedbackCount = useCallback(async () => {
+  // Pull every feedback submission. Ordered newest-first so the admin
+  // immediately sees what just came in; per-tab filtering (and the
+  // optional vote-priority sort inside that) happens client-side below.
+  const loadFeedback = useCallback(async () => {
     try {
-      const snap = await getDocs(collection(db, "feedback"));
-      setFeedbackCount(snap.size);
+      const snap = await getDocs(
+        query(collection(db, "feedback"), orderBy("createdAt", "desc"))
+      );
+      const items: FeedbackItem[] = [];
+      snap.forEach((d) =>
+        items.push({ id: d.id, ...d.data() } as FeedbackItem)
+      );
+      setFeedbackItems(items);
     } catch (e) {
       console.error("Feedback load error:", e);
-      setFeedbackCount(0);
+      setFeedbackItems([]);
     }
   }, []);
 
@@ -398,7 +431,8 @@ export default function AdminPanel() {
     setApplications([]);
     setTrainerApps([]);
     setWaitlistEntries([]);
-    setFeedbackCount(null);
+    setFeedbackItems([]);
+    setFeedbackTab("all");
     setUpdates([]);
     setTasks([]);
     setPageViews([]);
@@ -411,7 +445,7 @@ export default function AdminPanel() {
       loadApplications();
       loadTrainerApplications();
       loadWaitlist();
-      loadFeedbackCount();
+      loadFeedback();
       loadPageViews();
       loadUpdates();
       loadTasks();
@@ -422,7 +456,7 @@ export default function AdminPanel() {
     loadApplications,
     loadTrainerApplications,
     loadWaitlist,
-    loadFeedbackCount,
+    loadFeedback,
     loadPageViews,
     loadUpdates,
     loadTasks,
@@ -866,6 +900,51 @@ export default function AdminPanel() {
     }
   };
 
+  // --- Feedback actions ---
+
+  // Change a feedback item's status. Writes to Firestore and optimistically
+  // updates local state so the admin doesn't see a flicker waiting for the
+  // round-trip. Stamps `reviewedAt` on every change so we have an audit
+  // trail of when status moved (mirrors `markCareerReviewed`).
+  const updateFeedbackStatus = async (
+    feedbackId: string,
+    next: FeedbackStatus
+  ) => {
+    try {
+      await updateDoc(doc(db, "feedback", feedbackId), {
+        status: next,
+        reviewedAt: serverTimestamp(),
+      });
+      setFeedbackItems((prev) =>
+        prev.map((f) => (f.id === feedbackId ? { ...f, status: next } : f))
+      );
+      showToast(`Marked as ${next}`);
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+  };
+
+  // Hard-delete a feedback item. Used for spam / off-topic submissions.
+  // window.confirm because there's no undo — the public board shows
+  // whatever is in Firestore, so a fat-finger here is visible to users.
+  const deleteFeedbackItem = async (feedbackId: string) => {
+    if (
+      !window.confirm(
+        "Delete this feedback submission? This cannot be undone."
+      )
+    )
+      return;
+    try {
+      await deleteDoc(doc(db, "feedback", feedbackId));
+      setFeedbackItems((prev) => prev.filter((f) => f.id !== feedbackId));
+      showToast("Feedback deleted");
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      showToast("Error: " + (err.message || "Unknown error"));
+    }
+  };
+
   // --- Updates actions ---
 
   const postUpdate = async () => {
@@ -1130,9 +1209,18 @@ export default function AdminPanel() {
           <div className={styles.statCard}>
             <div className={styles.statLabel}>Feedback</div>
             <div className={styles.statValue}>
-              {feedbackCount ?? "\u2014"}
+              {feedbackItems.length || "\u2014"}
             </div>
-            <div className={styles.statSub}>Feature requests</div>
+            <div className={styles.statSub}>
+              {(() => {
+                const review = feedbackItems.filter(
+                  (f) => f.status === "under review"
+                ).length;
+                return review > 0
+                  ? `${review} under review`
+                  : "Feature requests";
+              })()}
+            </div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statLabel}>Career Apps</div>
@@ -1771,6 +1859,179 @@ export default function AdminPanel() {
               </div>
             ))
           )}
+        </div>
+
+        {/* FEEDBACK BOARD SUBMISSIONS — mirrors the Career Applications
+            layout. The public /feedback page writes here; this view lets
+            the admin read, triage, and progress items through the
+            under-review → planned → in-progress → shipped lifecycle. */}
+        <div className={styles.sectionHeader}>
+          <h2>Feedback Board</h2>
+          {(() => {
+            const reviewCount = feedbackItems.filter(
+              (f) => f.status === "under review"
+            ).length;
+            return reviewCount > 0 ? (
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--accent)",
+                  fontWeight: 700,
+                }}
+              >
+                {reviewCount} under review
+              </span>
+            ) : null;
+          })()}
+        </div>
+        <div className={styles.tabs}>
+          {(
+            ["all", "under review", "planned", "in progress", "shipped"] as const
+          ).map((tab) => {
+            const isActive = feedbackTab === tab;
+            const count =
+              tab === "all"
+                ? feedbackItems.length
+                : feedbackItems.filter((f) => f.status === tab).length;
+            const label =
+              tab === "all"
+                ? "All"
+                : tab.charAt(0).toUpperCase() + tab.slice(1);
+            return (
+              <button
+                key={tab}
+                className={`${styles.tab} ${
+                  isActive ? styles.tabActive : ""
+                }`}
+                onClick={() => setFeedbackTab(tab)}
+              >
+                {label}
+                {count > 0 && (
+                  <span
+                    className={`${styles.badge} ${
+                      isActive ? styles.badgeActive : ""
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className={styles.appList}>
+          {(() => {
+            const filteredFeedback =
+              feedbackTab === "all"
+                ? feedbackItems
+                : feedbackItems.filter((f) => f.status === feedbackTab);
+            if (filteredFeedback.length === 0) {
+              return (
+                <div className={styles.empty}>
+                  No{" "}
+                  {feedbackTab === "all"
+                    ? ""
+                    : `"${feedbackTab}" `}
+                  feedback submissions yet.
+                </div>
+              );
+            }
+            return filteredFeedback.map((f) => {
+              // Status pill class — one of four colors matching the public
+              // /feedback board so the same item reads the same in both places.
+              const statusPillClass =
+                f.status === "under review"
+                  ? styles.fbStatusReview
+                  : f.status === "planned"
+                  ? styles.fbStatusPlanned
+                  : f.status === "in progress"
+                  ? styles.fbStatusProgress
+                  : styles.fbStatusShipped;
+              return (
+                <div className={styles.appCard} key={f.id}>
+                  <div className={styles.appTop}>
+                    <div>
+                      <div className={styles.appGym}>{f.title}</div>
+                      <div className={styles.appDate}>
+                        {f.submittedBy || "Anonymous"}
+                        {f.createdAt && (
+                          <>
+                            {" · "}
+                            {formatDate(f.createdAt, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={`${styles.appStatus} ${statusPillClass}`}
+                    >
+                      {f.status}
+                    </span>
+                  </div>
+
+                  {f.description && (
+                    <div className={styles.appVerify}>
+                      <div className={styles.appFieldLabel}>Description</div>
+                      <p>{f.description}</p>
+                    </div>
+                  )}
+
+                  <div className={styles.appDetails}>
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Category</div>
+                      {f.category || "Feature"}
+                    </div>
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Votes</div>
+                      <span style={{ fontWeight: 700, color: "var(--accent)" }}>
+                        {f.votes ?? 0}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status control + delete. The select changes status
+                      immediately on pick — no extra "save" step — because
+                      it mirrors the public board live. */}
+                  <div className={styles.appActions}>
+                    <label
+                      className={styles.appFieldLabel}
+                      htmlFor={`fb-status-${f.id}`}
+                      style={{ marginRight: 8, alignSelf: "center" }}
+                    >
+                      Status
+                    </label>
+                    <select
+                      id={`fb-status-${f.id}`}
+                      className={styles.fbStatusSelect}
+                      value={f.status}
+                      onChange={(e) =>
+                        updateFeedbackStatus(
+                          f.id,
+                          e.target.value as FeedbackStatus
+                        )
+                      }
+                    >
+                      <option value="under review">Under Review</option>
+                      <option value="planned">Planned</option>
+                      <option value="in progress">In Progress</option>
+                      <option value="shipped">Shipped</option>
+                    </select>
+                    <button
+                      className={`${styles.actionBtn} ${styles.btnReject}`}
+                      onClick={() => deleteFeedbackItem(f.id)}
+                      style={{ marginLeft: "auto" }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            });
+          })()}
         </div>
 
         </>
