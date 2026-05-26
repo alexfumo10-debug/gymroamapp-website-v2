@@ -1,0 +1,290 @@
+/* /support page — mirrors /trainer's visual rhythm:
+   centered narrow column, hero with tag-pill + accent headline,
+   surface-toned cards with brand-yellow accents. */
+
+/* ── Hero ── */
+.hero {
+  max-width: 720px;
+  margin: 0 auto;
+  /* 120px top clears the fixed Nav (~68px) + comfortable breathing
+     buffer. Same value used on /trainer, /privacy, /terms. */
+  padding: 120px 24px 0;
+  text-align: center;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(232, 255, 60, 0.08);
+  border: 1px solid rgba(232, 255, 60, 0.15);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hero h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  margin-bottom: 12px;
+}
+
+.accent {
+  color: var(--accent);
+  /* Match the hero's "Anywhere." glow treatment for visual continuity. */
+  text-shadow:
+    0 0 20px rgba(232, 255, 60, 0.30),
+    0 0 40px rgba(232, 255, 60, 0.14);
+}
+
+.hero p {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 520px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+
+/* ── Quick contact card ── */
+.quickHelp {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 24px;
+}
+
+.quickHelpCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.quickHelpIcon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  background: rgba(232, 255, 60, 0.08);
+  border: 1px solid rgba(232, 255, 60, 0.18);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quickHelpText h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.quickHelpText p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Inline accent link inside a paragraph — used in the quick-help card
+   and in the form's fallback notice. Underline-on-hover for clarity. */
+.inlineLink {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  transition: text-decoration 0.15s;
+}
+.inlineLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Form section ── */
+.formSection {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+}
+
+.formCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.formCard h2 {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.formSubhead {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+.formCard label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formCard input,
+.formCard textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.formCard input:focus,
+.formCard textarea:focus {
+  border-color: var(--accent);
+}
+
+.formCard textarea {
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.5;
+}
+
+.required {
+  color: #ff4d6d;
+}
+
+/* ── Submit button ── (matches /trainer for visual consistency) */
+.submitBtn {
+  width: 100%;
+  background: var(--accent);
+  color: #0a0a0b;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 8px;
+  -webkit-appearance: none;
+  min-height: 48px;
+}
+
+.submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(232, 255, 60, 0.15);
+}
+
+.submitBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Inline notice shown only when EmailJS template is still the
+   placeholder. Soft, non-alarming look — informational, not error. */
+.fallbackNotice {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(232, 255, 60, 0.05);
+  border: 1px solid rgba(232, 255, 60, 0.18);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ── Success state ── */
+.success {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  background: rgba(232, 255, 60, 0.1);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--accent);
+}
+
+.success h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.success p {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.success strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .hero {
+    padding: 100px 20px 0;
+  }
+  .hero h1 {
+    font-size: 28px;
+  }
+  .hero p {
+    font-size: 15px;
+  }
+  .quickHelp {
+    padding: 0 20px 20px;
+  }
+  .quickHelpCard {
+    padding: 16px;
+  }
+  .formSection {
+    padding: 20px 20px 60px;
+  }
+  .formCard {
+    padding: 24px 20px;
+  }
+  .formCard h2 {
+    font-size: 20px;
+  }
+}

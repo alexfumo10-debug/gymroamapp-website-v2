@@ -46,6 +46,7 @@ const NAV_LINKS: NavLink[] = [
   { label: "Grow Your Gym", href: "/grow" },
   { label: "Careers", href: "/careers" },
   { label: "Feedback", href: "/feedback" },
+  { label: "Support", href: "/support" },
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ];

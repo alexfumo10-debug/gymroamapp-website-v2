@@ -25,6 +25,7 @@ const LAST_MODIFIED = {
   careers: new Date("2026-05-01"),
   join: new Date("2026-04-15"),
   feedback: new Date("2026-05-16"),
+  support: new Date("2026-05-26"),
   privacy: new Date("2026-03-27"),
   terms: new Date("2026-05-16"),
   cityPages: new Date("2026-05-01"),
@@ -39,6 +40,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/careers`, lastModified: LAST_MODIFIED.careers, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/join`, lastModified: LAST_MODIFIED.join, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/feedback`, lastModified: LAST_MODIFIED.feedback, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${BASE}/support`, lastModified: LAST_MODIFIED.support, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/privacy`, lastModified: LAST_MODIFIED.privacy, changeFrequency: "yearly", priority: 0.3 },
     { url: `${BASE}/terms`, lastModified: LAST_MODIFIED.terms, changeFrequency: "yearly", priority: 0.3 },
   ];
