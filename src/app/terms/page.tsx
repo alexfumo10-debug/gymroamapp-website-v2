@@ -3,8 +3,8 @@
  *
  * Initial draft authored alongside the Privacy Policy. Should be
  * reviewed by counsel before formal launch, especially the Governing
- * Law clause (currently set to Florida — adjust if the LLC's
- * principal place of business is elsewhere).
+ * Law clause (currently set to Georgia, Fulton County — adjust if
+ * AI Growth House LLC's principal place of business moves).
  *
  * Server component — no interactivity. Indexable.
  */
@@ -44,7 +44,7 @@ export default function TermsPage() {
             to and use of the GymRoam website at{" "}
             <a href="https://gymroamapp.com">gymroamapp.com</a>, the GymRoam
             mobile application, and any related services (collectively, the
-            &ldquo;Service&rdquo;) provided by Leve AI Studios LLC
+            &ldquo;Service&rdquo;) provided by AI Growth House LLC
             (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;). By
             using the Service, you agree to be bound by these Terms.
           </p>
@@ -138,7 +138,7 @@ export default function TermsPage() {
             You retain ownership of the content you submit to the Service
             (for example, gym descriptions, trainer bios, photos, feature
             requests, and application materials). By submitting content,
-            you grant Leve AI Studios LLC a worldwide, non-exclusive,
+            you grant AI Growth House LLC a worldwide, non-exclusive,
             royalty-free license to host, store, display, reproduce, and
             distribute that content for the purpose of operating and
             promoting the Service.
@@ -168,11 +168,11 @@ export default function TermsPage() {
           <h2>9. Intellectual Property</h2>
           <p>
             The Service, including its design, code, branding, copy, and
-            content (excluding user-submitted content), is owned by Leve
-            AI Studios LLC and is protected by U.S. and international
+            content (excluding user-submitted content), is owned by AI
+            Growth House LLC and is protected by U.S. and international
             copyright, trademark, and other intellectual property laws.
             &ldquo;GymRoam&rdquo; and associated marks are trademarks of
-            Leve AI Studios LLC.
+            AI Growth House LLC.
           </p>
           <p>
             Third-party trademarks, including gym brand names that may
@@ -208,7 +208,7 @@ export default function TermsPage() {
 
           <h2>12. Limitation of Liability</h2>
           <p>
-            To the maximum extent permitted by law, Leve AI Studios LLC,
+            To the maximum extent permitted by law, AI Growth House LLC,
             its officers, employees, and contractors will not be liable
             for any indirect, incidental, special, consequential, or
             punitive damages, or for any loss of profits, revenue, data,
@@ -221,7 +221,7 @@ export default function TermsPage() {
 
           <h2>13. Indemnification</h2>
           <p>
-            You agree to indemnify and hold harmless Leve AI Studios LLC
+            You agree to indemnify and hold harmless AI Growth House LLC
             and its team from any claim, loss, or expense arising out of
             your use of the Service, your content, or your breach of these
             Terms.
@@ -247,11 +247,11 @@ export default function TermsPage() {
 
           <h2>16. Governing Law and Disputes</h2>
           <p>
-            These Terms are governed by the laws of the State of Florida,
+            These Terms are governed by the laws of the State of Georgia,
             without regard to its conflict-of-laws principles. You agree
             that any dispute arising out of or relating to these Terms or
             the Service will be resolved exclusively in the state or
-            federal courts located in Miami-Dade County, Florida, and you
+            federal courts located in Fulton County, Georgia, and you
             consent to the personal jurisdiction of those courts. Nothing
             in this section limits any right you may have under mandatory
             local consumer-protection law.
@@ -267,7 +267,7 @@ export default function TermsPage() {
           </p>
 
           <div className={styles.footerNote}>
-            <p>&copy; 2026 Leve AI Studios LLC. All rights reserved.</p>
+            <p>&copy; 2026 AI Growth House LLC. All rights reserved.</p>
           </div>
         </div>
       </main>

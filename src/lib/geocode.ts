@@ -9,9 +9,9 @@
 export interface GeocodeResult {
   lat: number;
   lng: number;
-  /** Trimmed display: "Miami" */
+  /** Trimmed display: "Atlanta" */
   shortName: string;
-  /** Full display: "Miami, Miami-Dade County, Florida, United States" */
+  /** Full display: "Atlanta, Fulton County, Georgia, United States" */
   fullName: string;
 }
 

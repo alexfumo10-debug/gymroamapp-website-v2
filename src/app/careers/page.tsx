@@ -67,7 +67,7 @@ const ROLES: Role[] = [
     ],
     mentorship: [
       "Direct weekly 1:1 mentorship sessions with the founder",
-      "Designated site supervisor: Founder, Leve AI Studios LLC",
+      "Designated site supervisor: Founder, AI Growth House LLC",
       "Bi-quarterly performance reviews to track growth and feedback (satisfies your school's internship-office requirements)",
       "Real participation in founder-level decisions on growth strategy, brand direction, and partner selection",
     ],
@@ -95,7 +95,7 @@ const ROLES: Role[] = [
     ],
     mentorship: [
       "Direct weekly 1:1 creative reviews with the founder",
-      "Designated site supervisor: Founder, Leve AI Studios LLC",
+      "Designated site supervisor: Founder, AI Growth House LLC",
       "Bi-quarterly performance reviews (satisfies your school's internship-office requirements)",
       "Full creative input. Your voice and edit choices shape the brand's visual story.",
     ],
@@ -361,7 +361,7 @@ export default function CareersPage() {
                   <div className={styles.roleFactRow}>
                     <span className={styles.roleFactLabel}>Reports to</span>
                     <span className={styles.roleFactValue}>
-                      Founder &amp; Managing Member, Leve AI Studios LLC
+                      Founder &amp; Managing Member, AI Growth House LLC
                     </span>
                   </div>
                   <div className={styles.roleFactRow}>
@@ -646,7 +646,7 @@ export default function CareersPage() {
           <div className={styles.eeoInner}>
             <div className={styles.eeoTag}>Equal Opportunity</div>
             <p>
-              <strong>Leve AI Studios LLC is an equal-opportunity employer.</strong>{" "}
+              <strong>AI Growth House LLC is an equal-opportunity employer.</strong>{" "}
               We welcome applicants of all backgrounds, identities, abilities, and
               experience levels. Internships are awarded based on demonstrated
               interest, fit with the role&apos;s learning objectives, and ability

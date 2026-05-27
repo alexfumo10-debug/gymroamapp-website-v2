@@ -10,7 +10,7 @@
  *  3. Nav link row (all secondary pages, since none live in the top nav)
  *  4. Big "GYMROAM" watermark behind everything, fading bottom→transparent
  *  5. Centered G-icon card sitting on a soft divider line
- *  6. Copyright + "A Leve AI Studios Company" link
+ *  6. Copyright + "Powered by: AI Growth House LLC" link
  */
 
 import Link from "next/link";
@@ -124,12 +124,12 @@ export default function Footer() {
               © {year} GymRoam. All rights reserved.
             </p>
             <Link
-              href="https://levestudios.com"
+              href="https://aigrowthhouse.com"
               target="_blank"
               rel="noopener noreferrer"
               className="!text-text hover:!text-accent text-sm transition-colors duration-300"
             >
-              A Leve AI Studios Company
+              Powered by: AI Growth House LLC
             </Link>
           </div>
         </div>

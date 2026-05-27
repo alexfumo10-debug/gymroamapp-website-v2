@@ -3,8 +3,8 @@
  *
  * Ported verbatim from the prior GitHub Pages copy
  * (alexfumo10-debug.github.io/gymroam-privacy), with the controlling
- * entity changed from the individual to "Leve AI Studios LLC" per the
- * LLC being the operating entity for GymRoam.
+ * entity set to "AI Growth House LLC" — the operating entity for
+ * GymRoam (formerly AI Growth House LLC; same LLC, renamed).
  *
  * Server component — no interactivity. Indexable.
  */
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           </p>
 
           <p>
-            Leve AI Studios LLC (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or
+            AI Growth House LLC (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or
             &ldquo;us&rdquo;) built GymRoam as a commercial application. This
             Privacy Policy explains how we collect, use, and protect your
             information when you use our app.
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
           </p>
 
           <div className={styles.footerNote}>
-            <p>&copy; 2026 Leve AI Studios LLC. All rights reserved.</p>
+            <p>&copy; 2026 AI Growth House LLC. All rights reserved.</p>
           </div>
         </div>
       </main>
