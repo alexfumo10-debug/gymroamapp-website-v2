@@ -108,7 +108,7 @@ export default function JoinPage() {
           <a href="https://instagram.com/gymroamapp" target="_blank" rel="noopener noreferrer">Instagram</a>
           <a href="mailto:gymroamapp@gmail.com">Contact</a>
         </div>
-        <span>&copy; 2026 GymRoam — A <a href="https://levestudios.com" target="_blank" rel="noopener noreferrer">Leve AI Studios</a> Company</span>
+        <span>&copy; 2026 GymRoam — Powered by: <a href="https://aigrowthhouse.com" target="_blank" rel="noopener noreferrer">AI Growth House LLC</a></span>
       </footer>
 
       <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
