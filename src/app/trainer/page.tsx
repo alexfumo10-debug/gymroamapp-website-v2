@@ -111,7 +111,7 @@ export default function TrainerPage() {
 
       /* notification email to admin */
       await addDoc(collection(db, "mail"), {
-        to: ["gymroamapp@gmail.com"],
+        to: ["sales@gymroamapp.com"],
         message: {
           subject: `New Trainer Application: ${fullName.trim()} (${handle})`,
           html: `

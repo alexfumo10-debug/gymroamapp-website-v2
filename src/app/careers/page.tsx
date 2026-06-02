@@ -213,7 +213,7 @@ export default function CareersPage() {
             EMAILJS_SERVICE_ID,
             EMAILJS_CAREERS_TEMPLATE_ID,
             {
-              to_email: "gymroamapp@gmail.com",
+              to_email: "careers@gymroamapp.com",
               applicant_name: form.fullName.trim(),
               applicant_email: form.email.trim().toLowerCase(),
               role_title: roleObj?.formLabel || selectedRole,
@@ -244,7 +244,7 @@ export default function CareersPage() {
       let message = "Something went wrong. Try again.";
       if (err.code === "permission-denied") {
         message =
-          "We couldn't save your application right now. Please try again or email gymroamapp@gmail.com directly.";
+          "We couldn't save your application right now. Please try again or email careers@gymroamapp.com directly.";
       } else if (err.code === "unavailable") {
         message =
           "Connection issue — please check your network and try again.";
