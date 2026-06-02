@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import emailjs from "@emailjs/browser";
+import { useEffect } from "react";
 import {
   Airplane,
-  Check,
   Compass,
   ListBullets,
   MapPin,
@@ -14,12 +11,9 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import Image from "next/image";
-import { db } from "@/lib/firebase";
-import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from "@/lib/emailjs";
-import { LIQUID_GLASS_DISPLACEMENT_MAP } from "@/lib/liquid-glass-map";
+import { APP_STORE_URL } from "@/lib/app-store";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import Toast from "@/components/Toast";
 import Globe from "@/components/Globe";
 import CardTopo from "@/components/CardTopo";
 import HeroTopo from "@/components/HeroTopo";
@@ -97,20 +91,11 @@ const FEATURES: Feature[] = [
   },
 ];
 
-const USER_TYPES = ["Gym Goer", "Trainer", "Gym Owner", "Influencer"];
-
 export default function Home() {
-  const [selectedType, setSelectedType] = useState("Gym Goer");
-  const [email, setEmail] = useState("");
-  const [joined, setJoined] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: "" });
-
+  // fade-up animation observer. Was previously co-located with the
+  // waitlist localStorage hydration; now standalone since the waitlist
+  // is gone.
   useEffect(() => {
-    if (localStorage.getItem("gymroam_waitlist_joined") === "true") {
-      setJoined(true);
-    }
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -123,115 +108,43 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  const handleJoin = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      setToast({ show: true, message: "Please enter a valid email" });
-      return;
-    }
-    setLoading(true);
-    try {
-      await addDoc(collection(db, "waitlist"), {
-        email: email.trim().toLowerCase(),
-        type: selectedType,
-        source: "website",
-        createdAt: serverTimestamp(),
-      });
-      try {
-        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { to_email: email.trim().toLowerCase() }, EMAILJS_PUBLIC_KEY);
-      } catch { /* skip */ }
-      localStorage.setItem("gymroam_waitlist_joined", "true");
-      setJoined(true);
-    } catch {
-      setToast({ show: true, message: "Something went wrong. Try again." });
-    }
-    setLoading(false);
-  };
-
   return (
     <>
       <Nav />
-      {/* Liquid glass SVG filter — referenced by the waitlist email
-          tile's backdrop-filter. Defined once for the whole page.
-          primitiveUnits="objectBoundingBox" lets the 1x1 displacement
-          map stretch to any element size without JS calculation. */}
-      <svg
-        aria-hidden="true"
-        style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none" }}
-      >
-        <filter id="liquid-glass-waitlist" primitiveUnits="objectBoundingBox">
-          <feImage
-            result="map"
-            width="100%"
-            height="100%"
-            x="0"
-            y="0"
-            href={LIQUID_GLASS_DISPLACEMENT_MAP}
-            preserveAspectRatio="none"
-          />
-          <feGaussianBlur in="SourceGraphic" stdDeviation="0.01" result="blur" />
-          {/* Low displacement scale — refraction reads as a faint warp,
-              not a fishbowl. Higher values look cartoonish on a wide
-              input tile. */}
-          <feDisplacementMap
-            in="blur"
-            in2="map"
-            scale="0.12"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </svg>
       <section className={styles.hero} id="top">
         <HeroTopo />
         <div className={styles.heroInner}>
           <div className={`${styles.heroText} fade-up`}>
             <div className={styles.badge}>
               <span className={styles.badgeDot} />
-              Coming Soon to iOS
+              Now on iOS
             </div>
             <h1>Find Your Sweat.<br /><span className={styles.accent}>Anywhere.</span></h1>
             <p>Search any city. Get directions.<br className={styles.mobileBreak} /> Never miss a workout.</p>
-            {!joined ? (
-              <div className={styles.waitlist}>
-                <div className={styles.typeRow}>
-                  {USER_TYPES.map((type) => (
-                    <button key={type} className={`${styles.typeBtn} ${selectedType === type ? styles.active : ""}`} onClick={() => setSelectedType(type)}>{type}</button>
-                  ))}
-                </div>
-                <div className={styles.inputRow}>
-                  {/* Empty "lens" layer — carries the backdrop-filter +
-                      box-shadow stack. Must stay completely empty so
-                      Chrome's backdrop-filter only samples the page
-                      behind the tile (no text-ghosting). Lives behind
-                      the input/button via z-index. */}
-                  <span
-                    className={styles.inputRowLens}
-                    aria-hidden="true"
-                    style={{
-                      backdropFilter: "blur(14px) url(#liquid-glass-waitlist) saturate(140%)",
-                      WebkitBackdropFilter: "blur(14px) saturate(140%)",
-                    }}
-                  />
-                  <input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleJoin()} />
-                  <button onClick={handleJoin} disabled={loading}>{loading ? "Joining..." : "Join the Waitlist"}</button>
-                </div>
-                <p className={styles.note}>Be the first to know when GymRoam launches. No spam.</p>
-                <a href="/search" className={styles.previewLink}>
-                  Or preview the app experience &rarr;
-                </a>
-              </div>
-            ) : (
-              <div className={styles.success}>
-                <div className={styles.successCheck}>
-                  <Check size={18} weight="bold" />
-                </div>
-                <div>
-                  <div className={styles.successTitle}>You&apos;re on the list</div>
-                  <div className={styles.successSub}>We&apos;ll email you when GymRoam launches.</div>
-                </div>
-              </div>
-            )}
+            {/* Primary CTA stack — official Apple App Store badge + the
+                in-site "preview the app experience" secondary link. The
+                previous email-collection waitlist form was removed
+                once the app shipped on the App Store. */}
+            <div className={styles.ctaRow}>
+              <a
+                href={APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.appStoreBadgeHero}
+                aria-label="Download GymRoam on the App Store"
+              >
+                <Image
+                  src="/app-store-badge.svg"
+                  alt="Download on the App Store"
+                  width={180}
+                  height={60}
+                  priority
+                />
+              </a>
+              <a href="/search" className={styles.previewLink}>
+                Or preview the app experience &rarr;
+              </a>
+            </div>
           </div>
           <div className={`${styles.heroPhones} fade-up`}>
             <div className={styles.phoneGlow} />
@@ -280,7 +193,6 @@ export default function Home() {
       <Globe />
 
       <Footer />
-      <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
     </>
   );
 }

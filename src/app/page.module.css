@@ -27,9 +27,9 @@
     0 0 24px rgba(232, 255, 60, 0.38),
     0 0 48px rgba(232, 255, 60, 0.18);
 }
-/* "Coming Soon to iOS" pill — solid dark interior with a static
-   brand-yellow halo around it, mirroring the rest-state look of the
-   nav's HoverBorderGradient CTA (no rotation, just the glow). */
+/* "Now on iOS" pill — solid dark interior with a static
+   brand-yellow halo around it. Was previously "Coming Soon to iOS"
+   pre-launch; copy updated when the app shipped on the App Store. */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -48,125 +48,52 @@
 }
 .badgeDot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
 
-/* WAITLIST */
-.waitlist { max-width: 440px; }
-.typeRow { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-.typeBtn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; -webkit-appearance: none; min-height: 44px; }
-/* Hover (on un-selected buttons only) — a softer preview of the active
-   state. Border and text shift to a low-alpha brand yellow, no glow.
-   :not(.active) keeps the selected button's full-strength look stable. */
-.typeBtn:not(.active):hover {
-  border-color: rgba(232, 255, 60, 0.42);
-  color: rgba(232, 255, 60, 0.85);
-}
-/* Selected type — yellow outline + yellow text instead of filled.
-   The subtle glow halo is what differentiates it from the inactive
-   state without resorting to a heavy fill. */
-.active {
-  background: var(--surface);
-  color: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(232, 255, 60, 0.16);
-}
-/* Email capture tile — Apple Tahoe-style "liquid glass".
-   Structure: the wrapping .inputRow is just the flex container; the
-   visual glass effect lives on the empty .inputRowLens layer sitting
-   behind the input + button. Keeping the lens empty is the key trick
-   that prevents backdrop-filter from ghosting text rendered on top. */
-.inputRow {
-  position: relative;
-  isolation: isolate;
+/* HERO CTA STACK
+   The pre-launch email-collection tile (typeRow + inputRow + success
+   state) is gone now that the app is live on the App Store. What
+   replaces it is a tight column: the official Apple App Store badge
+   sitting above a secondary "preview the app experience" link.
+   Kept narrow so it doesn't compete with the phone carousel on the
+   right at desktop widths. */
+.ctaRow {
   display: flex;
-  gap: 8px;
-  padding: 6px;
-  border-radius: 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 440px;
 }
 
-/* The lens — fills the tile, sits behind content (z-index 0), pulls
-   in the SVG-filter refraction via inline backdrop-filter (declared
-   in JSX so Lightning CSS doesn't strip it).
-   Restrained shadow stack: a 1px hairline border, a faint top inset
-   highlight, and a soft drop shadow. Reads as clean frosted glass
-   rather than a chunky 3D bead. */
-.inputRowLens {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background-color: rgba(255, 255, 255, 0.025);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
-    0 8px 28px 0 rgba(0, 0, 0, 0.22);
-  transition: background-color 300ms ease-out, box-shadow 300ms ease-out;
+/* The Apple App Store badge anchor (hero variant — larger than the
+   Nav badge). Apple's marketing guidelines forbid recoloring or
+   visually treating the badge itself, so the hover affordance lives
+   on the anchor (slight lift + opacity dip), not on the SVG. */
+.appStoreBadgeHero {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.appStoreBadgeHero:hover {
+  transform: translateY(-2px);
+  opacity: 0.92;
+}
+.appStoreBadgeHero:active {
+  transform: translateY(0);
 }
 
-/* Focus-within picks up the brand-yellow ring + a faint yellow tint
-   on the glass. Subtle: the ring stays at low alpha so it reads as
-   "lit," not "circled in marker." */
-.inputRow:focus-within .inputRowLens {
-  background-color: rgba(232, 255, 60, 0.05);
-  box-shadow:
-    inset 0 0 0 1px rgba(232, 255, 60, 0.30),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
-    0 8px 28px 0 rgba(0, 0, 0, 0.22),
-    0 0 0 3px rgba(232, 255, 60, 0.10);
-}
-
-/* Input + button sit above the lens so they're not warped by the
-   displacement map. */
-.inputRow input,
-.inputRow button {
-  position: relative;
-  z-index: 1;
-}
-.inputRow input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 16px; font-family: inherit; padding: 12px 14px; min-width: 0; -webkit-appearance: none; border-radius: 0; }
-.inputRow input::placeholder { color: var(--dim); }
-/* Join the Waitlist button — solid brand yellow with a soft yellow
-   glow so it reads as the lit-up primary CTA inside the glass tile.
-   - Resting: two-layer halo at ~30% / ~14% — visible without being loud.
-   - Hover: glow intensifies AND the button lifts a hair.
-   - Disabled / loading: glow off so the dim state is unambiguous. */
-.inputRow button {
-  background: var(--accent);
-  color: #0A0A0B;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 10px;
-  font-size: 14px;
+/* Secondary in-site CTA — the "Or preview the app experience →"
+   link that drops users into /search without leaving the site. */
+.previewLink {
+  display: inline-block;
+  font-size: 13px;
   font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-  -webkit-appearance: none;
-  min-height: 44px;
-  box-shadow:
-    0 0 20px rgba(232, 255, 60, 0.32),
-    0 0 40px rgba(232, 255, 60, 0.14);
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
-.inputRow button:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 28px rgba(232, 255, 60, 0.50),
-    0 0 56px rgba(232, 255, 60, 0.24);
+.previewLink:hover {
+  opacity: 0.8;
 }
-.inputRow button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-.note { font-size: 12px; color: var(--dim); margin-top: 10px; }
-.previewLink { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; transition: opacity 0.15s; }
-.previewLink:hover { opacity: 0.8; }
-
-/* SUCCESS */
-.success { display: flex; background: var(--surface); border: 1px solid rgba(232,255,60,0.3); border-radius: 14px; padding: 16px 18px; max-width: 440px; align-items: center; gap: 14px; }
-.successCheck { width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0A0A0B; font-weight: 900; font-size: 16px; flex-shrink: 0; }
-.successTitle { font-size: 15px; font-weight: 700; color: var(--text); }
-.successSub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 /* HERO PHONE CAROUSEL WRAPPER
    Sizes are owned by the PhoneCarousel component itself; this wrapper
@@ -315,10 +242,8 @@
   .heroInner { grid-template-columns: 1fr; text-align: center; gap: 48px; }
   .heroText > p { margin: 0 auto 36px; text-align: center; }
   .heroPhones { min-height: 500px; }
-  .typeRow { justify-content: center; }
-  .waitlist { margin: 0 auto; }
-  .success { margin: 0 auto; }
-  .note { text-align: center; }
+  /* Center the CTA stack under the centered headline. */
+  .ctaRow { margin: 0 auto; align-items: center; }
   .badge { justify-content: center; }
   .features { padding: 80px 24px 48px; }
 }
@@ -332,13 +257,6 @@
   /* Force the second sentence onto its own line on mobile. */
   .mobileBreak { display: inline; }
   .heroPhones { min-height: 420px; }
-
-  /* Waitlist — stack input and button */
-  .inputRow { flex-direction: column; gap: 0; padding: 0; border-radius: 14px; overflow: hidden; }
-  .inputRow input { text-align: center; padding: 14px 16px; border-radius: 0; }
-  .inputRow button { border-radius: 0; padding: 14px 22px; width: 100%; }
-  .typeRow { gap: 8px; }
-  .typeBtn { flex: 1; min-width: calc(50% - 8px); text-align: center; justify-content: center; display: flex; align-items: center; }
 
   /* Features — centered layout */
   .featureRow { flex-direction: column; gap: 8px; text-align: center; align-items: center; }

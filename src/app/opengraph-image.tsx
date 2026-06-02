@@ -4,13 +4,15 @@
  * the home page is shared on social platforms, replacing the prior
  * static /og-image.png reference in layout.tsx.
  *
- * Visual goal: feel like the hero section without the waitlist UI.
+ * Visual goal: feel like the hero section as a static image.
  *   - Dark brand surface
- *   - "Coming Soon to iOS" badge
  *   - "Find Your Sweat. Anywhere." headline (with brand-yellow accent)
  *   - Tagline below
- *   - Phone screenshot (Discover screen) on the right
+ *   - Phone screenshot (Map screen) on the right
  *   - GYMROAM wordmark in the corner
+ *
+ * (Originally rendered a "Coming Soon to iOS" badge above the headline;
+ * removed when the app shipped on the App Store.)
  *
  * Uses the nodejs runtime so we can read the phone screenshot from
  * /public at build time and embed it as base64. Inter font binaries
@@ -84,9 +86,7 @@ export default async function Image() {
           }}
         />
 
-        {/* Left column — headline, tagline, wordmark. Headline now sits
-            higher in the layout since the Coming Soon badge above it
-            was removed. */}
+        {/* Left column — headline, tagline, wordmark. */}
         <div
           style={{
             position: "relative",
