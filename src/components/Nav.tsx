@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   InstagramLogo,
   List,
@@ -10,7 +11,7 @@ import {
   XLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import Logo from "./Logo";
-import { HoverBorderGradient } from "./ui/hover-border-gradient";
+import { APP_STORE_URL } from "@/lib/app-store";
 import styles from "./Nav.module.css";
 
 export default function Nav() {
@@ -52,15 +53,26 @@ export default function Nav() {
               <XLogo size={20} weight="regular" />
             </a>
           </li>
+          {/* Primary CTA — official Apple App Store badge linking to the
+              live GymRoam iOS listing. Replaced the prior "Get Early
+              Access" pill once the app shipped on the App Store. */}
           <li className={styles.ctaWrap}>
-            <HoverBorderGradient
-              as={Link}
-              href="/#top"
+            <a
+              href={APP_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setMenuOpen(false)}
-              duration={1.2}
+              className={styles.appStoreBadge}
+              aria-label="Download GymRoam on the App Store"
             >
-              Get Early Access
-            </HoverBorderGradient>
+              <Image
+                src="/app-store-badge.svg"
+                alt="Download on the App Store"
+                width={120}
+                height={40}
+                priority
+              />
+            </a>
           </li>
         </ul>
         <button

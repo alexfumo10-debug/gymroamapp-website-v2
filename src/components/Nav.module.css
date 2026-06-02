@@ -39,12 +39,31 @@
   color: var(--text);
 }
 
-/* Wrapper around the HoverBorderGradient CTA button. Keeps it from
-   inheriting the mobile-menu .links.show a styling (centered row with
-   padding) so the pill button stays a self-contained pill. */
+/* Wrapper around the primary CTA (Apple App Store badge). Keeps it
+   from inheriting the mobile-menu `.links.show a` styling (centered
+   row with padding) so the badge stays a self-contained block. */
 .ctaWrap {
   display: inline-flex;
   align-items: center;
+}
+
+/* Apple App Store badge anchor. The SVG itself is sized via the
+   next/image width/height; this wrapper just handles hover affordance
+   (subtle scale + opacity) without altering the badge's intrinsic
+   look, per Apple's marketing guidelines (don't tint, don't recolor,
+   don't add visual treatments on top of the badge). */
+.appStoreBadge {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.appStoreBadge:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+.appStoreBadge:active {
+  transform: translateY(0);
 }
 
 /* Social icon cluster (Instagram + TikTok + X) — sits as a single

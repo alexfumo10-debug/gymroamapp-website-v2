@@ -21,6 +21,7 @@ import {
   TiktokLogo,
   XLogo,
 } from "@phosphor-icons/react/dist/ssr";
+import { APP_STORE_URL } from "@/lib/app-store";
 
 interface SocialLink {
   icon: React.ReactNode;
@@ -81,6 +82,28 @@ export default function Footer() {
                   Discover gyms, studios, and wellness centers wherever you travel.
                 </p>
               </div>
+
+              {/* Apple App Store badge — same 120×40 sizing as the Nav
+                  CTA. Sits between the tagline and the social icons so
+                  the visual hierarchy reads brand → tagline → primary
+                  CTA → secondary CTAs (socials + nav). Apple's
+                  guidelines forbid recoloring the badge, so the hover
+                  affordance lives on the anchor (subtle lift + opacity
+                  dip) rather than on the SVG. */}
+              <a
+                href={APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Download GymRoam on the App Store"
+                className="mt-6 inline-flex items-center leading-none transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90"
+              >
+                <Image
+                  src="/app-store-badge.svg"
+                  alt="Download on the App Store"
+                  width={120}
+                  height={40}
+                />
+              </a>
 
               {/* Social icons */}
               <div className="flex mb-8 mt-6 gap-5">
