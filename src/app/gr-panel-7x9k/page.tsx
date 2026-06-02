@@ -19,6 +19,7 @@ import {
   query,
   orderBy,
   where,
+  limit,
   Timestamp,
   serverTimestamp,
 } from "firebase/firestore";
@@ -152,6 +153,22 @@ interface Task {
 // written by feedback/page.tsx's handleSubmit. `status` follows the same
 // four-stage lifecycle as the public board so admin status changes are
 // reflected back to users immediately.
+// App users — the people who signed up inside the iOS app (Firebase Auth
+// account creators). Only a few fields are surfaced in the admin list;
+// the rest of the user doc (fitness prefs, traveler type, creator bio,
+// etc.) is left for future detail views.
+interface AppUser {
+  uid: string;
+  email?: string;
+  displayName?: string;
+  username?: string;
+  photoURL?: string;
+  homeCity?: string;
+  isVerifiedCreator?: boolean;
+  verifiedCreatorTier?: string | null;
+  createdAt?: FirestoreTimestamp;
+}
+
 type FeedbackStatus = "under review" | "planned" | "in progress" | "shipped";
 
 interface FeedbackItem {
@@ -214,6 +231,9 @@ export default function AdminPanel() {
   // Career applications
   const [careerApps, setCareerApps] = useState<CareerApplication[]>([]);
   const [careerTab, setCareerTab] = useState<"pending" | "reviewed">("pending");
+
+  // App users — most-recent 100, ordered by createdAt desc.
+  const [appUsers, setAppUsers] = useState<AppUser[]>([]);
 
   // Updates state
   const [updates, setUpdates] = useState<UpdatePost[]>([]);
@@ -335,6 +355,27 @@ export default function AdminPanel() {
     }
   }, []);
 
+  // Pull the most recent N users. Bounded by `limit(100)` so this stays
+  // cheap as the collection grows. Legacy docs without `createdAt` are
+  // excluded by Firestore's orderBy semantics — that's fine; this view
+  // is intentionally "recent signups," not the full historical list.
+  const loadAppUsers = useCallback(async () => {
+    try {
+      const snap = await getDocs(
+        query(
+          collection(db, "users"),
+          orderBy("createdAt", "desc"),
+          limit(100)
+        )
+      );
+      const items: AppUser[] = [];
+      snap.forEach((d) => items.push({ uid: d.id, ...d.data() } as AppUser));
+      setAppUsers(items);
+    } catch (e) {
+      console.error("App users load error:", e);
+    }
+  }, []);
+
   const loadPageViews = useCallback(async () => {
     try {
       // Last 7 days only — keeps reads cheap
@@ -437,6 +478,7 @@ export default function AdminPanel() {
     setTasks([]);
     setPageViews([]);
     setCareerApps([]);
+    setAppUsers([]);
   };
 
   // Load data after login
@@ -450,6 +492,7 @@ export default function AdminPanel() {
       loadUpdates();
       loadTasks();
       loadCareerApplications();
+      loadAppUsers();
     }
   }, [
     isLoggedIn,
@@ -461,6 +504,7 @@ export default function AdminPanel() {
     loadUpdates,
     loadTasks,
     loadCareerApplications,
+    loadAppUsers,
   ]);
 
   // --- Derived stats ---
@@ -485,6 +529,16 @@ export default function AdminPanel() {
   const weekAgo = Date.now() / 1000 - 7 * 24 * 60 * 60;
   const recentSignups = waitlistEntries.filter(
     (e) => (e.createdAt?.seconds || 0) > weekAgo
+  ).length;
+
+  // App-signup activity windows. Used for both the stat-tile subtitle
+  // and the in-section velocity readout.
+  const thirtyDaysAgo = Date.now() / 1000 - 30 * 24 * 60 * 60;
+  const appUsersThisWeek = appUsers.filter(
+    (u) => (u.createdAt?.seconds || 0) > weekAgo
+  ).length;
+  const appUsersThisMonth = appUsers.filter(
+    (u) => (u.createdAt?.seconds || 0) > thirtyDaysAgo
   ).length;
 
   const filteredApps = applications.filter((a) => a.status === currentTab);
@@ -1180,6 +1234,19 @@ export default function AdminPanel() {
         {/* Stats Grid */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
+            <div className={styles.statLabel}>App Users</div>
+            <div className={styles.statValue}>
+              {appUsers.length || "\u2014"}
+            </div>
+            <div className={styles.statSub}>
+              {appUsersThisWeek > 0
+                ? `+${appUsersThisWeek} this week`
+                : appUsers.length > 0
+                  ? "Total signups"
+                  : "No signups yet"}
+            </div>
+          </div>
+          <div className={styles.statCard}>
             <div className={styles.statLabel}>Waitlist</div>
             <div className={styles.statValue}>
               {waitlistEntries.length || "\u2014"}
@@ -1686,6 +1753,82 @@ export default function AdminPanel() {
             )}
           </div>
         )}
+
+        {/* APP USERS — recent Firebase Auth signups from the iOS app.
+            Bounded to the 100 most-recent users (orderBy createdAt desc
+            in loadAppUsers). Empty today since the App Store just
+            launched; populates as people onboard. */}
+        <div className={styles.sectionHeader}>
+          <h2>App Users</h2>
+          <span style={{ fontSize: 11, color: "var(--dim)" }}>
+            {appUsers.length > 0
+              ? `${appUsers.length} recent · ${appUsersThisWeek} this week · ${appUsersThisMonth} this month`
+              : "No signups yet — refresh after the first ones come in"}
+          </span>
+        </div>
+        <div className={styles.appList}>
+          {appUsers.length === 0 ? (
+            <div className={styles.empty}>
+              No app users yet. People who create an account in the iOS app
+              will appear here, newest first.
+            </div>
+          ) : (
+            appUsers.map((u) => (
+              <div className={styles.appCard} key={u.uid}>
+                <div className={styles.appTop}>
+                  <div>
+                    <div className={styles.appGym}>
+                      {u.displayName || u.username || u.email || u.uid}
+                    </div>
+                    <div className={styles.appDate}>
+                      {u.username ? `@${u.username}` : "no handle yet"}
+                      {u.createdAt && (
+                        <>
+                          {" · "}
+                          {formatDate(u.createdAt, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {u.isVerifiedCreator && (
+                    <span
+                      className={`${styles.appStatus} ${styles.statusApproved}`}
+                    >
+                      verified{u.verifiedCreatorTier ? ` · ${u.verifiedCreatorTier}` : ""}
+                    </span>
+                  )}
+                </div>
+
+                <div className={styles.appDetails}>
+                  {u.email && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Email</div>
+                      <a href={`mailto:${u.email}`} className={styles.websiteLink}>
+                        {u.email}
+                      </a>
+                    </div>
+                  )}
+                  {u.homeCity && (
+                    <div className={styles.appField}>
+                      <div className={styles.appFieldLabel}>Home city</div>
+                      {u.homeCity}
+                    </div>
+                  )}
+                  <div className={styles.appField}>
+                    <div className={styles.appFieldLabel}>UID</div>
+                    <code style={{ fontSize: 11, color: "var(--dim)" }}>
+                      {u.uid}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
         {/* CAREER APPLICATIONS */}
         <div className={styles.sectionHeader}>
