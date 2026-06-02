@@ -23,7 +23,7 @@ export default function Nav() {
         <Logo />
         <ul className={`${styles.links} ${menuOpen ? styles.show : ""}`}>
           <li><Link href="/#features" onClick={() => setMenuOpen(false)}>Features</Link></li>
-          <li><a href="mailto:gymroamapp@gmail.com" onClick={() => setMenuOpen(false)}>Contact</a></li>
+          <li><a href="mailto:support@gymroamapp.com" onClick={() => setMenuOpen(false)}>Contact</a></li>
           <li className={styles.socials}>
             <a
               href="https://instagram.com/gymroamapp"

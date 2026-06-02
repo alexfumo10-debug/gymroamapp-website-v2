@@ -86,7 +86,7 @@ export default function GrowPage() {
 
       /* notification email via Firebase Trigger Email extension */
       await addDoc(collection(db, "mail"), {
-        to: ["gymroamapp@gmail.com"],
+        to: ["sales@gymroamapp.com"],
         message: {
           subject: `New Gym Partner Application: ${gymName.trim()}`,
           html: `

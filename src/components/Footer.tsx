@@ -38,7 +38,7 @@ const SOCIAL_LINKS: SocialLink[] = [
   { icon: <InstagramLogo size={24} weight="regular" />, href: "https://instagram.com/gymroamapp", label: "Instagram" },
   { icon: <TiktokLogo size={24} weight="regular" />, href: "https://tiktok.com/@gymroamapp", label: "TikTok" },
   { icon: <XLogo size={24} weight="regular" />, href: "https://x.com/gymroamapp", label: "X" },
-  { icon: <EnvelopeSimple size={24} weight="regular" />, href: "mailto:gymroamapp@gmail.com", label: "Email" },
+  { icon: <EnvelopeSimple size={24} weight="regular" />, href: "mailto:support@gymroamapp.com", label: "Email" },
 ];
 
 const NAV_LINKS: NavLink[] = [

@@ -19,7 +19,7 @@ export const EMAILJS_CAREERS_TEMPLATE_ID = "template_REPLACE_ME";
  *    template in the EmailJS dashboard. The template should accept the
  *    following variables (mirrors what /support/page.tsx sends):
  *
- *      {{to_email}}       → "gymroamapp@gmail.com" (fixed)
+ *      {{to_email}}       → "support@gymroamapp.com" (fixed)
  *      {{sender_name}}    → user's name
  *      {{sender_email}}   → user's email (reply-to)
  *      {{subject}}        → user's subject line
@@ -30,7 +30,7 @@ export const EMAILJS_CAREERS_TEMPLATE_ID = "template_REPLACE_ME";
  *    Recommended Reply-To field in EmailJS: {{sender_email}}
  *
  *    Until set, the /support form will block submission with an inline
- *    fallback notice that points users to gymroamapp@gmail.com directly.
+ *    fallback notice that points users to support@gymroamapp.com directly.
  *    No data is lost — the form simply tells the user where to email.
  */
 export const EMAILJS_SUPPORT_TEMPLATE_ID = "template_99s4pgb";

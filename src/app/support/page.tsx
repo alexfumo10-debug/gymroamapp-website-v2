@@ -7,10 +7,10 @@
  * second styling vocabulary.
  *
  * Delivery: EmailJS only (no Firestore writes). Submissions hit the
- * EMAILJS_SUPPORT_TEMPLATE_ID template and email gymroamapp@gmail.com.
+ * EMAILJS_SUPPORT_TEMPLATE_ID template and email support@gymroamapp.com.
  * If the template ID is still the `template_REPLACE_ME_SUPPORT`
  * placeholder, we BLOCK the submit and show an inline fallback panel
- * pointing the user at gymroamapp@gmail.com directly, so a forgotten
+ * pointing the user at support@gymroamapp.com directly, so a forgotten
  * EmailJS setup never produces silently-lost messages.
  *
  * No Firestore here by design (per Kevin's decision when scoping this
@@ -33,7 +33,7 @@ import {
 } from "@/lib/emailjs";
 import styles from "./page.module.css";
 
-const SUPPORT_EMAIL = "gymroamapp@gmail.com";
+const SUPPORT_EMAIL = "support@gymroamapp.com";
 
 // True only when the EmailJS template is still a placeholder. We block
 // submission in that case so messages don't silently drop into the void.

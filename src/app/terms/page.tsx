@@ -257,7 +257,7 @@ export default function TermsPage() {
           </p>
           <p>
             <strong>Email:</strong>{" "}
-            <a href="mailto:gymroamapp@gmail.com">gymroamapp@gmail.com</a>
+            <a href="mailto:support@gymroamapp.com">support@gymroamapp.com</a>
           </p>
 
           <div className={styles.footerNote}>

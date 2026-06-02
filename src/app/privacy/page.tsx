@@ -173,7 +173,7 @@ export default function PrivacyPage() {
           </p>
           <p>
             <strong>Email:</strong>{" "}
-            <a href="mailto:gymroamapp@gmail.com">gymroamapp@gmail.com</a>
+            <a href="mailto:support@gymroamapp.com">support@gymroamapp.com</a>
           </p>
 
           <div className={styles.footerNote}>
