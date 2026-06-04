@@ -804,4 +804,251 @@
   .sectionNav {
     flex-wrap: wrap;
   }
+  /* Mobile: collapse user table to single column so it doesn't
+     side-scroll horizontally on phones. */
+  .userRow {
+    grid-template-columns: 40px 1fr !important;
+    grid-template-areas:
+      "avatar identity"
+      "avatar email"
+      "avatar city"
+      "avatar date"
+      "avatar status" !important;
+    gap: 4px 12px !important;
+  }
+  .userRow > *:nth-child(1) { grid-area: avatar; }
+  .userRow > *:nth-child(2) { grid-area: identity; }
+  .userRow > *:nth-child(3) { grid-area: email; }
+  .userRow > *:nth-child(4) { grid-area: city; }
+  .userRow > *:nth-child(5) { grid-area: date; font-size: 11px; color: var(--dim); }
+  .userRow > *:nth-child(6) { grid-area: status; }
+  .userRowHeader { display: none !important; }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   New navigation patterns added with the 6-tab dashboard rewrite:
+   1. .subNav / .subTab — sub-tab nav inside a section (Users,
+      Pipeline, Team) using lighter visual weight than the top tabs
+      so the hierarchy reads as primary → secondary cleanly.
+   2. .attentionList / .attentionItem — the "Needs Your Attention"
+      action queue on the Overview tab.
+   3. .userTable / .userRow — dense table-row layout for App Users
+      (replaces the old big tile cards so 5–8 users fit per screen).
+   ────────────────────────────────────────────────────────────── */
+
+/* Sub-tab navigation strip. Sits below the top-level section tabs
+   and above the section's content. Lighter borders and smaller
+   padding than the top tabs so the visual hierarchy reads cleanly. */
+.subNav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.subTab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.subTab:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.subTabActive {
+  background: var(--surface2, rgba(255, 255, 255, 0.06));
+  color: var(--text);
+}
+
+/* "Needs Your Attention" action queue on the Overview tab.
+   Each row is a clickable button that jumps to the relevant
+   section + sub-tab in one click. Color-graded so the largest
+   counts read as more urgent at a glance. */
+.attentionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.attentionItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  width: 100%;
+}
+
+.attentionItem:hover {
+  border-color: rgba(232, 255, 60, 0.4);
+  background: rgba(232, 255, 60, 0.03);
+  transform: translateX(2px);
+}
+
+.attentionCount {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--accent);
+  min-width: 48px;
+  letter-spacing: -1px;
+  /* Match the accent glow used elsewhere on the site for visual
+     continuity. Keeps the action queue feeling like part of the
+     same design system rather than a foreign control surface. */
+  text-shadow: 0 0 16px rgba(232, 255, 60, 0.35);
+}
+
+.attentionLabel {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+  flex: 1;
+}
+
+.attentionArrow {
+  font-size: 18px;
+  color: var(--dim);
+  transition: color 0.15s, transform 0.15s;
+}
+
+.attentionItem:hover .attentionArrow {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.attentionAllClear {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+/* ── Dense user table — replaces the tile-card App Users list ──
+   Six-column grid: avatar bubble, identity (name + handle stacked),
+   email, city, joined date, status badge. Each row stays at ~52px
+   tall vs. ~150px for the old cards, so 5–8 users fit per screen
+   at typical desktop heights. */
+.userTable {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.userRow {
+  display: grid;
+  grid-template-columns: 40px 1.4fr 1.4fr 1fr 110px 130px;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  transition: background 0.12s;
+}
+
+.userRow:last-child {
+  border-bottom: none;
+}
+
+.userRow:hover:not(.userRowHeader) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Header row — small uppercase labels above the data rows. */
+.userRowHeader {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: default;
+}
+
+/* Avatar bubble — first character of display name as a 36px circle.
+   Brand-yellow tint at low alpha so it reads as "user" without
+   overpowering the row's text. */
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(232, 255, 60, 0.10);
+  border: 1px solid rgba(232, 255, 60, 0.22);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.userIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.userName {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userHandle {
+  color: var(--dim);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail,
+.userCity,
+.userDate {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userDate {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.userStatus {
+  text-align: right;
+  white-space: nowrap;
 }
