@@ -211,8 +211,38 @@ export default function AdminPanel() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminName, setAdminName] = useState("");
 
-  // Section navigation
-  const [activeSection, setActiveSection] = useState<"operations" | "updates" | "tasks">("operations");
+  // ── Section navigation ──
+  // Six top-level tabs, each owning a focused slice of admin work:
+  //   overview — at-a-glance dashboard + "Needs Your Attention" queue
+  //   users    — App Users + Waitlist
+  //   pipeline — Gym / Trainer / Career applications
+  //   feedback — public Feedback Board
+  //   traffic  — Website Traffic
+  //   team     — Updates + Tasks
+  // Sub-tab state for the multi-section tabs lives below.
+  type AdminSection =
+    | "overview"
+    | "users"
+    | "pipeline"
+    | "feedback"
+    | "traffic"
+    | "team";
+  const [activeSection, setActiveSection] = useState<AdminSection>("overview");
+
+  // Sub-tab state per section that has internal sub-sections.
+  // "app-users" is the most common landing tab for Users; gym is the
+  // most common for Pipeline (highest volume); tasks for Team (more
+  // actionable than the broadcast Updates feed).
+  const [usersTab, setUsersTab] = useState<"app-users" | "waitlist">("app-users");
+  const [pipelineTab, setPipelineTab] = useState<"gym" | "trainer" | "career">("gym");
+  const [teamTab, setTeamTab] = useState<"tasks" | "updates">("tasks");
+
+  // Type aliases for sub-tabs we'll target from the action queue.
+  // String-literal types (rather than typeof state) so this helper can
+  // sit before the corresponding useState calls without TDZ errors.
+  type CareerTab = "pending" | "reviewed";
+  type FeedbackTab = "all" | FeedbackStatus;
+  type AppPoolTab = "pending" | "approved" | "rejected";
 
   // Data state
   const [applications, setApplications] = useState<Application[]>([]);
@@ -282,6 +312,38 @@ export default function AdminPanel() {
     setToastMsg(msg);
     setToastShow(true);
   }, []);
+
+  // Navigate to a top-level section, optionally pre-selecting a sub-tab.
+  // Used by the "Needs Your Attention" queue on the Overview tab so a
+  // single click jumps to the right section AND pre-selects the right
+  // sub-tab (and inner status filter) in one motion.
+  const goToSection = useCallback(
+    (
+      section: AdminSection,
+      options?: {
+        users?: "app-users" | "waitlist";
+        pipeline?: "gym" | "trainer" | "career";
+        team?: "tasks" | "updates";
+        careerTab?: CareerTab;
+        feedbackTab?: FeedbackTab;
+        currentTab?: AppPoolTab;
+      }
+    ) => {
+      setActiveSection(section);
+      if (options?.users) setUsersTab(options.users);
+      if (options?.pipeline) setPipelineTab(options.pipeline);
+      if (options?.team) setTeamTab(options.team);
+      if (options?.careerTab) setCareerTab(options.careerTab);
+      if (options?.feedbackTab) setFeedbackTab(options.feedbackTab);
+      if (options?.currentTab) setCurrentTab(options.currentTab);
+      // Scroll back to top so the user lands at the section header,
+      // not wherever the previous section left the viewport.
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    []
+  );
 
   // Auto sign-in from persisted Firebase session
   useEffect(() => {
@@ -1227,21 +1289,62 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* Section Navigation */}
+        {/* ── Primary section navigation (6 tabs) ──
+            Each tab owns a focused slice of admin work. The badge on
+            the right of each label is a live count of items that
+            currently need attention (pending pipeline apps, feedback
+            under review, etc.) so the most actionable tabs surface
+            their urgency at the nav level. */}
         <div className={styles.sectionNav}>
-          {(["operations", "updates", "tasks"] as const).map((section) => (
+          {(
+            [
+              { key: "overview", label: "Overview", badge: 0 },
+              {
+                key: "users",
+                label: "Users",
+                badge: appUsersThisWeek + recentSignups,
+              },
+              {
+                key: "pipeline",
+                label: "Pipeline",
+                badge:
+                  pendingCount + trainerPendingCount + careerPendingCount,
+              },
+              {
+                key: "feedback",
+                label: "Feedback",
+                badge: feedbackItems.filter(
+                  (f) => f.status === "under review"
+                ).length,
+              },
+              { key: "traffic", label: "Traffic", badge: 0 },
+              {
+                key: "team",
+                label: "Team",
+                badge: tasks.filter((t) => t.status === "todo").length,
+              },
+            ] as const
+          ).map(({ key, label, badge }) => (
             <button
-              key={section}
-              className={`${styles.sectionTab} ${activeSection === section ? styles.sectionTabActive : ""}`}
-              onClick={() => setActiveSection(section)}
+              key={key}
+              className={`${styles.sectionTab} ${activeSection === key ? styles.sectionTabActive : ""}`}
+              onClick={() => setActiveSection(key)}
             >
-              {section.charAt(0).toUpperCase() + section.slice(1)}
+              {label}
+              {badge > 0 && (
+                <span
+                  className={`${styles.badge} ${activeSection === key ? styles.badgeActive : ""}`}
+                  style={{ marginLeft: 6 }}
+                >
+                  {badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
-        {/* ========== OPERATIONS SECTION ========== */}
-        {activeSection === "operations" && (
+        {/* ========== OVERVIEW SECTION ========== */}
+        {activeSection === "overview" && (
         <>
 
         {/* Stats Grid */}
@@ -1313,6 +1416,109 @@ export default function AdminPanel() {
           </div>
         </div>
 
+        {/* \u2500\u2500 Needs Your Attention \u2500\u2500
+            Quick-action queue pinned at the top of the Overview tab.
+            Each row counts items that currently need triage; clicking
+            it jumps to the exact section + sub-tab + status filter so
+            you can act in one motion. Rows that have zero items are
+            hidden so the queue doesn't read as a wall of zeros. */}
+        {(() => {
+          const reviewFeedback = feedbackItems.filter(
+            (f) => f.status === "under review"
+          ).length;
+          const todoTasks = tasks.filter((t) => t.status === "todo").length;
+          const items = [
+            {
+              show: pendingCount > 0,
+              count: pendingCount,
+              label: "pending gym partner application",
+              go: () =>
+                goToSection("pipeline", {
+                  pipeline: "gym",
+                  currentTab: "pending",
+                }),
+            },
+            {
+              show: trainerPendingCount > 0,
+              count: trainerPendingCount,
+              label: "pending trainer application",
+              go: () =>
+                goToSection("pipeline", {
+                  pipeline: "trainer",
+                  currentTab: "pending",
+                }),
+            },
+            {
+              show: careerPendingCount > 0,
+              count: careerPendingCount,
+              label: "pending career application",
+              go: () =>
+                goToSection("pipeline", {
+                  pipeline: "career",
+                  careerTab: "pending",
+                }),
+            },
+            {
+              show: reviewFeedback > 0,
+              count: reviewFeedback,
+              label: "feedback item under review",
+              go: () =>
+                goToSection("feedback", { feedbackTab: "under review" }),
+            },
+            {
+              show: todoTasks > 0,
+              count: todoTasks,
+              label: "task to do",
+              go: () => goToSection("team", { team: "tasks" }),
+            },
+          ].filter((x) => x.show);
+
+          return (
+            <>
+              <div className={styles.sectionHeader}>
+                <h2>Needs Your Attention</h2>
+                {items.length === 0 && (
+                  <span style={{ fontSize: 11, color: "var(--dim)" }}>
+                    All clear \u2713
+                  </span>
+                )}
+              </div>
+              {items.length === 0 ? (
+                <div className={styles.attentionAllClear}>
+                  Nothing pending right now. Stats above show overall
+                  health; check back when new submissions roll in.
+                </div>
+              ) : (
+                <div className={styles.attentionList}>
+                  {items.map((item, i) => (
+                    <button
+                      key={i}
+                      className={styles.attentionItem}
+                      onClick={item.go}
+                    >
+                      <span className={styles.attentionCount}>
+                        {item.count}
+                      </span>
+                      <span className={styles.attentionLabel}>
+                        {item.label}
+                        {item.count !== 1 ? "s" : ""}
+                      </span>
+                      <span className={styles.attentionArrow}>\u2192</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        </>
+        )}
+
+        {/* ========== TRAFFIC SECTION ========== */}
+        {activeSection === "traffic" && (
+        <>
+
         {/* Website Traffic */}
         <div className={styles.sectionHeader}>
           <h2>Website Traffic</h2>
@@ -1352,6 +1558,50 @@ export default function AdminPanel() {
           </div>
         </div>
 
+        </>
+        )}
+
+        {/* ========== USERS SECTION ========== */}
+        {activeSection === "users" && (
+        <>
+
+        {/* Users sub-tab navigation */}
+        <div className={styles.subNav}>
+          {(
+            [
+              {
+                key: "app-users",
+                label: "App Users",
+                count: appUsers.length,
+              },
+              {
+                key: "waitlist",
+                label: "Waitlist",
+                count: waitlistEntries.length,
+              },
+            ] as const
+          ).map(({ key, label, count }) => (
+            <button
+              key={key}
+              className={`${styles.subTab} ${usersTab === key ? styles.subTabActive : ""}`}
+              onClick={() => setUsersTab(key)}
+            >
+              {label}
+              {count > 0 && (
+                <span
+                  className={`${styles.badge} ${usersTab === key ? styles.badgeActive : ""}`}
+                  style={{ marginLeft: 6 }}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Waitlist sub-tab content */}
+        {usersTab === "waitlist" && (
+        <>
         {/* Waitlist Section */}
         <div className={styles.sectionHeader}>
           <h2>Waitlist Signups</h2>
@@ -1405,6 +1655,65 @@ export default function AdminPanel() {
             </>
           )}
         </div>
+        </>
+        )}
+
+        {/* App Users sub-tab content — placed AFTER the JSX sourced from
+            the old Operations block flows naturally; the actual content
+            lives further down (search for `<h2>App Users</h2>`). */}
+
+        </>
+        )}
+
+        {/* ========== PIPELINE SECTION ========== */}
+        {activeSection === "pipeline" && (
+        <>
+
+        {/* Pipeline sub-tab navigation */}
+        <div className={styles.subNav}>
+          {(
+            [
+              {
+                key: "gym",
+                label: "Gym Applications",
+                count: pendingCount,
+              },
+              {
+                key: "trainer",
+                label: "Trainer Applications",
+                count: trainerPendingCount,
+              },
+              {
+                key: "career",
+                label: "Career Applications",
+                count: careerPendingCount,
+              },
+            ] as const
+          ).map(({ key, label, count }) => (
+            <button
+              key={key}
+              className={`${styles.subTab} ${pipelineTab === key ? styles.subTabActive : ""}`}
+              onClick={() => setPipelineTab(key)}
+            >
+              {label}
+              {count > 0 && (
+                <span
+                  className={`${styles.badge} ${pipelineTab === key ? styles.badgeActive : ""}`}
+                  style={{ marginLeft: 6 }}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Gym + Trainer applications sub-tabs — share the existing
+            appPool switcher logic. Setting pipelineTab to "gym" or
+            "trainer" syncs appPool so the existing per-pool list +
+            modal logic Just Works without rewiring. */}
+        {(pipelineTab === "gym" || pipelineTab === "trainer") && (
+        <>
 
         {/* Applications Section */}
         <div className={styles.sectionHeader}>
@@ -1767,6 +2076,21 @@ export default function AdminPanel() {
           </div>
         )}
 
+        </>
+        )}
+
+        </>
+        )}
+
+        {/* ── Users → App Users sub-tab content ──
+            App Users JSX lives here in source order (legacy positioning
+            inside the old Operations block, sandwiched between Trainer
+            and Career applications). Conditionally rendered only when
+            the Users tab + app-users sub-tab is active so it surfaces
+            in the right logical home. */}
+        {activeSection === "users" && usersTab === "app-users" && (
+        <>
+
         {/* APP USERS — recent Firebase Auth signups from the iOS app.
             Bounded to the 100 most-recent users (orderBy createdAt desc
             in loadAppUsers). Empty today since the App Store just
@@ -1779,69 +2103,102 @@ export default function AdminPanel() {
               : "No signups yet — refresh after the first ones come in"}
           </span>
         </div>
-        <div className={styles.appList}>
+        {/* Dense rows instead of tile cards — 5–8 users visible per
+            screen at typical desktop heights vs. 1–2 with the old card
+            layout. Avatar bubble shows the first character of the
+            display name (or "?" if anonymous) so each row anchors
+            visually. Hovering a row lights the background subtly so
+            the eye can track which row it's on. */}
+        <div className={styles.userTable}>
           {appUsers.length === 0 ? (
             <div className={styles.empty}>
               No app users yet. People who create an account in the iOS app
               will appear here, newest first.
             </div>
           ) : (
-            appUsers.map((u) => (
-              <div className={styles.appCard} key={u.uid}>
-                <div className={styles.appTop}>
-                  <div>
-                    <div className={styles.appGym}>
-                      {u.displayName || u.username || u.email || u.uid}
+            <>
+              {/* Column header — appears once above the row list. Mirrors
+                  the row grid so labels align with the cell content. */}
+              <div className={`${styles.userRow} ${styles.userRowHeader}`}>
+                <span />
+                <span>Name</span>
+                <span>Email</span>
+                <span>City</span>
+                <span>Joined</span>
+                <span style={{ textAlign: "right" }}>Status</span>
+              </div>
+              {appUsers.map((u) => {
+                const displayName =
+                  u.displayName || u.username || u.email || u.uid;
+                const initial =
+                  (u.displayName?.[0] ||
+                    u.username?.[0] ||
+                    u.email?.[0] ||
+                    "?").toUpperCase();
+                return (
+                  <div className={styles.userRow} key={u.uid} title={u.uid}>
+                    <div className={styles.userAvatar}>{initial}</div>
+                    <div className={styles.userIdentity}>
+                      <div className={styles.userName}>{displayName}</div>
+                      <div className={styles.userHandle}>
+                        {u.username ? `@${u.username}` : "no handle"}
+                      </div>
                     </div>
-                    <div className={styles.appDate}>
-                      {u.username ? `@${u.username}` : "no handle yet"}
-                      {u.createdAt && (
-                        <>
-                          {" · "}
-                          {formatDate(u.createdAt, {
+                    <div className={styles.userEmail}>
+                      {u.email ? (
+                        <a
+                          href={`mailto:${u.email}`}
+                          className={styles.websiteLink}
+                        >
+                          {u.email}
+                        </a>
+                      ) : (
+                        <span style={{ color: "var(--dim)" }}>—</span>
+                      )}
+                    </div>
+                    <div className={styles.userCity}>
+                      {u.homeCity || (
+                        <span style={{ color: "var(--dim)" }}>—</span>
+                      )}
+                    </div>
+                    <div className={styles.userDate}>
+                      {u.createdAt
+                        ? formatDate(u.createdAt, {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
-                          })}
-                        </>
+                          })
+                        : ""}
+                    </div>
+                    <div className={styles.userStatus}>
+                      {u.isVerifiedCreator ? (
+                        <span
+                          className={`${styles.appStatus} ${styles.statusApproved}`}
+                        >
+                          ✓ verified
+                          {u.verifiedCreatorTier
+                            ? ` · ${u.verifiedCreatorTier}`
+                            : ""}
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--dim)", fontSize: 11 }}>
+                          standard
+                        </span>
                       )}
                     </div>
                   </div>
-                  {u.isVerifiedCreator && (
-                    <span
-                      className={`${styles.appStatus} ${styles.statusApproved}`}
-                    >
-                      verified{u.verifiedCreatorTier ? ` · ${u.verifiedCreatorTier}` : ""}
-                    </span>
-                  )}
-                </div>
-
-                <div className={styles.appDetails}>
-                  {u.email && (
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Email</div>
-                      <a href={`mailto:${u.email}`} className={styles.websiteLink}>
-                        {u.email}
-                      </a>
-                    </div>
-                  )}
-                  {u.homeCity && (
-                    <div className={styles.appField}>
-                      <div className={styles.appFieldLabel}>Home city</div>
-                      {u.homeCity}
-                    </div>
-                  )}
-                  <div className={styles.appField}>
-                    <div className={styles.appFieldLabel}>UID</div>
-                    <code style={{ fontSize: 11, color: "var(--dim)" }}>
-                      {u.uid}
-                    </code>
-                  </div>
-                </div>
-              </div>
-            ))
+                );
+              })}
+            </>
           )}
         </div>
+
+        </>
+        )}
+
+        {/* ── Pipeline → Career sub-tab content ── */}
+        {activeSection === "pipeline" && pipelineTab === "career" && (
+        <>
 
         {/* CAREER APPLICATIONS */}
         <div className={styles.sectionHeader}>
@@ -2016,6 +2373,13 @@ export default function AdminPanel() {
             ))
           )}
         </div>
+
+        </>
+        )}
+
+        {/* ========== FEEDBACK SECTION ========== */}
+        {activeSection === "feedback" && (
+        <>
 
         {/* FEEDBACK BOARD SUBMISSIONS — mirrors the Career Applications
             layout. The public /feedback page writes here; this view lets
@@ -2193,8 +2557,46 @@ export default function AdminPanel() {
         </>
         )}
 
-        {/* ========== UPDATES SECTION ========== */}
-        {activeSection === "updates" && (
+        {/* ========== TEAM SECTION (Updates + Tasks) ========== */}
+        {activeSection === "team" && (
+        <>
+
+        {/* Team sub-tab navigation */}
+        <div className={styles.subNav}>
+          {(
+            [
+              {
+                key: "tasks",
+                label: "Tasks",
+                count: tasks.filter((t) => t.status === "todo").length,
+              },
+              {
+                key: "updates",
+                label: "Updates",
+                count: updates.length,
+              },
+            ] as const
+          ).map(({ key, label, count }) => (
+            <button
+              key={key}
+              className={`${styles.subTab} ${teamTab === key ? styles.subTabActive : ""}`}
+              onClick={() => setTeamTab(key)}
+            >
+              {label}
+              {count > 0 && (
+                <span
+                  className={`${styles.badge} ${teamTab === key ? styles.badgeActive : ""}`}
+                  style={{ marginLeft: 6 }}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Updates sub-tab content */}
+        {teamTab === "updates" && (
         <>
           <div className={styles.sectionHeader}>
             <h2>Updates</h2>
@@ -2244,8 +2646,8 @@ export default function AdminPanel() {
         </>
         )}
 
-        {/* ========== TASKS SECTION ========== */}
-        {activeSection === "tasks" && (
+        {/* Tasks sub-tab content */}
+        {teamTab === "tasks" && (
         <>
           <div className={styles.sectionHeader}>
             <h2>Tasks</h2>
@@ -2368,6 +2770,9 @@ export default function AdminPanel() {
                 ))
             )}
           </div>
+        </>
+        )}
+
         </>
         )}
 
