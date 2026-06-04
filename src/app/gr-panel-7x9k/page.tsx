@@ -167,6 +167,7 @@ interface AppUser {
   isVerifiedCreator?: boolean;
   verifiedCreatorTier?: string | null;
   createdAt?: FirestoreTimestamp;
+  updatedAt?: number; // iOS writes this (epoch seconds) on every save
 }
 
 type FeedbackStatus = "under review" | "planned" | "in progress" | "shipped";
@@ -355,21 +356,33 @@ export default function AdminPanel() {
     }
   }, []);
 
-  // Pull the most recent N users. Bounded by `limit(100)` so this stays
-  // cheap as the collection grows. Legacy docs without `createdAt` are
-  // excluded by Firestore's orderBy semantics — that's fine; this view
-  // is intentionally "recent signups," not the full historical list.
+  // Pull the most recent N users, bounded by `limit(100)`. We order by
+  // `updatedAt` — NOT `createdAt` — because the iOS app writes `updatedAt`
+  // (epoch seconds) on every profile save but historically never wrote a
+  // `createdAt`. Ordering by `createdAt` made Firestore silently exclude
+  // EVERY user doc (they lack the field), so this section always showed
+  // empty. Ordering by `updatedAt` surfaces every onboarded user; we then
+  // synthesize a `createdAt` timestamp from `updatedAt` when it's missing so
+  // the date display + this-week/month velocity work uniformly. (Newer app
+  // builds write a real `createdAt`, which is preferred when present.)
   const loadAppUsers = useCallback(async () => {
     try {
       const snap = await getDocs(
         query(
           collection(db, "users"),
-          orderBy("createdAt", "desc"),
+          orderBy("updatedAt", "desc"),
           limit(100)
         )
       );
       const items: AppUser[] = [];
-      snap.forEach((d) => items.push({ uid: d.id, ...d.data() } as AppUser));
+      snap.forEach((d) => {
+        const data = d.data();
+        let createdAt = data.createdAt as FirestoreTimestamp | undefined;
+        if (!createdAt && typeof data.updatedAt === "number") {
+          createdAt = { seconds: Math.floor(data.updatedAt), nanoseconds: 0 };
+        }
+        items.push({ uid: d.id, ...data, createdAt } as AppUser);
+      });
       setAppUsers(items);
     } catch (e) {
       console.error("App users load error:", e);
