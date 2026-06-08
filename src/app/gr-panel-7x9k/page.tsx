@@ -418,23 +418,25 @@ export default function AdminPanel() {
     }
   }, []);
 
-  // Pull the most recent N users, bounded by `limit(100)`. We order by
-  // `updatedAt` — NOT `createdAt` — because the iOS app writes `updatedAt`
-  // (epoch seconds) on every profile save but historically never wrote a
-  // `createdAt`. Ordering by `createdAt` made Firestore silently exclude
-  // EVERY user doc (they lack the field), so this section always showed
-  // empty. Ordering by `updatedAt` surfaces every onboarded user; we then
-  // synthesize a `createdAt` timestamp from `updatedAt` when it's missing so
-  // the date display + this-week/month velocity work uniformly. (Newer app
-  // builds write a real `createdAt`, which is preferred when present.)
+  // Load up to 100 users. NO server-side `orderBy` — Firestore silently
+  // EXCLUDES docs that lack the ordering field, which is how users kept
+  // disappearing:
+  //   • PR #12 used orderBy(createdAt)  → hid every user (iOS didn't write it)
+  //   • PR #14 used orderBy(updatedAt)  → still hid users with no updatedAt
+  //     (signed up but never saved profile, pre-1.0.3 builds without the
+  //      photo-sync flow that stamps updatedAt)
+  // Fetching without orderBy returns docs in document-ID order (every doc
+  // has an ID, so none get filtered out). We sort client-side with a
+  // fallback chain so the most-recent appear at the top and date-less
+  // users sink to the bottom — but every user appears.
+  //
+  // Trade-off: this returns the 100 lowest-by-uid docs, not the 100
+  // newest. Fine at pre-launch scale (<<100 users). Revisit with proper
+  // server-side pagination once the user base outgrows the limit.
   const loadAppUsers = useCallback(async () => {
     try {
       const snap = await getDocs(
-        query(
-          collection(db, "users"),
-          orderBy("updatedAt", "desc"),
-          limit(100)
-        )
+        query(collection(db, "users"), limit(100))
       );
       const items: AppUser[] = [];
       snap.forEach((d) => {
@@ -445,6 +447,12 @@ export default function AdminPanel() {
         }
         items.push({ uid: d.id, ...data, createdAt } as AppUser);
       });
+      // Client-side newest-first sort. Users with no date field at all
+      // get seconds=0 and sink to the bottom (still visible, just last).
+      items.sort(
+        (a, b) =>
+          (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
+      );
       setAppUsers(items);
     } catch (e) {
       console.error("App users load error:", e);
