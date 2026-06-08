@@ -310,6 +310,13 @@ export default function AdminPanel() {
   // canonical email + the Auth detail in the per-user modal.
   const [authInfo, setAuthInfo] = useState<Record<string, AuthUserInfo>>({});
   const [authInfoLoaded, setAuthInfoLoaded] = useState(false);
+  // Surface fetch errors directly in the modal (we don't want to make
+  // the user open DevTools to diagnose). Cleared on successful fetch.
+  const [authInfoError, setAuthInfoError] = useState<{
+    status: number;
+    body: string;
+  } | null>(null);
+  const [authInfoCount, setAuthInfoCount] = useState<number>(0);
 
   // Per-user detail modal — opens when an admin clicks a row.
   // Fetches the user's workouts (passport stamps) and friends from the
@@ -523,6 +530,7 @@ export default function AdminPanel() {
   // user. A /users doc whose UID isn't in this map is an ORPHAN
   // (no Auth account) — we flag those in the UI.
   const loadAuthInfo = useCallback(async () => {
+    setAuthInfoError(null);
     try {
       const u = auth.currentUser;
       if (!u) {
@@ -539,17 +547,25 @@ export default function AdminPanel() {
         const body = await res.text().catch(() => "");
         console.error("authInfo fetch failed:", res.status, body);
         setAuthInfo({});
-        setAuthInfoLoaded(true); // loaded enough to enable orphan flags
+        setAuthInfoCount(0);
+        setAuthInfoError({ status: res.status, body });
+        setAuthInfoLoaded(true);
         return;
       }
       const data = (await res.json()) as {
         users: Record<string, AuthUserInfo>;
+        totalScanned?: number;
       };
-      setAuthInfo(data.users || {});
+      const map = data.users || {};
+      setAuthInfo(map);
+      setAuthInfoCount(data.totalScanned ?? Object.keys(map).length);
       setAuthInfoLoaded(true);
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
       console.error("authInfo load error:", e);
       setAuthInfo({});
+      setAuthInfoCount(0);
+      setAuthInfoError({ status: 0, body: msg });
       setAuthInfoLoaded(true);
     }
   }, []);
@@ -659,6 +675,8 @@ export default function AdminPanel() {
     setAppUsers([]);
     setAuthInfo({});
     setAuthInfoLoaded(false);
+    setAuthInfoError(null);
+    setAuthInfoCount(0);
   };
 
   // Load data after login
@@ -3075,13 +3093,63 @@ export default function AdminPanel() {
                   <div style={{ color: "var(--dim)", fontSize: 13 }}>
                     Loading Auth roster…
                   </div>
+                ) : authInfoError ? (
+                  // API call failed entirely. Show the actual error so
+                  // we can diagnose without DevTools.
+                  <div
+                    style={{
+                      fontSize: 13,
+                      padding: 12,
+                      borderRadius: 8,
+                      border: "1px solid var(--red, #FF4D6D)",
+                      background: "rgba(255, 77, 109, 0.08)",
+                      color: "var(--text)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        marginBottom: 6,
+                        color: "var(--red, #FF4D6D)",
+                      }}
+                    >
+                      Auth cross-reference failed
+                      {authInfoError.status > 0 &&
+                        ` (HTTP ${authInfoError.status})`}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "monospace",
+                        fontSize: 12,
+                        color: "var(--dim)",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        maxHeight: 160,
+                        overflowY: "auto",
+                      }}
+                    >
+                      {authInfoError.body || "(no response body)"}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 12,
+                        color: "var(--dim)",
+                      }}
+                    >
+                      Until this is fixed, no user's email or Auth
+                      details will populate.
+                    </div>
+                  </div>
                 ) : !authRec ? (
                   <div style={{ color: "var(--dim)", fontSize: 13 }}>
-                    No matching Auth record for this UID. The /users
-                    doc exists in Firestore but no Firebase Auth account
-                    is associated with this user (likely a leftover
-                    Firestore doc from a deleted Auth account, partial
-                    signup, or test data).
+                    No matching Auth record for this UID
+                    {authInfoCount > 0 &&
+                      ` (${authInfoCount} Auth users scanned)`}
+                    . The /users doc exists in Firestore but no Firebase
+                    Auth account is associated with this user (likely a
+                    leftover Firestore doc from a deleted Auth account,
+                    partial signup, or test data).
                   </div>
                 ) : (
                   <>

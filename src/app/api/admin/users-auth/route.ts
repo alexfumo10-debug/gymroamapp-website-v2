@@ -60,16 +60,25 @@ export async function GET(req: NextRequest) {
     const decoded = await adminAuth().verifyIdToken(idToken);
     callerEmail = decoded.email?.toLowerCase();
   } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
     console.error("verifyIdToken failed:", e);
     return NextResponse.json(
-      { error: "invalid id token" },
+      {
+        error: "invalid id token",
+        detail: msg,
+        stage: "verifyIdToken",
+      },
       { status: 401 }
     );
   }
 
   if (!callerEmail || !ADMIN_EMAILS.includes(callerEmail)) {
     return NextResponse.json(
-      { error: "not an admin" },
+      {
+        error: "not an admin",
+        detail: `caller email '${callerEmail ?? "<missing>"}' not in allowlist`,
+        stage: "adminCheck",
+      },
       { status: 403 }
     );
   }
@@ -102,9 +111,24 @@ export async function GET(req: NextRequest) {
       totalScanned,
     });
   } catch (e) {
+    // Surface the actual error — this is an admin-only route, so it's
+    // safe to include the message. Common causes:
+    //   - Service account lacks `Firebase Authentication Admin` role
+    //   - Missing/malformed FIREBASE_ADMIN_* env vars in Vercel
+    //   - Project mismatch between projectId and the private key
+    const msg = e instanceof Error ? e.message : String(e);
+    const code =
+      e && typeof e === "object" && "code" in e
+        ? String((e as { code: unknown }).code)
+        : undefined;
     console.error("listUsers failed:", e);
     return NextResponse.json(
-      { error: "failed to list auth users" },
+      {
+        error: "failed to list auth users",
+        detail: msg,
+        code,
+        stage: "listUsers",
+      },
       { status: 500 }
     );
   }
