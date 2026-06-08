@@ -2315,7 +2315,9 @@ export default function AdminPanel() {
                     <div className={styles.userIdentity}>
                       <div className={styles.userName}>{displayName}</div>
                       <div className={styles.userHandle}>
-                        {u.username ? `@${u.username}` : "no handle"}
+                        {u.username
+                          ? `@${u.username.replace(/^@+/, "")}`
+                          : "no handle"}
                       </div>
                     </div>
                     <div className={styles.userEmail}>
@@ -2980,7 +2982,9 @@ export default function AdminPanel() {
             >
               <h3>{displayName}</h3>
               <p className={styles.modalSubtitle}>
-                {u.username ? `@${u.username}` : "no handle"}
+                {u.username
+                          ? `@${u.username.replace(/^@+/, "")}`
+                          : "no handle"}
                 {" · "}
                 <code style={{ fontSize: 11, color: "var(--dim)" }}>
                   {u.uid}
@@ -3036,39 +3040,70 @@ export default function AdminPanel() {
                 </DetailRow>
               </div>
 
-              {/* AUTH */}
-              {authRec && (
-                <div style={{ marginTop: 20 }}>
-                  <div
+              {/* AUTH — always shown so it's clear WHY email is or
+                  isn't populated. Three possible states:
+                    1. authInfo populated + this UID present → real fields
+                    2. authInfo populated + this UID missing → "no Auth
+                       record for this UID" (true orphan in Auth)
+                    3. authInfo never loaded (API failed / hasn't returned
+                       yet) → "Auth lookup unavailable" notice */}
+              <div style={{ marginTop: 20 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--dim)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 8,
+                  }}
+                >
+                  Auth account
+                  <span
                     style={{
-                      fontSize: 11,
-                      fontWeight: 800,
+                      marginLeft: 8,
+                      fontWeight: 600,
+                      letterSpacing: 0,
+                      textTransform: "none",
                       color: "var(--dim)",
-                      textTransform: "uppercase",
-                      letterSpacing: 1,
-                      marginBottom: 8,
                     }}
                   >
-                    Auth account
-                  </div>
-                  <DetailRow label="Sign-in providers">
-                    {authRec.providers.length > 0
-                      ? authRec.providers.join(", ")
-                      : "—"}
-                  </DetailRow>
-                  <DetailRow label="Email verified">
-                    {authRec.emailVerified ? "✓ yes" : "no"}
-                  </DetailRow>
-                  <DetailRow label="Last sign-in">
-                    {authRec.lastSignIn
-                      ? new Date(authRec.lastSignIn).toLocaleString()
-                      : "—"}
-                  </DetailRow>
-                  <DetailRow label="Account state">
-                    {authRec.disabled ? "disabled" : "active"}
-                  </DetailRow>
+                    — from Firebase Auth (canonical source for email)
+                  </span>
                 </div>
-              )}
+                {!authInfoLoaded ? (
+                  <div style={{ color: "var(--dim)", fontSize: 13 }}>
+                    Loading Auth roster…
+                  </div>
+                ) : !authRec ? (
+                  <div style={{ color: "var(--dim)", fontSize: 13 }}>
+                    No matching Auth record for this UID. The /users
+                    doc exists in Firestore but no Firebase Auth account
+                    is associated with this user (likely a leftover
+                    Firestore doc from a deleted Auth account, partial
+                    signup, or test data).
+                  </div>
+                ) : (
+                  <>
+                    <DetailRow label="Sign-in providers">
+                      {authRec.providers.length > 0
+                        ? authRec.providers.join(", ")
+                        : "—"}
+                    </DetailRow>
+                    <DetailRow label="Email verified">
+                      {authRec.emailVerified ? "✓ yes" : "no"}
+                    </DetailRow>
+                    <DetailRow label="Last sign-in">
+                      {authRec.lastSignIn
+                        ? new Date(authRec.lastSignIn).toLocaleString()
+                        : "—"}
+                    </DetailRow>
+                    <DetailRow label="Account state">
+                      {authRec.disabled ? "disabled" : "active"}
+                    </DetailRow>
+                  </>
+                )}
+              </div>
 
               {/* STATS */}
               <div style={{ marginTop: 20 }}>
