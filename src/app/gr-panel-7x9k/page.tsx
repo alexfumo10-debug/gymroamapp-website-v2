@@ -170,6 +170,20 @@ interface AppUser {
   updatedAt?: number; // iOS writes this (epoch seconds) on every save
 }
 
+// Canonical Auth identity for a UID. Fetched from /api/admin/users-auth
+// (server-side, Firebase Admin SDK). Firebase Auth is the source of
+// truth for email — the Firestore /users doc may not mirror it.
+// A UID present in /users but ABSENT from this map is an orphan: no
+// matching Auth account (deleted user, leftover test data, etc.).
+interface AuthUserInfo {
+  email: string | null;
+  emailVerified: boolean;
+  providers: string[]; // e.g. ["apple.com"] / ["password"] / ["google.com"]
+  lastSignIn: string | null;
+  createdAt: string | null;
+  disabled: boolean;
+}
+
 type FeedbackStatus = "under review" | "planned" | "in progress" | "shipped";
 
 interface FeedbackItem {
@@ -265,6 +279,12 @@ export default function AdminPanel() {
 
   // App users — most-recent 100, ordered by createdAt desc.
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
+  // Cross-reference: uid → canonical Auth identity. Populated by
+  // /api/admin/users-auth after login. A UID present in `appUsers` but
+  // ABSENT from this map = orphan Firestore /users doc with no matching
+  // Auth account.
+  const [authInfo, setAuthInfo] = useState<Record<string, AuthUserInfo>>({});
+  const [authInfoLoaded, setAuthInfoLoaded] = useState(false);
 
   // Updates state
   const [updates, setUpdates] = useState<UpdatePost[]>([]);
@@ -459,6 +479,43 @@ export default function AdminPanel() {
     }
   }, []);
 
+  // Cross-reference Firestore /users with Firebase Auth. Server-side
+  // (Admin SDK) — the API route gates on a Firebase ID token + admin
+  // email allowlist. Result: { [uid]: AuthUserInfo } for every Auth
+  // user. A /users doc whose UID isn't in this map is an ORPHAN
+  // (no Auth account) — we flag those in the UI.
+  const loadAuthInfo = useCallback(async () => {
+    try {
+      const u = auth.currentUser;
+      if (!u) {
+        // Login race or signed-out — just clear and bail.
+        setAuthInfo({});
+        setAuthInfoLoaded(false);
+        return;
+      }
+      const idToken = await u.getIdToken();
+      const res = await fetch("/api/admin/users-auth", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        console.error("authInfo fetch failed:", res.status, body);
+        setAuthInfo({});
+        setAuthInfoLoaded(true); // loaded enough to enable orphan flags
+        return;
+      }
+      const data = (await res.json()) as {
+        users: Record<string, AuthUserInfo>;
+      };
+      setAuthInfo(data.users || {});
+      setAuthInfoLoaded(true);
+    } catch (e) {
+      console.error("authInfo load error:", e);
+      setAuthInfo({});
+      setAuthInfoLoaded(true);
+    }
+  }, []);
+
   const loadPageViews = useCallback(async () => {
     try {
       // Last 7 days only — keeps reads cheap
@@ -562,6 +619,8 @@ export default function AdminPanel() {
     setPageViews([]);
     setCareerApps([]);
     setAppUsers([]);
+    setAuthInfo({});
+    setAuthInfoLoaded(false);
   };
 
   // Load data after login
@@ -576,6 +635,7 @@ export default function AdminPanel() {
       loadTasks();
       loadCareerApplications();
       loadAppUsers();
+      loadAuthInfo();
     }
   }, [
     isLoggedIn,
@@ -588,6 +648,7 @@ export default function AdminPanel() {
     loadTasks,
     loadCareerApplications,
     loadAppUsers,
+    loadAuthInfo,
   ]);
 
   // --- Derived stats ---
@@ -2136,29 +2197,93 @@ export default function AdminPanel() {
                 <span style={{ textAlign: "right" }}>Status</span>
               </div>
               {appUsers.map((u) => {
+                // Prefer the canonical Auth email; Firestore /users.email
+                // may be missing or stale. Orphan = UID has no matching
+                // Auth account (Firestore doc lingered after Auth deletion,
+                // test data, partial signup). We only show the orphan
+                // badge once authInfo has loaded (else every row looks
+                // orphaned during the brief fetch window).
+                const auth = authInfo[u.uid];
+                const isOrphan = authInfoLoaded && !auth;
+                const canonicalEmail = auth?.email ?? u.email ?? null;
                 const displayName =
-                  u.displayName || u.username || u.email || u.uid;
+                  u.displayName || u.username || canonicalEmail || u.uid;
                 const initial =
                   (u.displayName?.[0] ||
                     u.username?.[0] ||
-                    u.email?.[0] ||
+                    canonicalEmail?.[0] ||
                     "?").toUpperCase();
                 return (
                   <div className={styles.userRow} key={u.uid} title={u.uid}>
                     <div className={styles.userAvatar}>{initial}</div>
                     <div className={styles.userIdentity}>
-                      <div className={styles.userName}>{displayName}</div>
+                      <div className={styles.userName}>
+                        {displayName}
+                        {isOrphan && (
+                          <span
+                            title="No matching Firebase Auth account — likely leftover Firestore doc from a deleted account or test data."
+                            style={{
+                              marginLeft: 8,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: "var(--red, #FF4D6D)",
+                              border: "1px solid var(--red, #FF4D6D)",
+                              borderRadius: 4,
+                              padding: "1px 5px",
+                              letterSpacing: 0.5,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            orphan
+                          </span>
+                        )}
+                        {auth?.disabled && (
+                          <span
+                            title="Firebase Auth account is disabled."
+                            style={{
+                              marginLeft: 8,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: "var(--dim)",
+                              border: "1px solid var(--dim)",
+                              borderRadius: 4,
+                              padding: "1px 5px",
+                              letterSpacing: 0.5,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            disabled
+                          </span>
+                        )}
+                      </div>
                       <div className={styles.userHandle}>
                         {u.username ? `@${u.username}` : "no handle"}
+                        {auth?.providers?.length ? (
+                          <span style={{ color: "var(--dim)", marginLeft: 8 }}>
+                            · {auth.providers.join(", ")}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                     <div className={styles.userEmail}>
-                      {u.email ? (
+                      {canonicalEmail ? (
                         <a
-                          href={`mailto:${u.email}`}
+                          href={`mailto:${canonicalEmail}`}
                           className={styles.websiteLink}
+                          title={
+                            auth?.emailVerified === false
+                              ? "Email NOT verified in Firebase Auth"
+                              : undefined
+                          }
                         >
-                          {u.email}
+                          {canonicalEmail}
+                          {auth && auth.emailVerified === false && (
+                            <span
+                              style={{ color: "var(--dim)", marginLeft: 4 }}
+                            >
+                              (unverified)
+                            </span>
+                          )}
                         </a>
                       ) : (
                         <span style={{ color: "var(--dim)" }}>—</span>
