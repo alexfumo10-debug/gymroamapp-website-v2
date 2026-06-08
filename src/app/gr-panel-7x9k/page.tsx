@@ -215,6 +215,32 @@ function formatDate(
   return new Date(ts.seconds * 1000).toLocaleDateString("en-US", options);
 }
 
+// Label/value row used inside the App User detail modal. Keeps the
+// modal markup readable.
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "140px 1fr",
+        gap: 12,
+        fontSize: 13,
+        padding: "5px 0",
+        borderBottom: "1px solid var(--surface2)",
+      }}
+    >
+      <span style={{ color: "var(--dim)", fontWeight: 600 }}>{label}</span>
+      <span style={{ color: "var(--text)" }}>{children}</span>
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -280,11 +306,23 @@ export default function AdminPanel() {
   // App users — most-recent 100, ordered by createdAt desc.
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
   // Cross-reference: uid → canonical Auth identity. Populated by
-  // /api/admin/users-auth after login. A UID present in `appUsers` but
-  // ABSENT from this map = orphan Firestore /users doc with no matching
-  // Auth account.
+  // /api/admin/users-auth after login. Used silently to surface
+  // canonical email + the Auth detail in the per-user modal.
   const [authInfo, setAuthInfo] = useState<Record<string, AuthUserInfo>>({});
   const [authInfoLoaded, setAuthInfoLoaded] = useState(false);
+
+  // Per-user detail modal — opens when an admin clicks a row.
+  // Fetches the user's workouts (passport stamps) and friends from the
+  // /users/{uid}/workouts and /users/{uid}/friends subcollections on
+  // open. Cleared (null) when closed.
+  const [userDetailUid, setUserDetailUid] = useState<string | null>(null);
+  const [userWorkouts, setUserWorkouts] = useState<
+    Array<{ id: string } & Record<string, unknown>>
+  >([]);
+  const [userFriends, setUserFriends] = useState<
+    Array<{ id: string } & Record<string, unknown>>
+  >([]);
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
 
   // Updates state
   const [updates, setUpdates] = useState<UpdatePost[]>([]);
@@ -650,6 +688,53 @@ export default function AdminPanel() {
     loadAppUsers,
     loadAuthInfo,
   ]);
+
+  // Fetch the per-user subcollections when the detail modal opens.
+  // Two reads in parallel: workouts (passport stamps) + friends. Both
+  // are tolerant of missing/empty subcollections (returns []).
+  useEffect(() => {
+    if (!userDetailUid) {
+      setUserWorkouts([]);
+      setUserFriends([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setUserDetailLoading(true);
+      try {
+        const [wSnap, fSnap] = await Promise.all([
+          getDocs(collection(db, `users/${userDetailUid}/workouts`)),
+          getDocs(collection(db, `users/${userDetailUid}/friends`)),
+        ]);
+        if (cancelled) return;
+        const ws: Array<{ id: string } & Record<string, unknown>> = [];
+        wSnap.forEach((d) => ws.push({ id: d.id, ...d.data() }));
+        const fs: Array<{ id: string } & Record<string, unknown>> = [];
+        fSnap.forEach((d) => fs.push({ id: d.id, ...d.data() }));
+        // Workouts newest-first when they carry a date field.
+        ws.sort((a, b) => {
+          const av =
+            (a.createdAt as FirestoreTimestamp | undefined)?.seconds ??
+            (typeof a.timestamp === "number" ? a.timestamp : 0);
+          const bv =
+            (b.createdAt as FirestoreTimestamp | undefined)?.seconds ??
+            (typeof b.timestamp === "number" ? b.timestamp : 0);
+          return bv - av;
+        });
+        setUserWorkouts(ws);
+        setUserFriends(fs);
+      } catch (e) {
+        console.error("user detail fetch failed:", e);
+        setUserWorkouts([]);
+        setUserFriends([]);
+      } finally {
+        if (!cancelled) setUserDetailLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userDetailUid]);
 
   // --- Derived stats ---
 
@@ -2198,14 +2283,11 @@ export default function AdminPanel() {
               </div>
               {appUsers.map((u) => {
                 // Prefer the canonical Auth email; Firestore /users.email
-                // may be missing or stale. Orphan = UID has no matching
-                // Auth account (Firestore doc lingered after Auth deletion,
-                // test data, partial signup). We only show the orphan
-                // badge once authInfo has loaded (else every row looks
-                // orphaned during the brief fetch window).
-                const auth = authInfo[u.uid];
-                const isOrphan = authInfoLoaded && !auth;
-                const canonicalEmail = auth?.email ?? u.email ?? null;
+                // may be missing or stale. Stays silent in the UI — no
+                // orphan/disabled/provider badges (cluttered the table).
+                // Auth detail still surfaces in the per-user detail modal.
+                const authRec = authInfo[u.uid];
+                const canonicalEmail = authRec?.email ?? u.email ?? null;
                 const displayName =
                   u.displayName || u.username || canonicalEmail || u.uid;
                 const initial =
@@ -2214,55 +2296,26 @@ export default function AdminPanel() {
                     canonicalEmail?.[0] ||
                     "?").toUpperCase();
                 return (
-                  <div className={styles.userRow} key={u.uid} title={u.uid}>
+                  <div
+                    className={styles.userRow}
+                    key={u.uid}
+                    title={`${u.uid} · click for details`}
+                    onClick={() => setUserDetailUid(u.uid)}
+                    style={{ cursor: "pointer" }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setUserDetailUid(u.uid);
+                      }
+                    }}
+                  >
                     <div className={styles.userAvatar}>{initial}</div>
                     <div className={styles.userIdentity}>
-                      <div className={styles.userName}>
-                        {displayName}
-                        {isOrphan && (
-                          <span
-                            title="No matching Firebase Auth account — likely leftover Firestore doc from a deleted account or test data."
-                            style={{
-                              marginLeft: 8,
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: "var(--red, #FF4D6D)",
-                              border: "1px solid var(--red, #FF4D6D)",
-                              borderRadius: 4,
-                              padding: "1px 5px",
-                              letterSpacing: 0.5,
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            orphan
-                          </span>
-                        )}
-                        {auth?.disabled && (
-                          <span
-                            title="Firebase Auth account is disabled."
-                            style={{
-                              marginLeft: 8,
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: "var(--dim)",
-                              border: "1px solid var(--dim)",
-                              borderRadius: 4,
-                              padding: "1px 5px",
-                              letterSpacing: 0.5,
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            disabled
-                          </span>
-                        )}
-                      </div>
+                      <div className={styles.userName}>{displayName}</div>
                       <div className={styles.userHandle}>
                         {u.username ? `@${u.username}` : "no handle"}
-                        {auth?.providers?.length ? (
-                          <span style={{ color: "var(--dim)", marginLeft: 8 }}>
-                            · {auth.providers.join(", ")}
-                          </span>
-                        ) : null}
                       </div>
                     </div>
                     <div className={styles.userEmail}>
@@ -2270,20 +2323,9 @@ export default function AdminPanel() {
                         <a
                           href={`mailto:${canonicalEmail}`}
                           className={styles.websiteLink}
-                          title={
-                            auth?.emailVerified === false
-                              ? "Email NOT verified in Firebase Auth"
-                              : undefined
-                          }
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {canonicalEmail}
-                          {auth && auth.emailVerified === false && (
-                            <span
-                              style={{ color: "var(--dim)", marginLeft: 4 }}
-                            >
-                              (unverified)
-                            </span>
-                          )}
                         </a>
                       ) : (
                         <span style={{ color: "var(--dim)" }}>—</span>
@@ -2910,6 +2952,283 @@ export default function AdminPanel() {
         )}
 
       </div>
+
+      {/* APP USER DETAIL MODAL — opens when an admin clicks a row in
+          the App Users list. Shows full Firestore profile, Auth identity
+          (when present), per-user stats, recent passport stamps, and
+          the friends list. Backdrop click + Close button both dismiss. */}
+      {userDetailUid && (() => {
+        const u = appUsers.find((x) => x.uid === userDetailUid);
+        if (!u) return null;
+        const authRec = authInfo[userDetailUid];
+        const canonicalEmail = authRec?.email ?? u.email ?? null;
+        const displayName =
+          u.displayName || u.username || canonicalEmail || u.uid;
+        return (
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setUserDetailUid(null)}
+          >
+            <div
+              className={styles.modal}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: 680,
+                maxHeight: "85vh",
+                overflowY: "auto",
+              }}
+            >
+              <h3>{displayName}</h3>
+              <p className={styles.modalSubtitle}>
+                {u.username ? `@${u.username}` : "no handle"}
+                {" · "}
+                <code style={{ fontSize: 11, color: "var(--dim)" }}>
+                  {u.uid}
+                </code>
+              </p>
+
+              {/* PROFILE */}
+              <div style={{ marginTop: 16 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--dim)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 8,
+                  }}
+                >
+                  Profile
+                </div>
+                <DetailRow label="Email">
+                  {canonicalEmail ? (
+                    <a
+                      href={`mailto:${canonicalEmail}`}
+                      className={styles.websiteLink}
+                    >
+                      {canonicalEmail}
+                    </a>
+                  ) : (
+                    <span style={{ color: "var(--dim)" }}>—</span>
+                  )}
+                </DetailRow>
+                <DetailRow label="Home city">
+                  {u.homeCity || (
+                    <span style={{ color: "var(--dim)" }}>—</span>
+                  )}
+                </DetailRow>
+                <DetailRow label="Joined">
+                  {u.createdAt
+                    ? formatDate(u.createdAt, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : authRec?.createdAt
+                      ? new Date(authRec.createdAt).toLocaleDateString()
+                      : "—"}
+                </DetailRow>
+                <DetailRow label="Verified creator">
+                  {u.isVerifiedCreator
+                    ? `✓ yes${u.verifiedCreatorTier ? ` (${u.verifiedCreatorTier})` : ""}`
+                    : "no"}
+                </DetailRow>
+              </div>
+
+              {/* AUTH */}
+              {authRec && (
+                <div style={{ marginTop: 20 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: "var(--dim)",
+                      textTransform: "uppercase",
+                      letterSpacing: 1,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Auth account
+                  </div>
+                  <DetailRow label="Sign-in providers">
+                    {authRec.providers.length > 0
+                      ? authRec.providers.join(", ")
+                      : "—"}
+                  </DetailRow>
+                  <DetailRow label="Email verified">
+                    {authRec.emailVerified ? "✓ yes" : "no"}
+                  </DetailRow>
+                  <DetailRow label="Last sign-in">
+                    {authRec.lastSignIn
+                      ? new Date(authRec.lastSignIn).toLocaleString()
+                      : "—"}
+                  </DetailRow>
+                  <DetailRow label="Account state">
+                    {authRec.disabled ? "disabled" : "active"}
+                  </DetailRow>
+                </div>
+              )}
+
+              {/* STATS */}
+              <div style={{ marginTop: 20 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--dim)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 8,
+                  }}
+                >
+                  Stats
+                </div>
+                <DetailRow label="Passport stamps">
+                  {userDetailLoading ? "loading…" : userWorkouts.length}
+                </DetailRow>
+                <DetailRow label="Friends">
+                  {userDetailLoading ? "loading…" : userFriends.length}
+                </DetailRow>
+              </div>
+
+              {/* RECENT STAMPS */}
+              <div style={{ marginTop: 20 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--dim)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 8,
+                  }}
+                >
+                  Recent stamps {userWorkouts.length > 10 ? `(top 10 of ${userWorkouts.length})` : ""}
+                </div>
+                {userDetailLoading ? (
+                  <div style={{ color: "var(--dim)", fontSize: 13 }}>
+                    Loading…
+                  </div>
+                ) : userWorkouts.length === 0 ? (
+                  <div style={{ color: "var(--dim)", fontSize: 13 }}>
+                    No stamps yet.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 6 }}>
+                    {userWorkouts.slice(0, 10).map((w) => {
+                      const ts =
+                        (w.createdAt as FirestoreTimestamp | undefined) ??
+                        (typeof w.timestamp === "number"
+                          ? {
+                              seconds: Math.floor(w.timestamp),
+                              nanoseconds: 0,
+                            }
+                          : undefined);
+                      return (
+                        <div
+                          key={w.id}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontSize: 13,
+                            borderBottom: "1px solid var(--surface2)",
+                            paddingBottom: 4,
+                          }}
+                        >
+                          <span>
+                            {(w.gymName as string) ||
+                              (w.name as string) ||
+                              (w.gymId as string) ||
+                              w.id}
+                            {(w.city as string) && (
+                              <span style={{ color: "var(--dim)" }}>
+                                {" · "}
+                                {w.city as string}
+                              </span>
+                            )}
+                          </span>
+                          <span
+                            style={{ color: "var(--dim)", fontSize: 12 }}
+                          >
+                            {ts
+                              ? formatDate(ts, {
+                                  month: "short",
+                                  day: "numeric",
+                                })
+                              : ""}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* FRIENDS */}
+              <div style={{ marginTop: 20 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--dim)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 8,
+                  }}
+                >
+                  Friends {userFriends.length > 20 ? `(top 20 of ${userFriends.length})` : ""}
+                </div>
+                {userDetailLoading ? (
+                  <div style={{ color: "var(--dim)", fontSize: 13 }}>
+                    Loading…
+                  </div>
+                ) : userFriends.length === 0 ? (
+                  <div style={{ color: "var(--dim)", fontSize: 13 }}>
+                    No friends yet.
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 6,
+                    }}
+                  >
+                    {userFriends.slice(0, 20).map((f) => (
+                      <span
+                        key={f.id}
+                        title={f.id}
+                        style={{
+                          fontSize: 12,
+                          color: "var(--text)",
+                          border: "1px solid var(--surface2)",
+                          borderRadius: 6,
+                          padding: "3px 8px",
+                          background: "var(--surface)",
+                        }}
+                      >
+                        {(f.displayName as string) ||
+                          (f.username as string) ||
+                          f.id.slice(0, 8)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.modalActions} style={{ marginTop: 24 }}>
+                <button
+                  className={styles.btnCancel}
+                  onClick={() => setUserDetailUid(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Gym Approve Modal */}
       {modalOpen && modalApp && (
