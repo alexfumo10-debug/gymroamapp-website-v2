@@ -1,0 +1,67 @@
+/* Themed chart tooltip + legend. */
+
+.tooltip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  min-width: 120px;
+}
+.tooltipLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tooltipName {
+  color: var(--muted);
+}
+.tooltipValue {
+  color: var(--text);
+  font-weight: 700;
+  margin-left: auto;
+}
+
+/* Legend chips */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.legendLabel {
+  color: var(--text);
+  font-weight: 600;
+}
+.legendValue {
+  color: var(--dim);
+  margin-left: auto;
+  font-size: 12px;
+}

@@ -1,0 +1,262 @@
+/* Shared UI primitives — GymRoam dark + brand-yellow, elevated. */
+
+/* ── Card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 12px 28px rgba(0, 0, 0, 0.25);
+}
+.cardPadded {
+  padding: 22px;
+}
+
+/* ── SectionHeading ── */
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+.sectionHeading h2 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--text);
+  margin: 0;
+}
+.sectionMeta {
+  font-size: 12px;
+  color: var(--dim);
+  font-weight: 500;
+}
+.sectionAction {
+  margin-left: auto;
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.badge_neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+.badge_accent {
+  background: rgba(232, 255, 60, 0.16);
+  color: var(--accent);
+}
+.badge_green {
+  background: rgba(78, 205, 196, 0.16);
+  color: var(--green);
+}
+.badge_red {
+  background: rgba(255, 77, 109, 0.16);
+  color: var(--red);
+}
+.badge_blue {
+  background: rgba(74, 158, 255, 0.16);
+  color: var(--blue);
+}
+.badge_orange {
+  background: rgba(255, 140, 66, 0.16);
+  color: var(--orange);
+}
+
+/* ── StatTile ── */
+.statTile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 112px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.statTile:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+/* Accent variant — the single most important KPI per view. */
+.statTileAccent {
+  border-color: rgba(232, 255, 60, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(232, 255, 60, 0.04) 0%,
+    var(--surface) 60%
+  );
+}
+.statLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+}
+.statValue {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -1.2px;
+  color: var(--text);
+  line-height: 1.05;
+}
+.statTileAccent .statValue {
+  color: var(--accent);
+  text-shadow: 0 0 22px rgba(232, 255, 60, 0.3);
+}
+.statFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+.statDelta {
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.deltaGood {
+  color: var(--green);
+}
+.deltaBad {
+  color: var(--red);
+}
+.deltaFlat {
+  color: var(--dim);
+}
+.statSub {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+/* ── ConnectReadyState ── */
+.connectState {
+  background: var(--surface);
+  border: 1px dashed rgba(232, 255, 60, 0.28);
+  border-radius: 16px;
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto;
+}
+.connectIcon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 16px rgba(232, 255, 60, 0.4));
+}
+.connectTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.connectSummary {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 auto 20px;
+  max-width: 460px;
+}
+.connectMetaRow {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.connectMetaLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  min-width: 64px;
+  text-align: right;
+}
+.connectEnv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.connectEnv code,
+.connectFootnote code {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 12px;
+  color: var(--accent);
+}
+.connectHint {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 16px auto 0;
+  max-width: 520px;
+  text-align: left;
+}
+.connectFootnote {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.6;
+  margin: 18px auto 0;
+  max-width: 460px;
+}
+
+/* ── Loading / error / empty inline states ── */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 32px;
+  justify-content: center;
+}
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: adminspin 0.7s linear infinite;
+}
+@keyframes adminspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.errorState {
+  color: var(--red);
+  font-size: 14px;
+  padding: 24px;
+  text-align: center;
+}
+.emptyHint {
+  color: var(--dim);
+  font-size: 14px;
+  padding: 32px;
+  text-align: center;
+  line-height: 1.6;
+}

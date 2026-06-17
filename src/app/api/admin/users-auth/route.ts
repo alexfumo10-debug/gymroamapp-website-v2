@@ -24,16 +24,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase-admin";
+import { requireAdmin } from "@/lib/admin-gate";
 
 // Firebase Admin SDK needs Node APIs — won't run on Edge.
 export const runtime = "nodejs";
 // This is dynamic per-request (auth check) — don't try to prerender.
 export const dynamic = "force-dynamic";
-
-const ADMIN_EMAILS = [
-  "gymroamapp@gmail.com",
-  "kevin@aigrowthhouse.com",
-];
 
 interface AuthUserInfo {
   email: string | null;
@@ -45,43 +41,10 @@ interface AuthUserInfo {
 }
 
 export async function GET(req: NextRequest) {
-  // --- Verify caller is an admin ---
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json(
-      { error: "missing bearer token" },
-      { status: 401 }
-    );
-  }
-  const idToken = authHeader.slice("Bearer ".length);
-
-  let callerEmail: string | undefined;
-  try {
-    const decoded = await adminAuth().verifyIdToken(idToken);
-    callerEmail = decoded.email?.toLowerCase();
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error("verifyIdToken failed:", e);
-    return NextResponse.json(
-      {
-        error: "invalid id token",
-        detail: msg,
-        stage: "verifyIdToken",
-      },
-      { status: 401 }
-    );
-  }
-
-  if (!callerEmail || !ADMIN_EMAILS.includes(callerEmail)) {
-    return NextResponse.json(
-      {
-        error: "not an admin",
-        detail: `caller email '${callerEmail ?? "<missing>"}' not in allowlist`,
-        stage: "adminCheck",
-      },
-      { status: 403 }
-    );
-  }
+  // Verify caller is an admin (shared gate — generic errors, no pre-auth
+  // detail leakage; matches the other /api/admin/* routes).
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
 
   // --- Pull every Auth user, paginated ---
   try {
