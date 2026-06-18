@@ -30,12 +30,28 @@ function keyId() {
   return process.env.APP_STORE_CONNECT_KEY_ID || "";
 }
 function privateKey() {
-  // Accept either form: literal "\n" escapes (single-line .env value) OR
-  // a real multi-line paste. Trim stray surrounding whitespace/newlines
-  // so a quoted multi-line value still parses cleanly.
-  return (process.env.APP_STORE_CONNECT_PRIVATE_KEY || "")
-    .replace(/\\n/g, "\n")
-    .trim();
+  // Tolerant of every paste form (the "must be an asymmetric key when
+  // using ES256" failure = malformed PEM): base64-encoded .p8 (the
+  // bulletproof paste — no newline ambiguity), literal "\n" escapes,
+  // real multi-line newlines, and quote-wrapped values. Same normalizer
+  // shape as firebase-admin's, since the App Store .p8 is also a
+  // PKCS#8 "BEGIN PRIVATE KEY" PEM (EC instead of RSA).
+  let key = (process.env.APP_STORE_CONNECT_PRIVATE_KEY || "").trim();
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1).trim();
+  }
+  if (!key.includes("BEGIN")) {
+    try {
+      const decoded = Buffer.from(key, "base64").toString("utf8");
+      if (decoded.includes("BEGIN")) key = decoded;
+    } catch {
+      /* leave as-is */
+    }
+  }
+  return key.replace(/\\n/g, "\n").trim();
 }
 function vendorNumber() {
   return process.env.APP_STORE_CONNECT_VENDOR_NUMBER || "";
