@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-gate";
-import { reviewsConfigured, fetchReviews } from "@/lib/appstore";
+import { reviewsConfigured, fetchReviews, isAscAuthError } from "@/lib/appstore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +27,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ configured: true, reviews });
   } catch (e) {
     console.error("[/api/admin/reviews]", e);
+    // Apple rejecting the key (wrong-account / not-yet-valid) → show the
+    // clean connect-ready placeholder, not a red error.
+    if (isAscAuthError(e)) {
+      return NextResponse.json({ configured: false, reviews: [] });
+    }
     return NextResponse.json(
       { configured: true, error: (e as Error).message, reviews: [] },
       { status: 502 }
