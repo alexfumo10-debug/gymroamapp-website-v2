@@ -35,37 +35,21 @@ export async function requireAdmin(
     return NextResponse.json({ error: "missing bearer token" }, { status: 401 });
   }
   const idToken = authHeader.slice("Bearer ".length);
-
-  // TEMP DIAGNOSTIC (ale/admin-gate-diagnostic): the two failure modes —
-  // (a) Admin SDK can't initialize from FIREBASE_ADMIN_* env vars, and
-  // (b) the ID token is bad — were both collapsed into a generic
-  // "invalid token", making the live env-var problem impossible to
-  // diagnose. Split them and surface the real error message + stage.
-  // Firebase init/verify error strings contain NO secret material
-  // (no key bytes), and this is an admin-only route. Tighten back to a
-  // generic message once the env vars are confirmed working.
-  let auth;
+  // Generic errors only — this gate runs BEFORE the caller is confirmed
+  // to be an admin, so it must not leak internal init/verify detail to
+  // unauthenticated callers. (The detailed init-vs-token split lived here
+  // temporarily to debug the FIREBASE_ADMIN_* env-var setup; reverted now
+  // that the credentials are confirmed working. Server-side console.error
+  // still captures the real exception for our own logs.)
   try {
-    auth = adminAuth(); // throws if FIREBASE_ADMIN_* missing/malformed
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json(
-      { error: "admin sdk init failed", stage: "adminAuth", detail: msg },
-      { status: 401 }
-    );
-  }
-  try {
-    const decoded = await auth.verifyIdToken(idToken);
+    const decoded = await adminAuth().verifyIdToken(idToken);
     const email = (decoded.email || "").toLowerCase();
     if (!ADMIN_EMAILS.includes(email)) {
       return NextResponse.json({ error: "not an admin" }, { status: 403 });
     }
     return null;
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json(
-      { error: "invalid token", stage: "verifyIdToken", detail: msg },
-      { status: 401 }
-    );
+    console.error("requireAdmin failed:", e);
+    return NextResponse.json({ error: "invalid token" }, { status: 401 });
   }
 }
