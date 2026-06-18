@@ -24,10 +24,13 @@ const ASC_HOST = "https://api.appstoreconnect.apple.com";
 const GYMROAM_APP_ID = "6773157406";
 
 function issuer() {
-  return process.env.APP_STORE_CONNECT_ISSUER_ID || "";
+  // .trim() — a stray space/newline from the Vercel paste corrupts the
+  // JWT `iss` claim and Apple rejects the token with 401 NOT_AUTHORIZED.
+  return (process.env.APP_STORE_CONNECT_ISSUER_ID || "").trim();
 }
 function keyId() {
-  return process.env.APP_STORE_CONNECT_KEY_ID || "";
+  // .trim() — same: trailing whitespace breaks the JWT `kid` header.
+  return (process.env.APP_STORE_CONNECT_KEY_ID || "").trim();
 }
 function privateKey() {
   // Tolerant of every paste form (the "must be an asymmetric key when
