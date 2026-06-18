@@ -69,6 +69,24 @@ export function subsConfigured(): boolean {
   return reviewsConfigured() && !!vendorNumber();
 }
 
+/**
+ * True when an error is Apple REJECTING the credentials (vs a transient
+ * network/5xx hiccup). The env vars are present but the key/issuer/account
+ * don't authenticate — e.g. a key from the wrong App Store Connect account.
+ * Routes treat this as "not connected yet" (clean placeholder) rather than
+ * a hard error, so the dashboard reads as connect-ready while the right
+ * AGH Team key is being sorted out.
+ */
+export function isAscAuthError(e: unknown): boolean {
+  const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
+  return (
+    msg.includes("401") ||
+    msg.includes("not_authorized") ||
+    msg.includes("not authorized") ||
+    msg.includes("invalid") // covers app/invalid-credential, invalid token
+  );
+}
+
 // ── Token cache (≤20 min lifetime) ──
 let cachedToken: { token: string; exp: number } | null = null;
 

@@ -18,7 +18,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-gate";
-import { subsConfigured, fetchSalesReport } from "@/lib/appstore";
+import { subsConfigured, fetchSalesReport, isAscAuthError } from "@/lib/appstore";
 import type { SubscriptionTierStat } from "@/app/gr-panel-7x9k/_lib/types";
 
 export const runtime = "nodejs";
@@ -179,6 +179,10 @@ export async function GET(req: NextRequest) {
     });
   } catch (e) {
     console.error("[/api/admin/consumer-subs]", e);
+    // Apple rejecting the key → clean placeholder, not a red error.
+    if (isAscAuthError(e)) {
+      return NextResponse.json({ configured: false, tiers: [] });
+    }
     return NextResponse.json(
       { configured: true, error: (e as Error).message, tiers: [] },
       { status: 502 }

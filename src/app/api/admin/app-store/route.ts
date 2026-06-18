@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-gate";
-import { subsConfigured, fetchDownloads } from "@/lib/appstore";
+import { subsConfigured, fetchDownloads, isAscAuthError } from "@/lib/appstore";
 import { adminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
@@ -55,6 +55,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ configured: true, downloads, funnel });
   } catch (e) {
     console.error("[/api/admin/app-store] downloads:", e);
+    // Apple rejecting the key → clean placeholder, not a red error.
+    if (isAscAuthError(e)) {
+      return NextResponse.json({ configured: false, downloads: null, funnel });
+    }
     return NextResponse.json(
       { configured: true, error: (e as Error).message, downloads: null, funnel },
       { status: 502 }
