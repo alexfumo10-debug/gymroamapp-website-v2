@@ -27,7 +27,9 @@ import { StatTile, Loading, ErrorState, Badge } from "./ui";
 import tabs from "./tabs.module.css";
 
 type Auth = ReturnType<typeof useAdminAuth>;
-type EnrichedUser = AppUser & { canonicalEmail: string; isOrphan: boolean };
+// uid is always resolved to a string in `enriched` (doc id), so the
+// detail modal can index authMap.map[selected.uid] without a guard.
+type EnrichedUser = AppUser & { uid: string; canonicalEmail: string; isOrphan: boolean };
 
 // Some user docs store the username already prefixed with "@"; strip any
 // leading @(s) and re-add exactly one so it never renders as "@@handle".
@@ -62,10 +64,16 @@ export function UsersTab({ auth }: { auth: Auth }) {
 
   const enriched = useMemo(() => {
     return users.data.map((u) => {
-      const authInfo = authMap.map[u.uid];
+      // The auth cross-ref map is keyed by Firebase Auth uid = the
+      // Firestore doc ID. useCollection exposes that as `id`; the doc
+      // itself has no `uid` field (iOS never writes one), so resolve the
+      // key from `id` first. Normalizing `uid` here also fixes the detail
+      // modal, which looks up authMap.map[selected.uid].
+      const uid = u.uid || u.id || "";
+      const authInfo = authMap.map[uid];
       const canonicalEmail = authInfo?.email || u.email || "";
       const isOrphan = authMap.state === "ready" && !authInfo;
-      return { ...u, canonicalEmail, isOrphan };
+      return { ...u, uid, canonicalEmail, isOrphan };
     });
   }, [users.data, authMap.map, authMap.state]);
 

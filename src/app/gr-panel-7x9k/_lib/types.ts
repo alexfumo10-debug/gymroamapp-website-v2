@@ -20,7 +20,12 @@ export interface FirestoreTimestamp {
    ──────────────────────────────────────────────────────────── */
 
 export interface AppUser {
-  uid: string;
+  // Firestore doc ID, set by useCollection ({ id: d.id, ...data }). This
+  // IS the Firebase Auth uid (GymRoam keys user docs by auth uid). The
+  // iOS app does NOT write a separate `uid` field into the doc, so always
+  // resolve the auth-uid key from `id` (uid is usually undefined).
+  id?: string;
+  uid?: string;
   email?: string;
   displayName?: string;
   username?: string;
