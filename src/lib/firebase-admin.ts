@@ -18,6 +18,41 @@ import { getApps, initializeApp, cert, App } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { getAuth, Auth } from "firebase-admin/auth";
 
+/**
+ * Normalize the FIREBASE_ADMIN_PRIVATE_KEY env var into valid PEM,
+ * tolerant of every common paste mishap (the "Invalid PEM formatted
+ * message" failure mode):
+ *   - Surrounding single/double quotes (copied with the JSON quotes)
+ *   - Literal `\n` sequences (copied straight from the JSON) → real newlines
+ *   - base64-encoded PEM (the bulletproof paste — no newline ambiguity)
+ *   - Already-real newlines (pasted multi-line) → used as-is
+ * Accepts whichever form is present so the value can't be silently
+ * mangled by the JSON → clipboard → Vercel → runtime pipeline.
+ */
+function normalizePrivateKey(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  let key = raw.trim();
+  // Strip accidental wrapping quotes.
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1).trim();
+  }
+  // If it isn't already PEM, assume base64-encoded PEM and decode it.
+  if (!key.includes("BEGIN PRIVATE KEY")) {
+    try {
+      const decoded = Buffer.from(key, "base64").toString("utf8");
+      if (decoded.includes("BEGIN PRIVATE KEY")) key = decoded;
+    } catch {
+      /* fall through — leave key as-is */
+    }
+  }
+  // Convert any literal \n to real newlines (no-op if already real).
+  key = key.replace(/\\n/g, "\n");
+  return key;
+}
+
 let adminApp: App | undefined;
 
 function getAdminApp(): App {
@@ -31,11 +66,7 @@ function getAdminApp(): App {
 
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  // Private key often stored with literal "\n" — convert to real newlines
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
-    /\\n/g,
-    "\n"
-  );
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error(
