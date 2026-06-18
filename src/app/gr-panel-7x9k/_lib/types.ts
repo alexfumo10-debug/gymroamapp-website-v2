@@ -154,7 +154,7 @@ export interface Review {
 }
 
 export interface SocialStat {
-  platform: "instagram" | "tiktok" | "x";
+  platform: "instagram";
   followers: number;
   followingDelta7d: number; // net new followers, last 7 days
   posts: number;
