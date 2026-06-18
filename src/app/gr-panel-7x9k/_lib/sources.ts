@@ -110,21 +110,13 @@ export const DATA_SOURCES: Record<string, DataSource> = {
   },
   social: {
     key: "social",
-    label: "Social Following",
+    label: "Instagram",
     status: "connect-ready",
-    summary: "Follower & engagement analytics across Instagram, TikTok, X.",
-    provider: "Instagram Graph / TikTok / X APIs",
-    envVars: [
-      "INSTAGRAM_ACCESS_TOKEN",
-      "INSTAGRAM_IG_USER_ID",
-      "TIKTOK_CLIENT_KEY",
-      "TIKTOK_CLIENT_SECRET",
-      "TIKTOK_REFRESH_TOKEN",
-      "X_BEARER_TOKEN",
-      "X_USERNAME",
-    ],
+    summary: "Instagram follower & engagement analytics.",
+    provider: "Instagram Graph API",
+    envVars: ["INSTAGRAM_ACCESS_TOKEN", "INSTAGRAM_IG_USER_ID"],
     setupHint:
-      "Each platform needs its own developer app. Instagram: Graph API (Business/Creator account linked to a Facebook Page) — needs the IG user id. TikTok: Display API with user-delegated OAuth (rotating refresh token). X (Twitter) API v2 is now pay-per-use — a payment method is required before any call works.",
+      "Instagram Graph API — a Business/Creator account linked to the GymRoam Facebook Page, a long-lived Page (or system-user) token, and the IG Business account id.",
   },
   crashes: {
     key: "crashes",
