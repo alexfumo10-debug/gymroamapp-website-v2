@@ -68,6 +68,47 @@ APP_STORE_CONNECT_PRIVATE_KEY = <contents of the .p8 file>
 - Apple's review API only returns reviews that have written text, per
   territory. Star-only ratings come via the sales reports.
 
+### App Store funnel (impressions → page views → downloads)
+
+The Traffic tab's App Store funnel tiles (Impressions, Product Page Views,
+Conversion Rate) come from the **App Store Connect Analytics Reports API**,
+which is asynchronous: you request an ONGOING report once, Apple generates
+the first file ~1–2 days later, then refreshes daily.
+
+- **Bootstrap (one-time):** `node scripts/appstore-analytics-request.mjs`
+  creates the ONGOING request. Already done — request id
+  `fac7ab09-a7a2-4a01-b809-6c32157bc4f7`.
+- **Ingestion:** `fetchAnalyticsFunnel()` in `src/lib/appstore.ts` walks
+  `reports → instances (DAILY) → segments`, downloads + gunzips the TSV
+  segments, and joins two reports:
+  - *App Store Discovery and Engagement Standard* → impressions
+    (`Event="Impression"`) and product page views (`Event="Page view"`),
+    summing `Counts`; unique impressions sum `Unique Counts`.
+  - *App Downloads Standard* → downloads = first-time downloads +
+    redownloads. **Important:** that report's `Counts` also includes app
+    *updates* (`Auto-update`, `Manual update`), which are not downloads and
+    dwarf the real ones — we exclude any `Download Type` containing
+    "update". Verified against the live files via
+    `scripts/appstore-analytics-probe.mjs`.
+  - Conversion rate = downloads ÷ unique impressions (Apple doesn't
+    provide it; we compute it).
+- **Route:** `POST|GET /api/admin/app-store/ingest` computes the funnel
+  and writes it to Firestore `adminIntegrations/appStoreAnalytics`. The
+  read route `/api/admin/app-store` serves that cache to the UI (null →
+  tiles show "pending first report").
+- **Schedule:** a daily **Vercel Cron** (09:00 UTC) is configured in
+  `vercel.json` to hit the ingest route. It authenticates with
+  `CRON_SECRET` (set this env var in Vercel — Vercel sends it as
+  `Authorization: Bearer $CRON_SECRET` on cron runs). Human callers still
+  use an admin Firebase token.
+- **Data lag:** Apple's analytics complete ~2 days behind, so the funnel
+  `asOf` trails "today" by a couple of days — the Downloads chart already
+  notes this in the UI.
+
+```
+CRON_SECRET = <a long random string>   # set in Vercel; enables the daily cron
+```
+
 ---
 
 ## 3. Meta Marketing API — Ad statistics

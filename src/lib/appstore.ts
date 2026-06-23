@@ -247,3 +247,217 @@ export async function fetchDownloads(
 
   return { total: series.reduce((s, x) => s + x.value, 0), series };
 }
+
+/* ────────────────────────────────────────────────────────────
+   ANALYTICS FUNNEL (async Analytics Reports API → daily TSVs)
+
+   Impressions → product page views → downloads, from the ONGOING
+   analytics report Apple generates ~1–2 days after the request. Unlike
+   the SALES report above (next-day, single endpoint), this is a tree:
+     analyticsReportRequests/{id}/reports          (one per report type)
+       → analyticsReports/{id}/instances           (one per day, DAILY)
+         → analyticsReportInstances/{id}/segments  (gzipped TSV on S3)
+   We read two reports and join them into a single funnel cached in
+   Firestore. Schema (columns, Event values) was verified against the
+   real downloaded files — see scripts/appstore-analytics-probe.mjs.
+   ──────────────────────────────────────────────────────────── */
+
+// The ONGOING request created on 2026-06-17 (scripts/appstore-analytics-request.mjs).
+const ANALYTICS_REQUEST_ID = "fac7ab09-a7a2-4a01-b809-6c32157bc4f7";
+// Report names verified live. The "Standard" variants carry exactly the
+// Event/Counts columns we need with the least dimensionality.
+const ENGAGEMENT_REPORT = "App Store Discovery and Engagement Standard";
+const DOWNLOADS_REPORT = "App Downloads Standard";
+
+interface AscListEntry {
+  id: string;
+  attributes?: Record<string, unknown>;
+}
+interface AscListResponse {
+  data?: AscListEntry[];
+  links?: { next?: string };
+}
+
+/** GET a JSON endpoint, throwing on non-2xx. */
+async function ascGetJson<T>(path: string): Promise<T> {
+  const res = await ascGet(path);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`ASC ${res.status} ${path.split("?")[0]}: ${text.slice(0, 200)}`);
+  }
+  return (await res.json()) as T;
+}
+
+/** Follow `links.next` and collect every page of a list endpoint. */
+async function ascListAll(path: string): Promise<AscListEntry[]> {
+  const out: AscListEntry[] = [];
+  let url = path;
+  while (url) {
+    const j = await ascGetJson<AscListResponse>(url);
+    out.push(...(j.data || []));
+    url = j.links?.next || "";
+  }
+  return out;
+}
+
+/** Download a presigned segment URL, gunzip, parse the TSV into rows. */
+async function fetchSegmentRows(url: string): Promise<Record<string, string>[]> {
+  const res = await fetch(url); // presigned S3 URL — no auth header
+  if (!res.ok) throw new Error(`ASC segment download ${res.status}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  let tsv: string;
+  try {
+    tsv = gunzipSync(buf).toString("utf8");
+  } catch {
+    tsv = buf.toString("utf8"); // tolerate an already-plain body
+  }
+  const lines = tsv.split("\n").filter((l) => l.trim().length > 0);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split("\t").map((h) => h.trim());
+  return lines.slice(1).map((line) => {
+    const cells = line.split("\t");
+    const row: Record<string, string> = {};
+    headers.forEach((h, i) => (row[h] = (cells[i] || "").trim()));
+    return row;
+  });
+}
+
+/**
+ * Every DAILY-instance row of a named report, each tagged with the
+ * instance `processingDate` it came from. Apple backfills/restates older
+ * dates in newer instances, so the caller dedupes by Date keeping the
+ * latest processingDate (see `authoritativeRows`).
+ */
+async function fetchReportRows(
+  reportName: string
+): Promise<{ processingDate: string; row: Record<string, string> }[]> {
+  const reports = await ascListAll(
+    `/v1/analyticsReportRequests/${ANALYTICS_REQUEST_ID}/reports?limit=200`
+  );
+  const report = reports.find((r) => r.attributes?.name === reportName);
+  if (!report) {
+    throw new Error(`analytics report "${reportName}" not present in request tree`);
+  }
+
+  const instances = await ascListAll(
+    `/v1/analyticsReports/${report.id}/instances?filter[granularity]=DAILY&limit=200`
+  );
+  // oldest → newest, so a later restatement of a date overwrites an earlier one
+  instances.sort((a, b) =>
+    String(a.attributes?.processingDate || "").localeCompare(
+      String(b.attributes?.processingDate || "")
+    )
+  );
+
+  const out: { processingDate: string; row: Record<string, string> }[] = [];
+  for (const inst of instances) {
+    const processingDate = String(inst.attributes?.processingDate || "");
+    const segments = await ascListAll(
+      `/v1/analyticsReportInstances/${inst.id}/segments?limit=200`
+    );
+    for (const seg of segments) {
+      const url = seg.attributes?.url as string | undefined;
+      if (!url) continue;
+      const rows = await fetchSegmentRows(url);
+      for (const row of rows) out.push({ processingDate, row });
+    }
+  }
+  return out;
+}
+
+/**
+ * Collapse restatements: for each calendar Date, keep only the rows from
+ * the instance with the newest processingDate that reported that Date.
+ */
+function authoritativeRows(
+  tagged: { processingDate: string; row: Record<string, string> }[]
+): Record<string, string>[] {
+  const latestPD: Record<string, string> = {};
+  for (const { processingDate, row } of tagged) {
+    const d = row["Date"] || "";
+    if (!latestPD[d] || processingDate > latestPD[d]) latestPD[d] = processingDate;
+  }
+  return tagged
+    .filter(({ processingDate, row }) => processingDate === latestPD[row["Date"] || ""])
+    .map((t) => t.row);
+}
+
+export interface AnalyticsFunnel {
+  impressions: number;
+  productPageViews: number;
+  downloads: number;
+  conversionRate: number; // percentage, e.g. 12.3
+  asOf: string; // ISO yyyy-mm-dd of the latest day the data covers
+}
+
+/**
+ * Build the App Store discovery funnel over the trailing `windowDays`
+ * (ending at the latest date Apple has reported). Joins two reports:
+ *   • Discovery & Engagement — impressions (Event="Impression") and
+ *     product page views (Event="Page view"), summing Counts; unique
+ *     impressions sum Unique Counts.
+ *   • App Downloads — total downloads = first-time downloads + redownloads.
+ *     NB the report's Counts also carries app *updates* ("Auto-update",
+ *     "Manual update"), which dwarf real downloads and are NOT downloads;
+ *     we exclude any Download Type containing "update" (verified against
+ *     the live file — see scripts/appstore-analytics-probe.mjs).
+ * Conversion rate = total downloads / unique impressions (Apple doesn't
+ * provide it). Returns zeros with asOf="" if no rows exist yet.
+ */
+export async function fetchAnalyticsFunnel(windowDays = 30): Promise<AnalyticsFunnel> {
+  const [engTagged, dlTagged] = await Promise.all([
+    fetchReportRows(ENGAGEMENT_REPORT),
+    fetchReportRows(DOWNLOADS_REPORT),
+  ]);
+  const engRows = authoritativeRows(engTagged);
+  const dlRows = authoritativeRows(dlTagged);
+
+  // Window ends at the latest date present across both reports.
+  const allDates = [...engRows, ...dlRows]
+    .map((r) => r["Date"])
+    .filter(Boolean)
+    .sort();
+  const asOf = allDates.length ? allDates[allDates.length - 1] : "";
+  let cutoff = "";
+  if (asOf) {
+    const d = new Date(`${asOf}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - (windowDays - 1));
+    cutoff = d.toISOString().slice(0, 10);
+  }
+  const inWindow = (r: Record<string, string>) => !cutoff || (r["Date"] || "") >= cutoff;
+
+  let impressions = 0;
+  let uniqueImpressions = 0;
+  let productPageViews = 0;
+  for (const r of engRows) {
+    if (!inWindow(r)) continue;
+    const event = r["Event"];
+    if (event === "Impression") {
+      impressions += num(r["Counts"]);
+      uniqueImpressions += num(r["Unique Counts"]);
+    } else if (event === "Page view") {
+      productPageViews += num(r["Counts"]);
+    }
+  }
+
+  let downloads = 0;
+  for (const r of dlRows) {
+    if (!inWindow(r)) continue;
+    // Exclude update events ("Auto-update", "Manual update") — only
+    // first-time downloads and redownloads count as downloads.
+    if (/update/i.test(r["Download Type"] || "")) continue;
+    downloads += num(r["Counts"]);
+  }
+
+  const conversionRate =
+    uniqueImpressions > 0 ? (downloads / uniqueImpressions) * 100 : 0;
+
+  return {
+    impressions,
+    productPageViews,
+    downloads,
+    // store with sane precision; the UI formats to 1 decimal
+    conversionRate: Math.round(conversionRate * 100) / 100,
+    asOf,
+  };
+}
