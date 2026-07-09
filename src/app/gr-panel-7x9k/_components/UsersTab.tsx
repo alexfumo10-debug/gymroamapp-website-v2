@@ -22,7 +22,7 @@ import {
   withinDays,
   tsToMillis,
 } from "../_lib/format";
-import type { AppUser, AuthUserInfo } from "../_lib/types";
+import type { AppUser, AuthUserInfo, FirestoreTimestamp } from "../_lib/types";
 import { StatTile, Loading, ErrorState, Badge } from "./ui";
 import tabs from "./tabs.module.css";
 
@@ -226,6 +226,8 @@ export function UsersTab({ auth }: { auth: Auth }) {
         <UserDetailModal
           user={selected}
           authInfo={authMap.map[selected.uid]}
+          getIdToken={auth.getIdToken}
+          onMutated={() => users.reload()}
           onClose={() => setSelected(null)}
         />
       )}
@@ -237,10 +239,14 @@ export function UsersTab({ auth }: { auth: Auth }) {
 function UserDetailModal({
   user,
   authInfo,
+  getIdToken,
+  onMutated,
   onClose,
 }: {
   user: EnrichedUser;
   authInfo?: AuthUserInfo;
+  getIdToken: () => Promise<string | null>;
+  onMutated: () => void;
   onClose: () => void;
 }) {
   const name = user.displayName || user.username || user.canonicalEmail || user.uid;
@@ -265,6 +271,13 @@ function UserDetailModal({
         </div>
 
         <div className={tabs.modalBody}>
+          <ProGrantSection
+            uid={user.uid}
+            initial={user.proAccessUntil}
+            getIdToken={getIdToken}
+            onMutated={onMutated}
+          />
+
           <div className={tabs.detailSectionTitle}>Profile</div>
           <div className={tabs.detailGrid}>
             {docEntries.map(([k, v]) => (
@@ -311,5 +324,171 @@ function UserDetailModal({
         </div>
       </div>
     </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   GymRoam Pro comp — grant/revoke a server-side entitlement.
+
+   Writes `proAccessUntil` to the user doc via /api/admin/pro-grant
+   (Admin SDK). iOS 2.3+ reads it into UserStore.isProMember, so a grant
+   unlocks every Pro feature with no App Store update. Used to comp
+   influencers/testers without touching StoreKit.
+   ──────────────────────────────────────────────────────────── */
+
+const DURATIONS: { label: string; value: number | "permanent" }[] = [
+  { label: "1 month", value: 30 },
+  { label: "3 months", value: 90 },
+  { label: "1 year", value: 365 },
+  { label: "Permanent", value: "permanent" },
+];
+
+// Any expiry past this reads as a "permanent" comp in the UI (the route
+// stores permanent grants as a year-2999 date).
+const PERMANENT_THRESHOLD_MS = Date.parse("2900-01-01T00:00:00Z");
+
+function ProGrantSection({
+  uid,
+  initial,
+  getIdToken,
+  onMutated,
+}: {
+  uid: string;
+  initial?: FirestoreTimestamp | null;
+  getIdToken: () => Promise<string | null>;
+  onMutated: () => void;
+}) {
+  const [untilMs, setUntilMs] = useState<number | null>(
+    initial ? tsToMillis(initial) : null
+  );
+  const [duration, setDuration] = useState<number | "permanent">(365);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const now = Date.now();
+  const isActive = untilMs != null && untilMs > now;
+  const isPermanent = untilMs != null && untilMs > PERMANENT_THRESHOLD_MS;
+  const isExpired = untilMs != null && untilMs <= now;
+
+  async function submit(action: "grant" | "revoke") {
+    setBusy(true);
+    setErr("");
+    try {
+      const token = await getIdToken();
+      if (!token) throw new Error("Not signed in.");
+      const res = await fetch("/api/admin/pro-grant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(
+          action === "grant"
+            ? { uid, action, durationDays: duration, reason: reason.trim() }
+            : { uid, action }
+        ),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      setUntilMs(action === "revoke" ? null : Date.parse(json.proAccessUntil));
+      if (action === "revoke") setReason("");
+      onMutated();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className={tabs.detailSectionTitle}>GymRoam Pro</div>
+      <div className={tabs.proBox}>
+        <div className={tabs.proStatusRow}>
+          <span
+            className={`${tabs.proDot} ${isActive ? tabs.proDotOn : ""}`}
+            aria-hidden="true"
+          />
+          <span className={tabs.proStatusText}>
+            {isActive ? (
+              isPermanent ? (
+                <>
+                  Pro comp active · <strong>permanent</strong>
+                </>
+              ) : (
+                <>
+                  Pro comp active · until{" "}
+                  <strong>
+                    {formatDate(untilMs!, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </strong>
+                </>
+              )
+            ) : isExpired ? (
+              "Pro comp expired — not active"
+            ) : (
+              "No Pro comp — standard entitlement"
+            )}
+          </span>
+        </div>
+
+        {!isActive && (
+          <>
+            <div className={tabs.proChips}>
+              {DURATIONS.map((d) => (
+                <button
+                  key={d.label}
+                  type="button"
+                  className={`${tabs.chip} ${
+                    duration === d.value ? tabs.chipActive : ""
+                  }`}
+                  onClick={() => setDuration(d.value)}
+                  disabled={busy}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+            <input
+              className={tabs.proReason}
+              placeholder="Reason (optional) — e.g. Influencer trial @handle"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              disabled={busy}
+              maxLength={200}
+            />
+            <button
+              type="button"
+              className={tabs.proBtn}
+              onClick={() => submit("grant")}
+              disabled={busy}
+            >
+              {busy ? "Granting…" : "Grant Pro"}
+            </button>
+          </>
+        )}
+
+        {isActive && (
+          <button
+            type="button"
+            className={tabs.proBtnDanger}
+            onClick={() => submit("revoke")}
+            disabled={busy}
+          >
+            {busy ? "Revoking…" : "Revoke Pro"}
+          </button>
+        )}
+
+        {err && <div className={tabs.proErr}>⚠ {err}</div>}
+        <p className={tabs.proHint}>
+          Server-side comp. Takes effect in-app on next launch/refresh — no App
+          Store update. Requires the iOS <code>proAccessUntil</code> read (2.3+).
+        </p>
+      </div>
+    </>
   );
 }

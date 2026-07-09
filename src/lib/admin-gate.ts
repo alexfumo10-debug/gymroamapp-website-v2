@@ -23,6 +23,54 @@ export const ADMIN_EMAILS = [
   "kevin@aigrowthhouse.com",
 ];
 
+export interface AdminContext {
+  /** The error response to return when the caller is NOT an admin, else null. */
+  denied: NextResponse | null;
+  /** The verified, lowercased admin email when authorized, else null. */
+  email: string | null;
+}
+
+/**
+ * Verify the caller is a signed-in admin AND surface their identity.
+ * Single source of truth for the admin gate — `requireAdmin` wraps this.
+ * Use this variant when the route needs to know WHICH admin acted (e.g.
+ * to stamp an audit field like `proGrantedBy`).
+ *
+ * Generic error messages only — this runs BEFORE the caller is confirmed
+ * to be an admin, so it must not leak internal init/verify detail to
+ * unauthenticated callers. The server-side console.error still captures
+ * the real exception for our own logs.
+ */
+export async function requireAdminContext(
+  req: NextRequest
+): Promise<AdminContext> {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return {
+      denied: NextResponse.json({ error: "missing bearer token" }, { status: 401 }),
+      email: null,
+    };
+  }
+  const idToken = authHeader.slice("Bearer ".length);
+  try {
+    const decoded = await adminAuth().verifyIdToken(idToken);
+    const email = (decoded.email || "").toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) {
+      return {
+        denied: NextResponse.json({ error: "not an admin" }, { status: 403 }),
+        email: null,
+      };
+    }
+    return { denied: null, email };
+  } catch (e) {
+    console.error("requireAdmin failed:", e);
+    return {
+      denied: NextResponse.json({ error: "invalid token" }, { status: 401 }),
+      email: null,
+    };
+  }
+}
+
 /**
  * Returns a NextResponse (the error to send) when the caller is NOT an
  * authorized admin, or `null` when they are — so the route can proceed.
@@ -30,26 +78,5 @@ export const ADMIN_EMAILS = [
 export async function requireAdmin(
   req: NextRequest
 ): Promise<NextResponse | null> {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "missing bearer token" }, { status: 401 });
-  }
-  const idToken = authHeader.slice("Bearer ".length);
-  // Generic errors only — this gate runs BEFORE the caller is confirmed
-  // to be an admin, so it must not leak internal init/verify detail to
-  // unauthenticated callers. (The detailed init-vs-token split lived here
-  // temporarily to debug the FIREBASE_ADMIN_* env-var setup; reverted now
-  // that the credentials are confirmed working. Server-side console.error
-  // still captures the real exception for our own logs.)
-  try {
-    const decoded = await adminAuth().verifyIdToken(idToken);
-    const email = (decoded.email || "").toLowerCase();
-    if (!ADMIN_EMAILS.includes(email)) {
-      return NextResponse.json({ error: "not an admin" }, { status: 403 });
-    }
-    return null;
-  } catch (e) {
-    console.error("requireAdmin failed:", e);
-    return NextResponse.json({ error: "invalid token" }, { status: 401 });
-  }
+  return (await requireAdminContext(req)).denied;
 }

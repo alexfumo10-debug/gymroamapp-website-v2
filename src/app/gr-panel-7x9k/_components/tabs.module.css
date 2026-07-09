@@ -313,6 +313,112 @@
   word-break: break-word;
 }
 
+/* ── GymRoam Pro comp control (user detail modal) ── */
+.proBox {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.proStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.proDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+.proDotOn {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(232, 255, 60, 0.18);
+}
+.proStatusText {
+  font-size: 13px;
+  color: var(--text);
+}
+.proStatusText strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+.proChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.proReason {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 9px 12px;
+}
+.proReason::placeholder {
+  color: var(--dim);
+}
+.proReason:focus {
+  outline: none;
+  border-color: rgba(232, 255, 60, 0.4);
+}
+.proBtn,
+.proBtnDanger {
+  align-self: flex-start;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  border: 1px solid transparent;
+}
+.proBtn {
+  background: var(--accent);
+  color: #0a0a0b;
+}
+.proBtn:hover {
+  opacity: 0.9;
+}
+.proBtnDanger {
+  background: transparent;
+  border-color: rgba(255, 90, 90, 0.4);
+  color: #ff7a7a;
+}
+.proBtnDanger:hover {
+  background: rgba(255, 90, 90, 0.1);
+}
+.proBtn:disabled,
+.proBtnDanger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.proErr {
+  font-size: 12px;
+  color: #ff7a7a;
+}
+.proHint {
+  font-size: 11.5px;
+  color: var(--dim);
+  line-height: 1.5;
+  margin: 0;
+}
+.proHint code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
 /* ── Ad creative thumbnail ── */
 .adThumb {
   width: 36px;
