@@ -33,6 +33,17 @@ export interface AppUser {
   homeCity?: string;
   isVerifiedCreator?: boolean;
   verifiedCreatorTier?: string | null;
+  // Server-granted GymRoam Pro comp — set by the admin panel via
+  // /api/admin/pro-grant, read by iOS 2.3+ into UserStore.isProMember.
+  // Pro is comped while `proAccessUntil` is in the future (a far-future
+  // date = permanent). Client self-write is blocked in firestore.rules
+  // (iOS repo). The rest are audit metadata.
+  proAccessUntil?: FirestoreTimestamp | null;
+  proGrantReason?: string | null;
+  proGrantedBy?: string | null;
+  proGrantedAt?: FirestoreTimestamp | null;
+  proRevokedBy?: string | null;
+  proRevokedAt?: FirestoreTimestamp | null;
   createdAt?: FirestoreTimestamp;
   updatedAt?: number; // iOS writes epoch seconds on every save
 }
