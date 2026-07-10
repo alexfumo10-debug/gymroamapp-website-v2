@@ -41,6 +41,21 @@ const INK = "#0A0A0B";
 const SUPPORT = "support@gymroamapp.com";
 const APP_STORE = "https://apps.apple.com/app/id6773157406";
 
+// GymRoam Pro pricing quoted in promotional templates. Single source of
+// truth for email copy — keep in sync with the live App Store Connect
+// products (US-store pricing; the App Store localizes at purchase).
+// The 7-day free trial exists on the ANNUAL plan only — never imply a
+// monthly trial.
+const PRO_MONTHLY = "$7.99/month";
+const PRO_ANNUAL = "$39.99/year";
+
+// Physical postal address for promotional footers — REQUIRED by CAN-SPAM
+// on any email whose primary purpose is commercial (e.g. the Pro pitch).
+// A registered-agent address or PO Box is fine. Until this is set, the
+// promo footer renders the opt-out line without the address line — set it
+// before sending promotional templates to real users.
+const POSTAL_ADDRESS = "";
+
 /** Escape untrusted text for safe HTML interpolation. */
 function esc(s: string): string {
   return s
@@ -69,7 +84,14 @@ function greeting(vars: EmailVars): string {
  * dark brand header. Built for broad email-client compatibility (Gmail,
  * Apple Mail, Outlook). No remote images (deliverability + privacy).
  */
-function layout(innerHtml: string): string {
+function layout(innerHtml: string, opts?: { promoFooter?: boolean }): string {
+  // CAN-SPAM block for promotional templates: why they got it, a working
+  // opt-out (reply-based is compliant), and the postal address when set.
+  const promo = opts?.promoFooter
+    ? `<p style="margin:10px 0 0;">You're receiving this one-time note because you have a GymRoam account. Prefer not to get emails like this? Reply &quot;unsubscribe&quot; and we won't send more.${
+        POSTAL_ADDRESS ? `<br/>GymRoam · ${esc(POSTAL_ADDRESS)}` : ""
+      }</p>`
+    : "";
   return `<!doctype html>
 <html>
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
@@ -84,13 +106,20 @@ function layout(innerHtml: string): string {
           ${innerHtml}
         </td></tr>
         <tr><td style="padding:18px 28px 26px;border-top:1px solid #eee;color:#8a8a92;font-size:12px;line-height:1.5;">
-          GymRoam · Questions? Just reply, or email <a href="mailto:${SUPPORT}" style="color:#5a5a63;">${SUPPORT}</a>.
+          GymRoam · Questions? Just reply, or email <a href="mailto:${SUPPORT}" style="color:#5a5a63;">${SUPPORT}</a>.${promo}
         </td></tr>
       </table>
     </td></tr>
   </table>
 </body>
 </html>`;
+}
+
+/** Plain-text mirror of the promo footer (compliance applies to both parts). */
+function promoFooterText(): string {
+  return `\n\nYou're receiving this one-time note because you have a GymRoam account. Prefer not to get emails like this? Reply "unsubscribe" and we won't send more.${
+    POSTAL_ADDRESS ? `\nGymRoam · ${POSTAL_ADDRESS}` : ""
+  }`;
 }
 
 function button(href: string, label: string): string {
@@ -194,6 +223,25 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       );
       const text = `Hi ${v.firstName || v.displayName || "there"},\n\nA quick heads-up: your complimentary GymRoam Pro access ends ${untilText}. Until then, everything stays unlocked — trips, saved gyms, home gyms, and Scout's smartest workouts.\n\nWant to keep Pro? You can subscribe right in the app: ${APP_STORE}\n\nQuestions, or feel like the timing's wrong? Just reply — a founder reads every message.\n\n— GymRoam`;
       return { subject: "Your GymRoam Pro access ends soon", html, text };
+    },
+  },
+  {
+    id: "welcome-pro",
+    label: "Welcome + Pro pitch ($7.99)",
+    description:
+      "Welcome with the Pro upsell (monthly price + annual w/ 7-day trial). PROMOTIONAL — send only while Pro is purchasable in the live app.",
+    editable: false,
+    render: (v) => {
+      const html = layout(
+        `<p style="margin:0 0 16px;">Hi ${greeting(v)},</p>
+         <p style="margin:0 0 16px;">Welcome to GymRoam — the passport for training wherever you travel. Find gyms, studios, and run clubs on the map, check in to stamp your passport, and ask Scout to plan a workout anywhere.</p>
+         <p style="margin:0 0 16px;">And when you're ready for the full experience, <strong>GymRoam Pro is waiting</strong>: unlimited trips, saved gyms, home gyms, and Scout's smartest workouts — for <strong>${PRO_MONTHLY}</strong>, or ${PRO_ANNUAL} with a <strong>7-day free trial</strong>.</p>
+         ${button(APP_STORE, "Start roaming")}
+         <p style="margin:0;">If anything's confusing, just reply — a founder reads every message.</p>`,
+        { promoFooter: true }
+      );
+      const text = `Hi ${v.firstName || v.displayName || "there"},\n\nWelcome to GymRoam — the passport for training wherever you travel. Find gyms, studios, and run clubs on the map, check in to stamp your passport, and ask Scout to plan a workout anywhere.\n\nAnd when you're ready for the full experience, GymRoam Pro is waiting: unlimited trips, saved gyms, home gyms, and Scout's smartest workouts — for ${PRO_MONTHLY}, or ${PRO_ANNUAL} with a 7-day free trial.\n\nStart roaming: ${APP_STORE}\n\nIf anything's confusing, just reply — a founder reads every message.\n\n— GymRoam${promoFooterText()}`;
+      return { subject: "Welcome to GymRoam — Pro is waiting for you", html, text };
     },
   },
   {
