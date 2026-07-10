@@ -23,6 +23,7 @@ import {
   tsToMillis,
 } from "../_lib/format";
 import type { AppUser, AuthUserInfo, FirestoreTimestamp } from "../_lib/types";
+import { EMAIL_TEMPLATE_OPTIONS } from "@/lib/email-templates";
 import { StatTile, Loading, ErrorState, Badge } from "./ui";
 import tabs from "./tabs.module.css";
 
@@ -278,6 +279,12 @@ function UserDetailModal({
             onMutated={onMutated}
           />
 
+          <SendEmailSection
+            uid={user.uid}
+            email={user.canonicalEmail}
+            getIdToken={getIdToken}
+          />
+
           <div className={tabs.detailSectionTitle}>Profile</div>
           <div className={tabs.detailGrid}>
             {docEntries.map(([k, v]) => (
@@ -487,6 +494,150 @@ function ProGrantSection({
         <p className={tabs.proHint}>
           Server-side comp. Takes effect in-app on next launch/refresh — no App
           Store update. Requires the iOS <code>proAccessUntil</code> read (2.3+).
+        </p>
+      </div>
+    </>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   Send a transactional 1:1 email to this user.
+
+   Renders a code-defined template (src/lib/email-templates.ts) and POSTs
+   to /api/admin/send-email, which sends via Resend and logs to
+   adminEmailLog. Transactional only — no bulk, no marketing.
+   ──────────────────────────────────────────────────────────── */
+
+function SendEmailSection({
+  uid,
+  email,
+  getIdToken,
+}: {
+  uid: string;
+  email: string;
+  getIdToken: () => Promise<string | null>;
+}) {
+  const [templateId, setTemplateId] = useState(EMAIL_TEMPLATE_OPTIONS[0].id);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const tmpl =
+    EMAIL_TEMPLATE_OPTIONS.find((t) => t.id === templateId) ??
+    EMAIL_TEMPLATE_OPTIONS[0];
+  const noEmail = !email;
+  const isPrivateRelay = email.endsWith("@privaterelay.appleid.com");
+
+  async function send() {
+    setBusy(true);
+    setResult(null);
+    try {
+      const token = await getIdToken();
+      if (!token) throw new Error("Not signed in.");
+      const res = await fetch("/api/admin/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          uid,
+          templateId,
+          ...(tmpl.editable ? { subject, body: message } : {}),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      setResult({ ok: true, text: `Sent “${json.subject}” to ${json.to}.` });
+      if (tmpl.editable) {
+        setSubject("");
+        setMessage("");
+      }
+    } catch (e) {
+      setResult({ ok: false, text: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className={tabs.detailSectionTitle}>Send Email</div>
+      <div className={tabs.proBox}>
+        <div className={tabs.emailTo}>
+          To:{" "}
+          {noEmail ? (
+            <em>no email on file</em>
+          ) : (
+            <strong>{email}</strong>
+          )}
+        </div>
+        {isPrivateRelay && (
+          <div className={tabs.emailWarn}>
+            Apple private-relay address — delivery requires your send domain to
+            be registered under Apple Developer → Sign in with Apple → Email
+            Sources, or it will bounce.
+          </div>
+        )}
+
+        <select
+          className={tabs.emailSelect}
+          value={templateId}
+          onChange={(e) => {
+            setTemplateId(e.target.value);
+            setResult(null);
+          }}
+          disabled={busy || noEmail}
+        >
+          {EMAIL_TEMPLATE_OPTIONS.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+        <p className={tabs.emailDesc}>{tmpl.description}</p>
+
+        {tmpl.editable && (
+          <>
+            <input
+              className={tabs.proReason}
+              placeholder="Subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              disabled={busy || noEmail}
+              maxLength={140}
+            />
+            <textarea
+              className={tabs.emailBody}
+              placeholder="Your message…"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              disabled={busy || noEmail}
+              rows={5}
+            />
+          </>
+        )}
+
+        <button
+          type="button"
+          className={tabs.proBtn}
+          onClick={send}
+          disabled={busy || noEmail || (tmpl.editable && !message.trim())}
+        >
+          {busy ? "Sending…" : "Send email"}
+        </button>
+
+        {result && (
+          <div className={result.ok ? tabs.emailOk : tabs.proErr}>
+            {result.ok ? "✓ " : "⚠ "}
+            {result.text}
+          </div>
+        )}
+        <p className={tabs.proHint}>
+          Transactional 1:1 only — sends via Resend, logged to{" "}
+          <code>adminEmailLog</code>. Dormant until <code>RESEND_API_KEY</code>{" "}
+          + <code>EMAIL_FROM</code> are set.
         </p>
       </div>
     </>

@@ -201,6 +201,45 @@ BIGQUERY_CRASHLYTICS_DATASET = firebase_crashlytics
 
 ---
 
+## 6. Resend — Transactional email ("Send Email" on a user)
+
+The Users tab's detail modal has a **Send Email** section (next to Grant
+Pro). It sends a **transactional, 1:1** email — a code-defined template or
+a custom subject/body — via **Resend**, and logs every send to Firestore
+`adminEmailLog`.
+
+- **Route:** `POST /api/admin/send-email` (admin-gated). Resolves the
+  recipient from the Firebase Auth uid (canonical email, not the user-doc
+  value), renders the template (`src/lib/email-templates.ts`), sends, logs.
+- **Scope guardrail:** transactional only — no bulk, no marketing. That's
+  deliberate: promotional mail would need an unsubscribe link + consent
+  trail (CAN-SPAM) we don't have. Keep new templates transactional.
+- **Dormant until configured:** returns **503** until both env vars are set.
+
+```
+RESEND_API_KEY = re_...                              # Resend → API Keys (Sending)
+EMAIL_FROM     = GymRoam <hello@send.gymroamapp.com> # must be on the verified domain
+```
+
+**Setup (in order):**
+1. **resend.com → Add Domain** — use a **subdomain** (`send.gymroamapp.com`),
+   NOT the apex. This isolates its reputation from the apex that sends
+   Firebase password resets, so a bad send can't spam-flag your resets.
+2. Add the **SPF / DKIM / DMARC** records Resend shows you, in **Squarespace**
+   DNS (where the rest of the domain's DNS lives).
+3. ⚠️ **Apple Private Relay:** a real share of users signed in with Apple and
+   have `@privaterelay.appleid.com` addresses. Apple **bounces** mail to them
+   unless the send domain is registered under **Apple Developer → Certificates,
+   Identifiers & Profiles → Sign in with Apple for Email Communication**. The
+   panel shows a warning when a recipient is a relay address.
+4. Create an **API key** (Sending access) → set `RESEND_API_KEY`; set
+   `EMAIL_FROM` to an address on the verified subdomain. Both in Vercel
+   (Production) via the usual env-var flow, then redeploy.
+
+Free tier: ~100 emails/day, 3k/mo — ample for 1:1 transactional.
+
+---
+
 ## Priority order (recommendation)
 
 1. **App Store Connect** — one key, two tabs (reviews + Pro/Pro+). Highest ROI.
