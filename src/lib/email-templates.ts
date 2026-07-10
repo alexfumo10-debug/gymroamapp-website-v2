@@ -152,6 +152,71 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       return { subject: "Welcome to GymRoam", html, text };
     },
   },
+  {
+    id: "influencer-pro",
+    label: "Influencer: Pro on us",
+    description:
+      "Personal founder note for a comped creator/influencer. Uses the Pro-until date when set.",
+    editable: false,
+    render: (v) => {
+      const until = v.proUntil
+        ? ` — active through <strong>${esc(v.proUntil)}</strong>`
+        : "";
+      const untilText = v.proUntil ? ` — active through ${v.proUntil}` : "";
+      const html = layout(
+        `<p style="margin:0 0 16px;">Hi ${greeting(v)},</p>
+         <p style="margin:0 0 16px;">Alex here, one of the founders of GymRoam. We turned on <strong>GymRoam Pro</strong> for you, on us${until}. No card, no strings.</p>
+         <p style="margin:0 0 16px;">Pro unlocks everything: unlimited trips, saved gyms, home gyms, and Scout's smartest workouts. Take it on your next trip and put it through its paces.</p>
+         ${button(APP_STORE, "Open GymRoam")}
+         <p style="margin:0;">One ask: be honest with us. If something's confusing or missing, reply to this email — it comes straight to a founder, and we ship fast.</p>`
+      );
+      const text = `Hi ${v.firstName || v.displayName || "there"},\n\nAlex here, one of the founders of GymRoam. We turned on GymRoam Pro for you, on us${untilText}. No card, no strings.\n\nPro unlocks everything: unlimited trips, saved gyms, home gyms, and Scout's smartest workouts. Take it on your next trip and put it through its paces.\n\nOpen the app: ${APP_STORE}\n\nOne ask: be honest with us. If something's confusing or missing, reply to this email — it comes straight to a founder, and we ship fast.\n\n— GymRoam`;
+      return { subject: "GymRoam Pro is on us", html, text };
+    },
+  },
+  {
+    id: "pro-expiring",
+    label: "Pro access ending soon",
+    description:
+      "Heads-up that a comped Pro window is ending. Uses the user's Pro-until date.",
+    editable: false,
+    render: (v) => {
+      const until = v.proUntil
+        ? `on <strong>${esc(v.proUntil)}</strong>`
+        : "soon";
+      const untilText = v.proUntil ? `on ${v.proUntil}` : "soon";
+      const html = layout(
+        `<p style="margin:0 0 16px;">Hi ${greeting(v)},</p>
+         <p style="margin:0 0 16px;">A quick heads-up: your complimentary <strong>GymRoam Pro</strong> access ends ${until}. Until then, everything stays unlocked — trips, saved gyms, home gyms, and Scout's smartest workouts.</p>
+         <p style="margin:0 0 16px;">Want to keep Pro? You can subscribe right in the app.</p>
+         ${button(APP_STORE, "Open GymRoam")}
+         <p style="margin:0;">Questions, or feel like the timing's wrong? Just reply — a founder reads every message.</p>`
+      );
+      const text = `Hi ${v.firstName || v.displayName || "there"},\n\nA quick heads-up: your complimentary GymRoam Pro access ends ${untilText}. Until then, everything stays unlocked — trips, saved gyms, home gyms, and Scout's smartest workouts.\n\nWant to keep Pro? You can subscribe right in the app: ${APP_STORE}\n\nQuestions, or feel like the timing's wrong? Just reply — a founder reads every message.\n\n— GymRoam`;
+      return { subject: "Your GymRoam Pro access ends soon", html, text };
+    },
+  },
+  {
+    id: "feature-shipped",
+    label: "You asked, we shipped it",
+    description:
+      "For a feedback submitter when their request goes live. You write what shipped; the template frames it.",
+    editable: true,
+    render: (v) => {
+      const subject =
+        (v.subject || "").trim() || "You asked. It's in GymRoam now.";
+      const bodyText = (v.body || "").trim();
+      const html = layout(
+        `<p style="margin:0 0 16px;">Hi ${greeting(v)},</p>
+         <p style="margin:0 0 16px;">You flagged something in GymRoam's feedback, and we built it. It's live now:</p>
+         ${paragraphs(bodyText || " ")}
+         ${button(APP_STORE, "See it in the app")}
+         <p style="margin:0;">Keep the ideas coming — this one exists because you spoke up.</p>`
+      );
+      const text = `Hi ${v.firstName || v.displayName || "there"},\n\nYou flagged something in GymRoam's feedback, and we built it. It's live now:\n\n${bodyText}\n\nSee it in the app: ${APP_STORE}\n\nKeep the ideas coming — this one exists because you spoke up.\n\n— GymRoam`;
+      return { subject, html, text };
+    },
+  },
 ];
 
 /** Lightweight metadata for the dashboard picker (safe on the client). */
