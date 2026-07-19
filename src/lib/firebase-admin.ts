@@ -90,3 +90,15 @@ export function adminDb(): Firestore {
 export function adminAuth(): Auth {
   return getAuth(getAdminApp());
 }
+
+/**
+ * The raw (normalized) service-account credentials, for routes that need
+ * to mint a Google OAuth token for APIs OUTSIDE the Admin SDK's surface
+ * (e.g. the Google Analytics Data API). Returns null when unconfigured.
+ */
+export function adminCredentials(): { clientEmail: string; privateKey: string } | null {
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
+  if (!clientEmail || !privateKey) return null;
+  return { clientEmail, privateKey };
+}
