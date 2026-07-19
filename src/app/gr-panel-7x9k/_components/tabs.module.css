@@ -313,6 +313,82 @@
   word-break: break-word;
 }
 
+/* ── Live tab ── */
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+}
+.liveMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 255, 60, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(232, 255, 60, 0);
+  }
+}
+.liveGeoList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.liveGeoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.liveGeoRow:last-child {
+  border-bottom: none;
+}
+.liveGeoPlace {
+  color: var(--text);
+}
+.liveGeoCount {
+  color: var(--accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.liveSetupList {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.9;
+}
+.liveSetupList code {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 12px;
+  color: var(--accent);
+  word-break: break-all;
+}
+
 /* ── GymRoam Pro comp control (user detail modal) ── */
 .proBox {
   border: 1px solid var(--border);

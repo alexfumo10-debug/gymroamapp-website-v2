@@ -38,6 +38,13 @@ export const DATA_SOURCES: Record<string, DataSource> = {
     status: "live",
     summary: "Firebase Auth + Firestore /users, cross-referenced for canonical email.",
   },
+  live: {
+    key: "live",
+    label: "Live Activity",
+    status: "live",
+    summary:
+      "Firebase Auth refreshes (named recently-active feed, ~1h resolution) + GA4 realtime (active-now count and city/country, last 30 min — needs the Firebase service account granted Viewer on the GA property).",
+  },
   traffic: {
     key: "traffic",
     label: "Website Traffic",

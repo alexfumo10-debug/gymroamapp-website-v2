@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useAdminAuth } from "../_lib/useAdminData";
 import { DATA_SOURCES } from "../_lib/sources";
 import { OverviewTab } from "../_components/OverviewTab";
+import { LiveTab } from "../_components/LiveTab";
 import { UsersTab } from "../_components/UsersTab";
 import { TrafficTab } from "../_components/TrafficTab";
 import { PipelineTab } from "../_components/PipelineTab";
@@ -30,6 +31,7 @@ import styles from "./page.module.css";
 
 type TabKey =
   | "overview"
+  | "live"
   | "users"
   | "traffic"
   | "pipeline"
@@ -42,6 +44,7 @@ type TabKey =
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "overview", label: "Overview" },
+  { key: "live", label: "Live" },
   { key: "users", label: "Users" },
   { key: "traffic", label: "Traffic" },
   { key: "pipeline", label: "Pipeline" },
@@ -147,6 +150,7 @@ export default function DashboardV2() {
       {/* Active tab */}
       <main className={styles.main}>
         {tab === "overview" && <OverviewTab />}
+        {tab === "live" && <LiveTab auth={auth} />}
         {tab === "users" && <UsersTab auth={auth} />}
         {tab === "traffic" && <TrafficTab auth={auth} />}
         {tab === "pipeline" && <PipelineTab />}
