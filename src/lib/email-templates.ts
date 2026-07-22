@@ -38,8 +38,17 @@ export interface EmailTemplate {
 
 const BRAND_YELLOW = "#E8FF3C";
 const INK = "#0A0A0B";
+const CARD_BG = "#131312"; // brand near-black card
+const TEXT = "#ECEBE8"; // off-white body text on dark
+const MUTED = "#9a9a93"; // footer / secondary text
+const HAIRLINE = "rgba(255,255,255,0.09)"; // subtle dividers on dark
 const SUPPORT = "support@gymroamapp.com";
 const APP_STORE = "https://apps.apple.com/app/id6773157406";
+
+// The real logo (the app icon), hosted on the site so email clients can
+// load it. Absolute URL is required in email. If a client blocks remote
+// images, the "GymRoam" wordmark text beside it still carries the brand.
+const LOGO_URL = "https://gymroamapp.com/gymroam-logo.png";
 
 // GymRoam Pro pricing quoted in promotional templates. Single source of
 // truth for email copy — keep in sync with the live App Store Connect
@@ -80,33 +89,43 @@ function greeting(vars: EmailVars): string {
 }
 
 /**
- * Shared email chrome — table-based, inline-styled, light background with a
- * dark brand header. Built for broad email-client compatibility (Gmail,
- * Apple Mail, Outlook). No remote images (deliverability + privacy).
+ * Shared email chrome — table-based, inline-styled, NATIVE DARK to match the
+ * GymRoam brand (near-black + neon yellow). The `color-scheme: dark` signal
+ * + meta tags stop Apple Mail / Gmail from force-inverting it (that inversion
+ * is what muddied the old light design in dark-mode inboxes). The header uses
+ * the real logo asset (hosted PNG) beside the wordmark, so a client that
+ * blocks remote images still shows "GymRoam". Broad-client compatible
+ * (Gmail, Apple Mail, Outlook) via bgcolor fallbacks.
  */
 function layout(innerHtml: string, opts?: { promoFooter?: boolean }): string {
   // CAN-SPAM block for promotional templates: why they got it, a working
   // opt-out (reply-based is compliant), and the postal address when set.
   const promo = opts?.promoFooter
-    ? `<p style="margin:10px 0 0;">You're receiving this one-time note because you have a GymRoam account. Prefer not to get emails like this? Reply &quot;unsubscribe&quot; and we won't send more.${
+    ? `<p style="margin:10px 0 0;color:${MUTED};">You're receiving this one-time note because you have a GymRoam account. Prefer not to get emails like this? Reply &quot;unsubscribe&quot; and we won't send more.${
         POSTAL_ADDRESS ? `<br/>GymRoam · ${esc(POSTAL_ADDRESS)}` : ""
       }</p>`
     : "";
   return `<!doctype html>
 <html>
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f4f4f5;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="color-scheme" content="dark"/>
+  <meta name="supported-color-schemes" content="dark"/>
+</head>
+<body style="margin:0;padding:0;background:${INK};color-scheme:dark;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${INK}" style="background:${INK};padding:24px 0;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-        <tr><td style="background:${INK};padding:20px 28px;">
-          <span style="font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Gym<span style="color:${BRAND_YELLOW};">Roam</span></span>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${CARD_BG}" style="max-width:520px;background:${CARD_BG};border-radius:14px;overflow:hidden;border:1px solid ${HAIRLINE};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+        <tr><td bgcolor="${INK}" style="background:${INK};padding:20px 28px;border-bottom:1px solid ${HAIRLINE};">
+          <img src="${LOGO_URL}" width="38" height="38" alt="" style="display:inline-block;vertical-align:middle;border-radius:9px;"/>
+          <span style="display:inline-block;vertical-align:middle;margin-left:11px;font-size:21px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Gym<span style="color:${BRAND_YELLOW};">Roam</span></span>
         </td></tr>
-        <tr><td style="padding:28px;color:#1a1a1f;font-size:15px;line-height:1.6;">
+        <tr><td style="padding:28px;color:${TEXT};font-size:15px;line-height:1.6;">
           ${innerHtml}
         </td></tr>
-        <tr><td style="padding:18px 28px 26px;border-top:1px solid #eee;color:#8a8a92;font-size:12px;line-height:1.5;">
-          GymRoam · Questions? Just reply, or email <a href="mailto:${SUPPORT}" style="color:#5a5a63;">${SUPPORT}</a>.${promo}
+        <tr><td style="padding:18px 28px 26px;border-top:1px solid ${HAIRLINE};color:${MUTED};font-size:12px;line-height:1.5;">
+          GymRoam · Questions? Just reply, or email <a href="mailto:${SUPPORT}" style="color:${BRAND_YELLOW};">${SUPPORT}</a>.${promo}
         </td></tr>
       </table>
     </td></tr>
