@@ -14,7 +14,7 @@
 import { useMemo } from "react";
 import { useAdminApi, type useAdminAuth } from "../_lib/useAdminData";
 import { DATA_SOURCES } from "../_lib/sources";
-import { formatCurrency, formatDateTime } from "../_lib/format";
+import { formatCurrency, formatDate, formatDateTime } from "../_lib/format";
 import type { SubscriptionTierStat, SubscriptionEvent } from "../_lib/types";
 import { StatTile, Loading, SectionHeading, Badge, Card } from "./ui";
 import tabs from "./tabs.module.css";
@@ -25,6 +25,122 @@ interface SubsResponse {
   tiers: SubscriptionTierStat[];
   events?: SubscriptionEvent[];
   error?: string;
+}
+
+interface ProMember {
+  uid: string;
+  name: string;
+  username: string | null;
+  email: string | null;
+  source: "purchased" | "comped" | "founder";
+  proAccessUntil: string | null;
+  permanent: boolean;
+  badgeActive: boolean;
+  expiredComp: boolean;
+}
+interface ProMembersResponse {
+  counts: { purchased: number; comped: number; founders: number; total: number };
+  purchased: ProMember[];
+  comped: ProMember[];
+  founders: ProMember[];
+}
+
+const SOURCE_META: Record<
+  ProMember["source"],
+  { label: string; tone: "green" | "blue" | "accent" }
+> = {
+  purchased: { label: "💳 Purchased", tone: "green" },
+  comped: { label: "🎁 Comped", tone: "blue" },
+  founder: { label: "👑 Founder", tone: "accent" },
+};
+
+const PRO_COLS = "34px 1.5fr 1.5fr 118px 150px";
+
+/** The named list of every Pro member, grouped purchased → comped → founder. */
+function ProMembersSection({ data }: { data: ProMembersResponse }) {
+  const { counts } = data;
+  const rows = [...data.purchased, ...data.comped, ...data.founders];
+
+  return (
+    <>
+      <SectionHeading
+        title="Pro Members"
+        meta={`${counts.total} total · ${counts.purchased} purchased · ${counts.comped} comped · ${counts.founders} founder`}
+      />
+      {rows.length === 0 ? (
+        <Card>
+          <p className={tabs.chartSub}>No Pro members yet.</p>
+        </Card>
+      ) : (
+        <div className={tabs.table}>
+          <div
+            className={`${tabs.row} ${tabs.rowHeader}`}
+            style={{ gridTemplateColumns: PRO_COLS }}
+          >
+            <span />
+            <span>Member</span>
+            <span>Email</span>
+            <span>Source</span>
+            <span className={tabs.cellRight}>Access</span>
+          </div>
+          {rows.map((m) => (
+            <div key={m.uid} className={tabs.row} style={{ gridTemplateColumns: PRO_COLS }}>
+              <div className={tabs.avatar}>{(m.name[0] || "?").toUpperCase()}</div>
+              <div className={tabs.cellStack}>
+                <span className={tabs.cellPrimary}>{m.name}</span>
+                <span className={tabs.cellSecondary}>
+                  {m.username ? `@${m.username.replace(/^@+/, "")}` : "—"}
+                </span>
+              </div>
+              <div className={tabs.cellMuted}>
+                {m.email ? (
+                  <a href={`mailto:${m.email}`} className={tabs.link}>
+                    {m.email}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </div>
+              <div>
+                <Badge tone={SOURCE_META[m.source].tone}>{SOURCE_META[m.source].label}</Badge>
+              </div>
+              <div className={`${tabs.cellRight} ${tabs.cellStack}`}>
+                <span className={tabs.cellMuted}>
+                  {m.source === "purchased"
+                    ? "App Store"
+                    : m.source === "founder"
+                    ? "Founder"
+                    : m.permanent
+                    ? "Permanent"
+                    : `until ${
+                        m.proAccessUntil
+                          ? formatDate(Date.parse(m.proAccessUntil), {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : "—"
+                      }`}
+                </span>
+                {m.source !== "founder" && (
+                  <span
+                    className={tabs.cellSecondary}
+                    style={{ color: m.badgeActive ? "var(--green)" : "var(--dim)" }}
+                  >
+                    {m.expiredComp
+                      ? "grant expired"
+                      : m.badgeActive
+                      ? "active on device"
+                      : "not activated yet"}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
 }
 
 function TierCard({ t }: { t: SubscriptionTierStat }) {
@@ -49,6 +165,11 @@ export function SubscriptionsTab({ auth }: { auth: Auth }) {
   const gym = useAdminApi<SubsResponse>("/api/admin/gym-subs", auth.getIdToken, true);
   const consumer = useAdminApi<SubsResponse>(
     "/api/admin/consumer-subs",
+    auth.getIdToken,
+    true
+  );
+  const proMembers = useAdminApi<ProMembersResponse>(
+    "/api/admin/pro-members",
     auth.getIdToken,
     true
   );
@@ -88,6 +209,10 @@ export function SubscriptionsTab({ auth }: { auth: Auth }) {
         <StatTile label="New This Month" value={totals.nu} />
         <StatTile label="Canceled This Month" value={totals.canc} invertDelta />
       </div>
+
+      {/* Pro Members — the named "who is actually Pro" list (Firestore-derived,
+          since Apple's reports are anonymous). */}
+      {proMembers.data && <ProMembersSection data={proMembers.data} />}
 
       {/* Tier cards */}
       {allTiers.length > 0 && (
