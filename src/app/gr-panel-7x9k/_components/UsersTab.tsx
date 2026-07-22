@@ -27,16 +27,15 @@ import { EMAIL_TEMPLATE_OPTIONS } from "@/lib/email-templates";
 import { StatTile, Loading, ErrorState, Badge, Card, SectionHeading } from "./ui";
 import tabs from "./tabs.module.css";
 
-// Onboarding "How did you hear about us?" values (iOS 2.4+). Keep this enum
-// in sync with the iOS spec. Unknown/legacy values fall back to Title Case.
+// Onboarding attribution values — mirror AcquisitionSource in the iOS app
+// (feature/onboarding-attribution). Unknown values fall back to Title Case.
 const SOURCE_LABELS: Record<string, string> = {
   instagram: "Instagram",
   tiktok: "TikTok",
-  friend: "Friend / word of mouth",
-  app_store: "App Store",
-  google: "Google / search",
-  reddit: "Reddit",
-  other: "Other",
+  creator: "A creator / influencer",
+  google: "Google",
+  appstore: "App Store search",
+  other: "Other / not sure",
 };
 function sourceLabel(s: string): string {
   return (
@@ -124,22 +123,27 @@ export function UsersTab({ auth }: { auth: Auth }) {
   ).length;
   const orphanCount = enriched.filter((u) => u.isOrphan).length;
 
-  // Acquisition-source breakdown from the onboarding question (iOS 2.4+).
-  // Users predating it have no `signupSource` and land in `unknown`.
+  // Acquisition breakdown from the onboarding "Where did you hear about us?"
+  // step. Reads users/{uid}.acquisition.{source,creatorCode}. Users who
+  // predate the step (or are on a build without it) land in `unknown`.
   const acquisition = useMemo(() => {
     const counts: Record<string, number> = {};
+    const creators: Record<string, number> = {};
     let unknown = 0;
     for (const u of enriched) {
-      const s = (u.signupSource || "").toString().trim().toLowerCase();
+      const s = (u.acquisition?.source || "").toString().trim().toLowerCase();
       if (!s) {
         unknown++;
         continue;
       }
       counts[s] = (counts[s] || 0) + 1;
+      const code = (u.acquisition?.creatorCode || "").toString().trim().toLowerCase();
+      if (code) creators[code] = (creators[code] || 0) + 1;
     }
     const known = Object.values(counts).reduce((a, b) => a + b, 0);
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-    return { sorted, unknown, known };
+    const topCreators = Object.entries(creators).sort((a, b) => b[1] - a[1]);
+    return { sorted, topCreators, unknown, known };
   }, [enriched]);
 
   if (users.state === "loading") return <Loading label="Loading users…" />;
@@ -168,12 +172,14 @@ export function UsersTab({ auth }: { auth: Auth }) {
       <Card>
         {acquisition.known === 0 ? (
           <p className={tabs.chartSub} style={{ margin: 0, lineHeight: 1.6 }}>
-            No source data yet. This fills in once the onboarding{" "}
-            <strong>&quot;How did you hear about us?&quot;</strong> question ships
-            in iOS 2.4 — then you&apos;ll see the Instagram vs TikTok vs
-            word-of-mouth split for new signups.
+            No attribution data yet. The onboarding{" "}
+            <strong>&quot;Where did you hear about us?&quot;</strong> step is built
+            (<code>feature/onboarding-attribution</code>) but isn&apos;t in the
+            live App Store build — this fills in once a build with it ships and
+            users go through onboarding. Then you&apos;ll see the Instagram vs
+            TikTok split (and which creators drove signups).
             {acquisition.unknown > 0 &&
-              ` (${acquisition.unknown} existing users predate it.)`}
+              ` (${acquisition.unknown} current users predate the step.)`}
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -217,10 +223,23 @@ export function UsersTab({ auth }: { auth: Auth }) {
                 </div>
               );
             })}
+            {acquisition.topCreators.length > 0 && (
+              <div style={{ marginTop: 6, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                <div className={tabs.cellDim} style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+                  Signups by creator code
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {acquisition.topCreators.map(([code, count]) => (
+                    <Badge key={code} tone="accent">
+                      @{code} · {count}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
             {acquisition.unknown > 0 && (
               <p className={tabs.cellDim} style={{ fontSize: 12, margin: "2px 0 0" }}>
-                {acquisition.unknown} users predate the question (no source
-                recorded).
+                {acquisition.unknown} users predate the step (no source recorded).
               </p>
             )}
           </div>

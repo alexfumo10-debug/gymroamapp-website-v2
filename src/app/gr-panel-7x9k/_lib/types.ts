@@ -33,10 +33,17 @@ export interface AppUser {
   homeCity?: string;
   isVerifiedCreator?: boolean;
   verifiedCreatorTier?: string | null;
-  // Self-reported acquisition source from the onboarding "How did you hear
-  // about us?" question (iOS 2.4+). One of a fixed enum — see the Acquisition
-  // section in UsersTab + the iOS spec. Absent for users who predate it.
-  signupSource?: string | null;
+  // Onboarding attribution — "Where did you hear about us?" (iOS
+  // feature/onboarding-attribution). Written to users/{uid}.acquisition as a
+  // map. `source` ∈ instagram|tiktok|creator|google|appstore|other; social/
+  // creator channels also capture a `creatorCode` (@handle) for per-creator
+  // ROI. Absent until the step ships in a build + the user goes through it.
+  acquisition?: {
+    source?: string;
+    creatorCode?: string;
+    at?: FirestoreTimestamp;
+    appVersion?: string;
+  } | null;
   // Server-granted GymRoam Pro comp — set by the admin panel via
   // /api/admin/pro-grant, read by iOS 2.3+ into UserStore.isProMember.
   // Pro is comped while `proAccessUntil` is in the future (a far-future
