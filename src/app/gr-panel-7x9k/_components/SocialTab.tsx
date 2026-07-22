@@ -61,11 +61,18 @@ export function SocialTab({ auth }: { auth: Auth }) {
           <div className={tabs.kpiGrid}>
             <StatTile accent label="Followers" value={formatCompact(ig.followers)} />
             <StatTile label="Posts" value={formatCompact(ig.posts)} />
-            <StatTile
-              label="New This Week"
-              value={`${ig.followingDelta7d >= 0 ? "+" : ""}${ig.followingDelta7d}`}
-              sub="net followers"
-            />
+            {ig.followers < 100 ? (
+              // Instagram's follower_count growth insight is unavailable for
+              // accounts under 100 followers — show "not yet" rather than a
+              // misleading "+0" that reads as broken.
+              <StatTile label="New This Week" value="—" sub="needs 100+ followers" />
+            ) : (
+              <StatTile
+                label="New This Week"
+                value={`${ig.followingDelta7d >= 0 ? "+" : ""}${ig.followingDelta7d}`}
+                sub="net followers"
+              />
+            )}
             {typeof ig.engagementRate === "number" && (
               <StatTile label="Engagement" value={`${ig.engagementRate.toFixed(1)}%`} />
             )}
