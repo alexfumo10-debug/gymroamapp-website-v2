@@ -33,6 +33,10 @@ export interface AppUser {
   homeCity?: string;
   isVerifiedCreator?: boolean;
   verifiedCreatorTier?: string | null;
+  // Self-reported acquisition source from the onboarding "How did you hear
+  // about us?" question (iOS 2.4+). One of a fixed enum — see the Acquisition
+  // section in UsersTab + the iOS spec. Absent for users who predate it.
+  signupSource?: string | null;
   // Server-granted GymRoam Pro comp — set by the admin panel via
   // /api/admin/pro-grant, read by iOS 2.3+ into UserStore.isProMember.
   // Pro is comped while `proAccessUntil` is in the future (a far-future
