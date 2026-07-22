@@ -24,8 +24,26 @@ import {
 } from "../_lib/format";
 import type { AppUser, AuthUserInfo, FirestoreTimestamp } from "../_lib/types";
 import { EMAIL_TEMPLATE_OPTIONS } from "@/lib/email-templates";
-import { StatTile, Loading, ErrorState, Badge } from "./ui";
+import { StatTile, Loading, ErrorState, Badge, Card, SectionHeading } from "./ui";
 import tabs from "./tabs.module.css";
+
+// Onboarding "How did you hear about us?" values (iOS 2.4+). Keep this enum
+// in sync with the iOS spec. Unknown/legacy values fall back to Title Case.
+const SOURCE_LABELS: Record<string, string> = {
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  friend: "Friend / word of mouth",
+  app_store: "App Store",
+  google: "Google / search",
+  reddit: "Reddit",
+  other: "Other",
+};
+function sourceLabel(s: string): string {
+  return (
+    SOURCE_LABELS[s] ||
+    s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}
 
 type Auth = ReturnType<typeof useAdminAuth>;
 // uid is always resolved to a string in `enriched` (doc id), so the
@@ -106,6 +124,24 @@ export function UsersTab({ auth }: { auth: Auth }) {
   ).length;
   const orphanCount = enriched.filter((u) => u.isOrphan).length;
 
+  // Acquisition-source breakdown from the onboarding question (iOS 2.4+).
+  // Users predating it have no `signupSource` and land in `unknown`.
+  const acquisition = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let unknown = 0;
+    for (const u of enriched) {
+      const s = (u.signupSource || "").toString().trim().toLowerCase();
+      if (!s) {
+        unknown++;
+        continue;
+      }
+      counts[s] = (counts[s] || 0) + 1;
+    }
+    const known = Object.values(counts).reduce((a, b) => a + b, 0);
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    return { sorted, unknown, known };
+  }, [enriched]);
+
   if (users.state === "loading") return <Loading label="Loading users…" />;
   if (users.state === "error") return <ErrorState message={users.error} />;
 
@@ -123,6 +159,73 @@ export function UsersTab({ auth }: { auth: Auth }) {
           invertDelta
         />
       </div>
+
+      {/* Acquisition sources — "How did you hear about us?" (iOS 2.4+) */}
+      <SectionHeading
+        title="Where users come from"
+        meta={acquisition.known > 0 ? `${acquisition.known} answered` : undefined}
+      />
+      <Card>
+        {acquisition.known === 0 ? (
+          <p className={tabs.chartSub} style={{ margin: 0, lineHeight: 1.6 }}>
+            No source data yet. This fills in once the onboarding{" "}
+            <strong>&quot;How did you hear about us?&quot;</strong> question ships
+            in iOS 2.4 — then you&apos;ll see the Instagram vs TikTok vs
+            word-of-mouth split for new signups.
+            {acquisition.unknown > 0 &&
+              ` (${acquisition.unknown} existing users predate it.)`}
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {acquisition.sorted.map(([src, count]) => {
+              const pct = Math.round((count / acquisition.known) * 100);
+              return (
+                <div
+                  key={src}
+                  style={{ display: "flex", alignItems: "center", gap: 12 }}
+                >
+                  <span style={{ width: 150, fontSize: 13, color: "var(--text)" }}>
+                    {sourceLabel(src)}
+                  </span>
+                  <div
+                    style={{
+                      flex: 1,
+                      height: 8,
+                      background: "var(--surface2)",
+                      borderRadius: 4,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${pct}%`,
+                        height: "100%",
+                        background: "var(--accent)",
+                      }}
+                    />
+                  </div>
+                  <span
+                    style={{
+                      width: 74,
+                      textAlign: "right",
+                      fontSize: 12,
+                      color: "var(--muted)",
+                    }}
+                  >
+                    {count} · {pct}%
+                  </span>
+                </div>
+              );
+            })}
+            {acquisition.unknown > 0 && (
+              <p className={tabs.cellDim} style={{ fontSize: 12, margin: "2px 0 0" }}>
+                {acquisition.unknown} users predate the question (no source
+                recorded).
+              </p>
+            )}
+          </div>
+        )}
+      </Card>
 
       {/* Toolbar */}
       <div className={tabs.toolbar}>
