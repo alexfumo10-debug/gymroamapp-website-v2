@@ -36,7 +36,12 @@ export interface EmailTemplate {
   render: (vars: EmailVars) => RenderedEmail;
 }
 
-const BRAND_YELLOW = "#E8FF3C";
+// Email accent. The brand neon is #E8FF3C, but that's a LIME (green channel
+// maxed, red lower) — mobile mail apps in dark mode render it as green. We
+// raise red to max so red >= green → it reads as a bright neon YELLOW on
+// phones while staying on-brand. Email-only; does not change the app/brand
+// assets. (The header logo PNG is still the exact #E8FF3C tile.)
+const BRAND_YELLOW = "#FFEC3C";
 const INK = "#0A0A0B";
 const CARD_BG = "#131312"; // brand near-black card
 const TEXT = "#ECEBE8"; // off-white body text on dark
@@ -48,7 +53,10 @@ const APP_STORE = "https://apps.apple.com/app/id6773157406";
 // The real logo (the app icon), hosted on the site so email clients can
 // load it. Absolute URL is required in email. If a client blocks remote
 // images, the "GymRoam" wordmark text beside it still carries the brand.
-const LOGO_URL = "https://gymroamapp.com/gymroam-logo.png";
+// Email-only warm-yellow variant of the app icon (#FFEC3C tile) so the header
+// logo matches the email accent and doesn't read green on mobile. The exact
+// brand icon (#E8FF3C lime) stays at gymroam-logo.png for the app/site.
+const LOGO_URL = "https://gymroamapp.com/gymroam-logo-email.png";
 
 // GymRoam Pro pricing quoted in promotional templates. Single source of
 // truth for email copy — keep in sync with the live App Store Connect
@@ -147,6 +155,24 @@ function button(href: string, label: string): string {
   </td></tr></table>`;
 }
 
+/** One feature line: bold neon name + a one-line description. */
+function featureRow(name: string, desc: string): string {
+  return `<p style="margin:0 0 15px;"><strong style="color:${BRAND_YELLOW};">${esc(name)}</strong><br/>${esc(desc)}</p>`;
+}
+
+// The feature rundown shown to Pro members (id "pro-features"). Order = most
+// marquee first. Keep every line true to what actually ships (no unconfirmed
+// perks). Rendered to HTML rows + plain-text bullets from one source.
+const PRO_FEATURES: [string, string][] = [
+  ["Scout, your AI", "Find the right gym or generate a full workout anywhere. Pro runs the smartest model."],
+  ["Unlimited Trips", "Map the gyms for every trip and get countdown reminders before you fly."],
+  ["Unlimited saved gyms", "Bookmark every spot worth coming back to, no cap."],
+  ["Home gyms", "Set your home bases and post multi-layout Stories from them."],
+  ["Travel Fitness Passport", "Check in with a photo, earn a stamp, and share the card straight to Instagram."],
+  ["The whole map", "Boutique studios, HYROX, pilates, yoga, run clubs, recovery and wellness, wherever you land."],
+  ["Friends", "Follow friends and see where they've been training."],
+];
+
 export const EMAIL_TEMPLATES: EmailTemplate[] = [
   {
     id: "custom",
@@ -223,25 +249,23 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     },
   },
   {
-    id: "pro-expiring",
-    label: "Pro access ending soon",
+    id: "pro-features",
+    label: "Pro features rundown",
     description:
-      "Heads-up that a comped Pro window is ending. Uses the user's Pro-until date.",
+      "Walks a Pro member through everything the app can do, so they use it all.",
     editable: false,
     render: (v) => {
-      const until = v.proUntil
-        ? `on <strong>${esc(v.proUntil)}</strong>`
-        : "soon";
-      const untilText = v.proUntil ? `on ${v.proUntil}` : "soon";
+      const rowsHtml = PRO_FEATURES.map(([n, d]) => featureRow(n, d)).join("\n");
+      const rowsText = PRO_FEATURES.map(([n, d]) => `• ${n}: ${d}`).join("\n");
       const html = layout(
         `<p style="margin:0 0 16px;">Hi ${greeting(v)},</p>
-         <p style="margin:0 0 16px;">A quick heads-up: your complimentary <strong>GymRoam Pro</strong> access ends ${until}. Until then, everything stays unlocked — trips, saved gyms, home gyms, and Scout's smartest workouts.</p>
-         <p style="margin:0 0 16px;">Want to keep Pro? You can subscribe right in the app.</p>
+         <p style="margin:0 0 18px;">You&apos;re on <strong>GymRoam Pro</strong>, so the full toolkit is yours. Here&apos;s everything you can do to make the most of every trip:</p>
+         ${rowsHtml}
          ${button(APP_STORE, "Open GymRoam")}
-         <p style="margin:0;">Questions, or feel like the timing's wrong? Just reply — a founder reads every message.</p>`
+         <p style="margin:0;">Get out there. Reply anytime, a founder reads every message.</p>`
       );
-      const text = `Hi ${v.firstName || v.displayName || "there"},\n\nA quick heads-up: your complimentary GymRoam Pro access ends ${untilText}. Until then, everything stays unlocked — trips, saved gyms, home gyms, and Scout's smartest workouts.\n\nWant to keep Pro? You can subscribe right in the app: ${APP_STORE}\n\nQuestions, or feel like the timing's wrong? Just reply — a founder reads every message.\n\n— GymRoam`;
-      return { subject: "Your GymRoam Pro access ends soon", html, text };
+      const text = `Hi ${v.firstName || v.displayName || "there"},\n\nYou're on GymRoam Pro, so the full toolkit is yours. Here's everything you can do to make the most of every trip:\n\n${rowsText}\n\nOpen the app: ${APP_STORE}\n\nGet out there. Reply anytime, a founder reads every message.\n\nThe GymRoam team`;
+      return { subject: "Everything your GymRoam Pro unlocks", html, text };
     },
   },
   {
@@ -261,27 +285,6 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       );
       const text = `Hi ${v.firstName || v.displayName || "there"},\n\nWelcome to GymRoam — the passport for training wherever you travel. Find gyms, studios, and run clubs on the map, check in to stamp your passport, and ask Scout to plan a workout anywhere.\n\nAnd when you're ready for the full experience, GymRoam Pro is waiting: unlimited trips, saved gyms, home gyms, and Scout's smartest workouts — for ${PRO_MONTHLY}, or ${PRO_ANNUAL} with a 7-day free trial.\n\nStart roaming: ${APP_STORE}\n\nIf anything's confusing, just reply — a founder reads every message.\n\n— GymRoam${promoFooterText()}`;
       return { subject: "Welcome to GymRoam — Pro is waiting for you", html, text };
-    },
-  },
-  {
-    id: "feature-shipped",
-    label: "You asked, we shipped it",
-    description:
-      "For a feedback submitter when their request goes live. You write what shipped; the template frames it.",
-    editable: true,
-    render: (v) => {
-      const subject =
-        (v.subject || "").trim() || "You asked. It's in GymRoam now.";
-      const bodyText = (v.body || "").trim();
-      const html = layout(
-        `<p style="margin:0 0 16px;">Hi ${greeting(v)},</p>
-         <p style="margin:0 0 16px;">You flagged something in GymRoam's feedback, and we built it. It's live now:</p>
-         ${paragraphs(bodyText || " ")}
-         ${button(APP_STORE, "See it in the app")}
-         <p style="margin:0;">Keep the ideas coming — this one exists because you spoke up.</p>`
-      );
-      const text = `Hi ${v.firstName || v.displayName || "there"},\n\nYou flagged something in GymRoam's feedback, and we built it. It's live now:\n\n${bodyText}\n\nSee it in the app: ${APP_STORE}\n\nKeep the ideas coming — this one exists because you spoke up.\n\n— GymRoam`;
-      return { subject, html, text };
     },
   },
 ];
