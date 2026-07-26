@@ -36,12 +36,7 @@ export interface EmailTemplate {
   render: (vars: EmailVars) => RenderedEmail;
 }
 
-// Email accent. The brand neon is #E8FF3C, but that's a LIME (green channel
-// maxed, red lower) — mobile mail apps in dark mode render it as green. We
-// raise red to max so red >= green → it reads as a bright neon YELLOW on
-// phones while staying on-brand. Email-only; does not change the app/brand
-// assets. (The header logo PNG is still the exact #E8FF3C tile.)
-const BRAND_YELLOW = "#FFEC3C";
+const BRAND_YELLOW = "#E8FF3C";
 const INK = "#0A0A0B";
 const CARD_BG = "#131312"; // brand near-black card
 const TEXT = "#ECEBE8"; // off-white body text on dark
@@ -53,10 +48,10 @@ const APP_STORE = "https://apps.apple.com/app/id6773157406";
 // The real logo (the app icon), hosted on the site so email clients can
 // load it. Absolute URL is required in email. If a client blocks remote
 // images, the "GymRoam" wordmark text beside it still carries the brand.
-// Email-only warm-yellow variant of the app icon (#FFEC3C tile) so the header
-// logo matches the email accent and doesn't read green on mobile. The exact
-// brand icon (#E8FF3C lime) stays at gymroam-logo.png for the app/site.
-const LOGO_URL = "https://gymroamapp.com/gymroam-logo-email.png";
+// The real logo (the app icon), hosted on the site so email clients can
+// load it. Absolute URL is required in email. If a client blocks remote
+// images, the "GymRoam" wordmark text beside it still carries the brand.
+const LOGO_URL = "https://gymroamapp.com/gymroam-logo.png";
 
 // GymRoam Pro pricing quoted in promotional templates. Single source of
 // truth for email copy — keep in sync with the live App Store Connect
