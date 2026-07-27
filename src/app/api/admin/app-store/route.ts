@@ -27,6 +27,8 @@ interface FunnelCache {
   downloads?: number;
   conversionRate?: number;
   asOf?: string; // ISO date the cached data covers through
+  lifetimeFirstTimeDownloads?: number; // since launch, matches ASC
+  lifetimeAsOf?: string;
 }
 
 export async function GET(req: NextRequest) {

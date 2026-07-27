@@ -19,7 +19,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-gate";
-import { subsConfigured, fetchAnalyticsFunnel } from "@/lib/appstore";
+import { subsConfigured, fetchAnalyticsFunnel, fetchLifetimeDownloads } from "@/lib/appstore";
 import { adminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
@@ -61,15 +61,35 @@ async function ingest(req: NextRequest) {
       });
     }
 
+    // Lifetime first-time downloads (Sales report, since launch) — heavier
+    // (one report per day), so it lives here in the daily cron and is cached.
+    // Non-fatal: if it fails, the funnel still writes and the last cached
+    // lifetime value persists.
+    let lifetime: { total: number; asOf: string } | null = null;
+    try {
+      lifetime = await fetchLifetimeDownloads();
+    } catch (e) {
+      console.error("[/api/admin/app-store/ingest] lifetime downloads:", e);
+    }
+
     await adminDb()
       .collection("adminIntegrations")
       .doc("appStoreAnalytics")
       .set(
-        { ...funnel, updatedAt: new Date().toISOString() },
+        {
+          ...funnel,
+          ...(lifetime
+            ? {
+                lifetimeFirstTimeDownloads: lifetime.total,
+                lifetimeAsOf: lifetime.asOf,
+              }
+            : {}),
+          updatedAt: new Date().toISOString(),
+        },
         { merge: true }
       );
 
-    return NextResponse.json({ ok: true, wrote: true, funnel });
+    return NextResponse.json({ ok: true, wrote: true, funnel, lifetime });
   } catch (e) {
     console.error("[/api/admin/app-store/ingest]", e);
     return NextResponse.json(

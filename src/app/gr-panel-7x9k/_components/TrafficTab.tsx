@@ -23,6 +23,8 @@ interface AppStoreResponse {
     productPageViews?: number;
     conversionRate?: number;
     asOf?: string;
+    lifetimeFirstTimeDownloads?: number;
+    lifetimeAsOf?: string;
   } | null;
   error?: string;
 }
@@ -163,6 +165,15 @@ export function TrafficTab({ auth }: { auth: Auth }) {
           <div className={tabs.kpiGrid}>
             <StatTile
               accent
+              label="Downloads (Lifetime)"
+              value={
+                fn?.lifetimeFirstTimeDownloads != null
+                  ? formatCompact(fn.lifetimeFirstTimeDownloads)
+                  : "—"
+              }
+              sub="first-time, since launch (matches App Store Connect)"
+            />
+            <StatTile
               label="Downloads (30d)"
               value={dl ? formatCompact(dl.total) : "—"}
               sub="first-time installs"
