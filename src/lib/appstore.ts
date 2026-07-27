@@ -285,6 +285,57 @@ export async function fetchDownloads(
   return { total: series.reduce((s, x) => s + x.value, 0), series };
 }
 
+// First App Store availability (V1.0 approved + live). Lifetime download
+// totals are summed from here so they match App Store Connect's headline
+// "First-Time Downloads" figure. Days before availability simply return
+// no data (counted as zero).
+const APP_LAUNCH_DATE = "2026-05-27";
+
+/**
+ * Lifetime first-time downloads since launch, from the SALES report — same
+ * Product-Type-"1" definition as fetchDownloads (excludes redownloads "3"
+ * and updates "7"), so it matches App Store Connect's "First-Time Downloads"
+ * number. This is one daily report per day since launch, so it's HEAVY:
+ * only call it from the daily ingestion job (cached in Firestore), never on
+ * a page load. Batched (12 concurrent) to stay well under Apple's rate limit.
+ */
+export async function fetchLifetimeDownloads(): Promise<{ total: number; asOf: string }> {
+  const launch = new Date(`${APP_LAUNCH_DATE}T00:00:00Z`);
+  // Apple's sales data lags ~1–2 days, so the newest reliable day is today-2.
+  const end = new Date();
+  end.setUTCDate(end.getUTCDate() - 2);
+
+  const dates: string[] = [];
+  for (let d = new Date(launch); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    dates.push(d.toISOString().slice(0, 10));
+  }
+
+  let total = 0;
+  const BATCH = 12;
+  for (let i = 0; i < dates.length; i += BATCH) {
+    const chunk = dates.slice(i, i + BATCH);
+    const units = await Promise.all(
+      chunk.map(async (date) => {
+        const rows = await fetchSalesReport({
+          frequency: "DAILY",
+          reportType: "SALES",
+          reportSubType: "SUMMARY",
+          reportDate: date,
+          version: "1_1",
+        });
+        let u = 0;
+        for (const row of rows) {
+          if ((row["Product Type Identifier"] || "").startsWith("1")) u += num(row["Units"]);
+        }
+        return u;
+      })
+    );
+    total += units.reduce((s, u) => s + u, 0);
+  }
+
+  return { total, asOf: dates.length ? dates[dates.length - 1] : "" };
+}
+
 /* ────────────────────────────────────────────────────────────
    ANALYTICS FUNNEL (async Analytics Reports API → daily TSVs)
 
