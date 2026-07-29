@@ -225,14 +225,18 @@ export function UsersTab({ auth }: { auth: Auth }) {
             })}
             {acquisition.topCreators.length > 0 && (
               <div style={{ marginTop: 6, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                <div className={tabs.cellDim} style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+                <div className={tabs.cellDim} style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
                   Signups by creator code
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {acquisition.topCreators.map(([code, count]) => (
-                    <Badge key={code} tone="accent">
-                      @{code} · {count}
-                    </Badge>
+                    <CreatorCodeRow
+                      key={code}
+                      code={code}
+                      count={count}
+                      getIdToken={auth.getIdToken}
+                      onGranted={() => users.reload()}
+                    />
                   ))}
                 </div>
               </div>
@@ -354,6 +358,77 @@ export function UsersTab({ auth }: { auth: Auth }) {
           onClose={() => setSelected(null)}
         />
       )}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   One creator code + a bulk "grant bonus Pro" action.
+
+   Rewards everyone who signed up with that creator's code (e.g. @chloe)
+   with extra Pro days, via /api/admin/creator-grant. Idempotent server-
+   side: re-running only grants NEW signups, so it's safe to click again
+   as the creator's numbers grow.
+   ──────────────────────────────────────────────────────────── */
+function CreatorCodeRow({
+  code,
+  count,
+  getIdToken,
+  onGranted,
+}: {
+  code: string;
+  count: number;
+  getIdToken: () => Promise<string | null>;
+  onGranted: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState("");
+  const [err, setErr] = useState("");
+
+  async function grant() {
+    setBusy(true);
+    setErr("");
+    setResult("");
+    try {
+      const token = await getIdToken();
+      if (!token) throw new Error("Not signed in.");
+      const res = await fetch("/api/admin/creator-grant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code, days: 7 }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      setResult(
+        json.granted > 0
+          ? `+7 days to ${json.granted} user${json.granted === 1 ? "" : "s"}`
+          : `nothing new (${json.skippedAlreadyGranted} already had it)`
+      );
+      onGranted();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <Badge tone="accent">
+        @{code} · {count}
+      </Badge>
+      <button
+        type="button"
+        className={tabs.proBtn}
+        onClick={grant}
+        disabled={busy}
+        style={{ fontSize: 12, padding: "6px 12px" }}
+        title="Give everyone who used this code +7 days of Pro (only new signups on repeat runs)"
+      >
+        {busy ? "Granting…" : "Grant +1 week Pro"}
+      </button>
+      {result && <span style={{ fontSize: 12, color: "var(--green)" }}>{result}</span>}
+      {err && <span style={{ fontSize: 12, color: "#ff7a7a" }}>⚠ {err}</span>}
     </div>
   );
 }
