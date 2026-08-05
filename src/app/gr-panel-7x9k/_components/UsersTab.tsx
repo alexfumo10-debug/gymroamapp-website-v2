@@ -250,6 +250,10 @@ export function UsersTab({ auth }: { auth: Auth }) {
         )}
       </Card>
 
+      {/* Campaign grant — reward a channel + date window (works when nobody
+          types a creator code, which is the realistic influencer case). */}
+      <WindowGrantPanel getIdToken={auth.getIdToken} onGranted={() => users.reload()} />
+
       {/* Toolbar */}
       <div className={tabs.toolbar}>
         <input
@@ -359,6 +363,170 @@ export function UsersTab({ auth }: { auth: Auth }) {
         />
       )}
     </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   Campaign grant — reward everyone who signed up from a channel
+   within a date window (e.g. Instagram during an influencer's post
+   week). Use this when the creator-code field goes unused, which is
+   the norm: an optional free-text box gets skipped by almost everyone.
+   Less precise than a code (it sweeps in organic traffic from that
+   channel), so Preview first to see exactly who's affected.
+   ──────────────────────────────────────────────────────────── */
+const GRANT_SOURCES = ["instagram", "tiktok", "creator", "google", "appstore", "other", "any"];
+
+function todayISO(offsetDays = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
+function WindowGrantPanel({
+  getIdToken,
+  onGranted,
+}: {
+  getIdToken: () => Promise<string | null>;
+  onGranted: () => void;
+}) {
+  const [source, setSource] = useState("instagram");
+  const [from, setFrom] = useState(todayISO(-7));
+  const [to, setTo] = useState(todayISO());
+  const [days, setDays] = useState(7);
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState<string>("");
+  const [result, setResult] = useState("");
+  const [err, setErr] = useState("");
+
+  async function call(dryRun: boolean) {
+    setBusy(true);
+    setErr("");
+    if (dryRun) setResult("");
+    try {
+      const token = await getIdToken();
+      if (!token) throw new Error("Not signed in.");
+      const res = await fetch("/api/admin/creator-grant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ mode: "window", source, from, to, days, dryRun }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      if (dryRun) {
+        setPreview(
+          json.wouldGrant > 0
+            ? `${json.wouldGrant} user${json.wouldGrant === 1 ? "" : "s"} would get +${days}d` +
+                (json.alreadyGranted ? ` (${json.alreadyGranted} already granted)` : "") +
+                (json.users?.length ? `: ${json.users.slice(0, 8).join(", ")}` : "")
+            : `No new users match${json.alreadyGranted ? ` (${json.alreadyGranted} already granted)` : ""}.`
+        );
+      } else {
+        setPreview("");
+        setResult(
+          json.granted > 0
+            ? `Granted +${days} days to ${json.granted} user${json.granted === 1 ? "" : "s"}.`
+            : `Nothing new to grant${json.skippedAlreadyGranted ? ` (${json.skippedAlreadyGranted} already had it)` : ""}.`
+        );
+        onGranted();
+      }
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const field: React.CSSProperties = {
+    background: "var(--surface2)",
+    border: "1px solid var(--border)",
+    borderRadius: 8,
+    color: "var(--text)",
+    fontFamily: "inherit",
+    fontSize: 13,
+    padding: "7px 10px",
+  };
+
+  return (
+    <>
+      <SectionHeading title="Campaign grant" meta="reward a channel + date window" />
+      <Card>
+        <p className={tabs.chartSub} style={{ margin: "0 0 12px", lineHeight: 1.6 }}>
+          Give bonus Pro to everyone who signed up from a channel during a date
+          range, for when an influencer posts and their audience skips the
+          creator-code field. Safe to re-run: only new signups are rewarded.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+          <select
+            style={field}
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            disabled={busy}
+          >
+            {GRANT_SOURCES.map((s) => (
+              <option key={s} value={s}>
+                {s === "any" ? "Any source" : sourceLabel(s)}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            style={field}
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            disabled={busy}
+          />
+          <span className={tabs.cellDim} style={{ fontSize: 12 }}>
+            to
+          </span>
+          <input
+            type="date"
+            style={field}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            disabled={busy}
+          />
+          <input
+            type="number"
+            min={1}
+            max={365}
+            style={{ ...field, width: 74 }}
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value) || 7)}
+            disabled={busy}
+            title="Bonus days of Pro"
+          />
+          <span className={tabs.cellDim} style={{ fontSize: 12 }}>
+            days
+          </span>
+          <button
+            type="button"
+            className={tabs.chip}
+            onClick={() => call(true)}
+            disabled={busy}
+          >
+            {busy ? "…" : "Preview"}
+          </button>
+          <button
+            type="button"
+            className={tabs.proBtn}
+            onClick={() => call(false)}
+            disabled={busy}
+            style={{ fontSize: 13, padding: "8px 16px" }}
+          >
+            Grant Pro
+          </button>
+        </div>
+        {preview && (
+          <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "12px 0 0" }}>{preview}</p>
+        )}
+        {result && (
+          <p style={{ fontSize: 12.5, color: "var(--green)", margin: "12px 0 0" }}>{result}</p>
+        )}
+        {err && (
+          <p style={{ fontSize: 12.5, color: "#ff7a7a", margin: "12px 0 0" }}>⚠ {err}</p>
+        )}
+      </Card>
+    </>
   );
 }
 
