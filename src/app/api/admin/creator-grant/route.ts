@@ -1,30 +1,24 @@
 /**
- * POST /api/admin/creator-grant — bulk-grant bonus Pro to a cohort of signups.
+ * POST /api/admin/creator-grant — grant bonus Pro to everyone who signed up
+ * with a given creator code.
  *
- * Two ways to pick the cohort:
+ * A creator (say @chloe) tells their audience to enter their code during
+ * onboarding; iOS writes it to `users/{uid}.acquisition.creatorCode`. This
+ * route finds those users and extends each one's Pro comp window by N days,
+ * reusing the same `proAccessUntil` field the iOS app (2.3+) already reads,
+ * so it lights up every Pro feature with no app update.
  *
- *  1. mode "code"   — everyone whose `acquisition.creatorCode` matches, e.g.
- *                     @chloe. Precise, but depends on users actually typing
- *                     the code (in practice most skip that optional field).
- *  2. mode "window" — everyone who signed up from a given SOURCE within a
- *                     date range, e.g. instagram between Aug 4 and Aug 11.
- *                     Less precise (sweeps in organic traffic from that
- *                     channel) but it works when nobody types a code, which
- *                     is the realistic case for an influencer post.
+ * IDEMPOTENT by design: each granted user is stamped in
+ * `proCodeGrants[<code>]`. Re-running the same code skips anyone already
+ * granted for it and only rewards NEW signups, so it's safe to click again
+ * as the creator's numbers grow.
  *
- * Either way it extends each matched user's `proAccessUntil` by N days,
- * reusing the Pro comp field the iOS app (2.3+) already reads — so the perk
- * lights up with no app update.
- *
- * IDEMPOTENT: each granted user is stamped under `proCodeGrants[<key>]`
- * (key = the code, or a sanitized window id). Re-running the same grant
- * skips anyone already rewarded for it and only picks up NEW signups, so
- * it's safe to click repeatedly as a campaign grows.
- *
- * Extension is additive from whichever is later — now, or their existing
- * proAccessUntil — so a comped window is extended, never shortened.
+ * Extension is additive from whichever is later: now, or their existing
+ * proAccessUntil (so a comped user's window is extended, never shortened).
  *
  * Admin-only (Firebase ID token → ADMIN_EMAILS).
+ *
+ * Body: { code: string, days?: number, dryRun?: boolean }
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -55,22 +49,9 @@ function safeKey(raw: string): string {
 }
 
 interface Body {
-  mode?: "code" | "window";
   code?: string;
-  source?: string; // window mode: an AcquisitionSource, or "any"
-  from?: string; // window mode: yyyy-mm-dd (inclusive)
-  to?: string; // window mode: yyyy-mm-dd (inclusive)
   days?: number;
   dryRun?: boolean;
-}
-
-/** Signup time for a user doc: createdAt, else the attribution timestamp. */
-function signupMs(d: Record<string, unknown>): number | null {
-  const created = d.createdAt as { toDate?: () => Date } | undefined;
-  if (created && typeof created.toDate === "function") return created.toDate().getTime();
-  const acq = d.acquisition as { at?: { toDate?: () => Date } } | undefined;
-  if (acq?.at && typeof acq.at.toDate === "function") return acq.at.toDate().getTime();
-  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -84,45 +65,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 });
   }
 
-  const mode: "code" | "window" = body.mode === "window" ? "window" : "code";
+  const code = normalizeCode(body.code || "");
+  if (!code) {
+    return NextResponse.json({ ok: false, error: "missing code" }, { status: 400 });
+  }
+  const grantKey = safeKey(code);
   const daysRaw = Number(body.days);
   const days =
     Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, MAX_DAYS) : DEFAULT_DAYS;
   const dryRun = body.dryRun === true;
-
-  // Resolve the cohort selector + the idempotency key.
-  let grantKey = "";
-  let label = "";
-  let code = "";
-  let source = "";
-  let fromMs = 0;
-  let toMs = 0;
-
-  if (mode === "code") {
-    code = normalizeCode(body.code || "");
-    if (!code) {
-      return NextResponse.json({ ok: false, error: "missing code" }, { status: 400 });
-    }
-    grantKey = safeKey(code);
-    label = `@${code}`;
-  } else {
-    source = (body.source || "").trim().toLowerCase();
-    const from = (body.from || "").trim();
-    const to = (body.to || "").trim();
-    if (!source || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-      return NextResponse.json(
-        { ok: false, error: "window mode needs source + from/to as yyyy-mm-dd" },
-        { status: 400 }
-      );
-    }
-    fromMs = Date.parse(`${from}T00:00:00Z`);
-    toMs = Date.parse(`${to}T00:00:00Z`) + DAY_MS - 1; // inclusive end-of-day
-    if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs < fromMs) {
-      return NextResponse.json({ ok: false, error: "invalid date range" }, { status: 400 });
-    }
-    grantKey = safeKey(`w_${source}_${from}_${to}`);
-    label = `${source} signups ${from} → ${to}`;
-  }
 
   try {
     const snap = await adminDb().collection("users").get();
@@ -131,20 +82,9 @@ export async function POST(req: NextRequest) {
 
     snap.forEach((doc) => {
       const d = doc.data();
-      const acq = d.acquisition as { creatorCode?: string; source?: string } | undefined;
-
-      let isMatch = false;
-      if (mode === "code") {
-        const raw = acq?.creatorCode;
-        isMatch = !!raw && normalizeCode(String(raw)) === code;
-      } else {
-        const src = (acq?.source || "").toString().trim().toLowerCase();
-        const srcOk = source === "any" ? true : src === source;
-        const ms = signupMs(d);
-        isMatch = srcOk && ms != null && ms >= fromMs && ms <= toMs;
-      }
-      if (!isMatch) return;
-
+      const acq = d.acquisition as { creatorCode?: string } | undefined;
+      const raw = acq?.creatorCode;
+      if (!raw || normalizeCode(String(raw)) !== code) return;
       const grants = (d.proCodeGrants || {}) as Record<string, unknown>;
       matched.push({
         uid: doc.id,
@@ -159,8 +99,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         dryRun: true,
-        mode,
-        label,
+        code,
         days,
         matched: matched.length,
         wouldGrant: toGrant.length,
@@ -182,7 +121,7 @@ export async function POST(req: NextRequest) {
       await ref.set(
         {
           proAccessUntil: Timestamp.fromDate(until),
-          proGrantReason: `${label} (+${days}d)`,
+          proGrantReason: `Creator code @${code} (+${days}d)`,
           proGrantedBy: adminEmail,
           proGrantedAt: FieldValue.serverTimestamp(),
           [`proCodeGrants.${grantKey}`]: FieldValue.serverTimestamp(),
@@ -194,8 +133,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      mode,
-      label,
+      code,
       days,
       matched: matched.length,
       granted: results.length,
