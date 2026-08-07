@@ -437,9 +437,18 @@ export default function CreatorPage() {
             <div className={styles.resources}>
               <div className={styles.resourceCard}>
                 <h3>Brand assets</h3>
-                <p>Logo, app icon, and screenshots you can drop into a post.</p>
-                <a href="/GymRoam-G-Icon.png" download className={styles.resourceLink}>
+                <p>The logo and app screenshots you can drop straight into a post.</p>
+                {/* These point at files that actually exist in /public. The
+                    previous link was /GymRoam-G-Icon.png, which 404'd. */}
+                <a href="/gymroam-logo.png" download className={styles.resourceLink}>
                   Download logo &rarr;
+                </a>
+                <a
+                  href="/app-screens/map.png"
+                  download
+                  className={styles.resourceLink}
+                >
+                  Download app screenshot &rarr;
                 </a>
               </div>
               <div className={styles.resourceCard}>
@@ -447,13 +456,13 @@ export default function CreatorPage() {
                 <ul>
                   <li>&ldquo;POV: you&apos;re in a new city and need a gym in 30 seconds&rdquo;</li>
                   <li>&ldquo;Hotel gym or real gym? Here&apos;s how I decide&rdquo;</li>
-                  <li>&ldquo;I never skip a workout when I travel — here&apos;s the app&rdquo;</li>
+                  <li>&ldquo;I never skip a workout when I travel. Here&apos;s the app&rdquo;</li>
                 </ul>
               </div>
               <div className={styles.resourceCard}>
                 <h3>Ground rules</h3>
                 <ul>
-                  <li>Disclose the partnership — #ad or #partner</li>
+                  <li>Disclose the partnership with #ad or #partner</li>
                   <li>No coupon or deal-aggregator sites</li>
                   <li>Don&apos;t bid on &ldquo;GymRoam&rdquo; in paid search</li>
                 </ul>
