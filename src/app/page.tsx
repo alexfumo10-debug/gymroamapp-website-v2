@@ -12,7 +12,7 @@ import {
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { APP_STORE_URL } from "@/lib/app-store";
-import { AFFILIATE_DISCOUNT_USD, COMMISSION_TIERS } from "@/lib/affiliate";
+import { AFFILIATE_DISCOUNT_USD } from "@/lib/affiliate";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Globe from "@/components/Globe";
@@ -22,16 +22,12 @@ import PhoneCarousel from "@/components/ui/phone-carousel";
 import { GlowCard } from "@/components/ui/spotlight-card";
 import styles from "./page.module.css";
 
-/** The three things a creator actually wants to know before applying.
- *  Commission range is derived from COMMISSION_TIERS so the homepage
- *  can never drift out of sync with the rates we actually pay. */
+/** The three things a creator wants to know before applying.
+ *  Deliberately NO commission rate here: exact percentages are commercial
+ *  terms, shared with a creator once they're approved, not published to
+ *  anyone browsing the site (or to competitors). */
 const CREATOR_HIGHLIGHTS = [
-  {
-    value: `${Math.round(COMMISSION_TIERS[0].rate * 100)}–${Math.round(
-      COMMISSION_TIERS[COMMISSION_TIERS.length - 1].rate * 100
-    )}%`,
-    label: "Commission, by tier",
-  },
+  { value: "Tiered", label: "Rates climb as you refer more" },
   { value: "Recurring", label: "Paid on renewals, not just signup" },
   { value: "Free Pro", label: "On the house, once you're approved" },
 ];
@@ -245,7 +241,7 @@ export default function Home() {
           </div>
 
           <p className={styles.creatorNote}>
-            Applications are reviewed by hand — we approve creators, not
+            Applications are reviewed by hand. We approve creators, not
             coupon sites.
           </p>
         </div>
