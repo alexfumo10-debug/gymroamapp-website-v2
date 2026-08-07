@@ -321,7 +321,7 @@ function ReviewModal({
     normalizeCode(a.issuedCode || a.requestedCode || "")
   );
   const [reviewNote, setReviewNote] = useState(a.reviewNote || "");
-  const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
+  const [busy, setBusy] = useState<"approve" | "reject" | "delete" | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -330,8 +330,10 @@ function ReviewModal({
   const changedCode = normalizeCode(a.issuedCode || "") !== code;
 
   const post = useCallback(
-    async (action: "approve" | "reject" | "recode") => {
-      setBusy(action === "reject" ? "reject" : "approve");
+    async (action: "approve" | "reject" | "recode" | "delete") => {
+      setBusy(
+        action === "reject" ? "reject" : action === "delete" ? "delete" : "approve"
+      );
       setError("");
       try {
         const token = await getIdToken();
@@ -527,6 +529,29 @@ function ReviewModal({
                   </button>
                 </>
               )}
+            </div>
+
+            {/* Delete — removes the application and frees its code so the
+                same person (or code) can be applied for again. Confirmed
+                because it's not recoverable. */}
+            <div className={styles.dangerRow}>
+              <button
+                className={styles.deleteBtn}
+                disabled={busy !== null}
+                onClick={() => {
+                  const owned = normalizeCode(a.issuedCode || "");
+                  const msg = owned
+                    ? `Delete this application and release the code ${owned}? They'll lose dashboard access and can apply again from scratch. This can't be undone.`
+                    : "Delete this application? This can't be undone.";
+                  if (window.confirm(msg)) post("delete");
+                }}
+              >
+                {busy === "delete" ? "Deleting…" : "Delete application"}
+              </button>
+              <span className={styles.dangerNote}>
+                Frees the code and revokes dashboard access. Their GymRoam
+                account itself is left alone.
+              </span>
             </div>
 
             {!isApproved && (
