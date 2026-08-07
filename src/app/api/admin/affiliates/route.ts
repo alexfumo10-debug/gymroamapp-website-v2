@@ -336,7 +336,14 @@ export async function POST(req: NextRequest) {
   }
 
   const link = trackingLink(code);
-  const isFirstApproval = action === "approve" && !previousCode;
+  // Only a genuine code CHANGE gets the "your code changed" note. Approving
+  // an already-approved creator without changing their code (a re-approval,
+  // or re-sending their details) previously took that path and produced
+  // nonsense: "your code is now X ... your old code X no longer accepts
+  // new signups". Everything that isn't a real change re-sends the full
+  // welcome, which also re-issues the dashboard password link — that's how
+  // a creator who lost the first email gets back in.
+  const codeChanged = !!previousCode && previousCode !== code;
 
   // Provision the dashboard login. Failure here is logged and surfaced
   // but never rolls back the code — the approval already happened, and
@@ -358,9 +365,10 @@ export async function POST(req: NextRequest) {
   // the creator get the full onboarding; a recode gets a short heads-up.
   if (application.email) {
     try {
-      const mail = isFirstApproval
+      const mail = !codeChanged
         ? affiliateApprovedEmail({
             name: application.fullName || "",
+            email: application.email,
             code,
             trackingLink: link,
             dashboardLink: passwordLink,
@@ -392,7 +400,7 @@ export async function POST(req: NextRequest) {
     status: "approved",
     code,
     link,
-    ...(isFirstApproval && !passwordLink
+    ...(!codeChanged && !passwordLink
       ? {
           warning:
             "Code issued and welcome email sent, but the dashboard login couldn't be provisioned. Approve again to retry.",
