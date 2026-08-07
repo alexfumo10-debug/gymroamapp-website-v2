@@ -24,29 +24,57 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireAdmin } from "@/lib/admin-gate";
 import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { Resend } from "resend";
 import {
   normalizeCode,
   validateCodeFormat,
   CODE_REJECTION_MESSAGES,
   trackingLink,
-  APPLE_SIGNIN_WARNING,
-  AFFILIATE_DISCOUNT_USD,
-  COMMISSION_TIERS,
-  CLEARING_DAYS,
-  MIN_PAYOUT_USD,
   SITE_ORIGIN,
 } from "@/lib/affiliate";
+import {
+  affiliateApprovedEmail,
+  affiliateDeclinedEmail,
+  affiliateCodeChangedEmail,
+  AFFILIATE_REPLY_TO,
+  type AffiliateEmail,
+} from "@/lib/affiliate-emails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type Action = "approve" | "reject" | "recode";
 
+/**
+ * Send a creator-program email through Resend.
+ *
+ * Was the Firestore `mail` collection (Trigger Email extension), which
+ * sends from the Firebase default sender and lands in spam. Throws when
+ * unconfigured so callers can surface it — approval/decision state is
+ * always written before we get here, so a throw never loses the decision.
+ */
+async function sendAffiliateEmail(to: string, mail: AffiliateEmail): Promise<void> {
+  const key = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+  if (!key || !from) throw new Error("email not configured (RESEND_API_KEY / EMAIL_FROM)");
+  const { error } = await new Resend(key).emails.send({
+    from,
+    to: to.toLowerCase(),
+    replyTo: AFFILIATE_REPLY_TO,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+  });
+  if (error) throw new Error(error.message);
+}
+
 interface Body {
   applicationId?: string;
   action?: Action;
   code?: string;
   reviewNote?: string;
+  /** Decline only: set false to skip the "not this time" email. */
+  notify?: boolean;
 }
 
 /**
@@ -112,83 +140,6 @@ async function adminEmail(req: NextRequest): Promise<string> {
   }
 }
 
-function welcomeEmail(params: {
-  fullName: string;
-  code: string;
-  link: string;
-  passwordLink: string | null;
-}) {
-  const { fullName, code, link, passwordLink } = params;
-  const tierLines = COMMISSION_TIERS.map(
-    (t) =>
-      `<li>${
-        t.maxSignups === null
-          ? `${t.minSignups}+ Pro signups`
-          : `${t.minSignups}–${t.maxSignups} Pro signups`
-      } — <strong style="color:#E8FF3C;">${t.label}</strong></li>`
-  ).join("");
-
-  return {
-    subject: `You're in — your GymRoam code is ${code}`,
-    html: `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #1F1F26;">
-        <div style="text-align:center;margin-bottom:24px;">
-          <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
-        </div>
-        <h2 style="text-align:center;margin:0 0 8px;font-size:22px;">Welcome to the GymRoam Creator Program</h2>
-        <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">Approved — here's everything you need, ${fullName}.</p>
-
-        <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:16px;text-align:center;">
-          <p style="margin:0 0 6px;color:#8A8A99;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Your referral code</p>
-          <p style="margin:0 0 16px;font-weight:900;font-size:28px;color:#E8FF3C;letter-spacing:2px;">${code}</p>
-          <p style="margin:0 0 6px;color:#8A8A99;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Your tracking link</p>
-          <p style="margin:0;font-size:14px;"><a href="${link}" style="color:#E8FF3C;">${link}</a></p>
-        </div>
-
-        <p style="color:#8A8A99;font-size:13px;line-height:1.7;margin:0 0 24px;">
-          Anyone who enters <strong style="color:#E8E8EE;">${code}</strong> gets
-          <strong style="color:#E8E8EE;">$${AFFILIATE_DISCOUNT_USD} off</strong> annual Pro —
-          at signup or when they upgrade later.
-        </p>
-
-        <h3 style="font-size:13px;color:#8A8A99;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Your commission</h3>
-        <ul style="color:#8A8A99;font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 8px;">${tierLines}</ul>
-        <p style="color:#55555F;font-size:12px;line-height:1.7;margin:0 0 24px;">
-          Paid on net revenue (after Apple's cut, refunds, and taxes), recurring
-          on renewals for as long as your referral stays subscribed. Commission
-          clears once a subscription has been active ${CLEARING_DAYS} consecutive days.
-          Payouts run monthly, $${MIN_PAYOUT_USD} minimum — balances under that roll forward.
-        </p>
-
-        <div style="background:#1A1206;border:1px solid #FF8C42;border-radius:12px;padding:16px;margin-bottom:24px;">
-          <p style="margin:0 0 6px;color:#FF8C42;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Read this before you sign up</p>
-          <p style="margin:0;color:#E8E8EE;font-size:13px;line-height:1.6;">${APPLE_SIGNIN_WARNING}</p>
-        </div>
-
-        ${
-          passwordLink
-            ? `<div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:24px;text-align:center;">
-                 <p style="margin:0 0 6px;color:#8A8A99;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Your creator dashboard</p>
-                 <p style="margin:0 0 14px;color:#8A8A99;font-size:13px;line-height:1.6;">Track your clicks, conversions, tier progress, and commission in real time.</p>
-                 <a href="${passwordLink}" style="display:inline-block;background:#E8FF3C;color:#0A0A0B;font-weight:800;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px;">Set your password</a>
-                 <p style="margin:14px 0 0;color:#55555F;font-size:11px;">Then sign in any time at ${SITE_ORIGIN}/creator</p>
-               </div>`
-            : `<p style="color:#8A8A99;font-size:13px;line-height:1.7;margin:0 0 24px;">We'll follow up separately with your creator dashboard login.</p>`
-        }
-
-        <h3 style="font-size:13px;color:#8A8A99;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Next steps</h3>
-        <ol style="color:#8A8A99;font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 24px;">
-          <li>We'll send your affiliate agreement to sign — reply once it's done</li>
-          <li>Download GymRoam and sign up <strong style="color:#E8E8EE;">with your email</strong></li>
-          <li>Tell us the email you used and we'll switch on your free Pro</li>
-          <li>Start sharing — your link and code work immediately</li>
-        </ol>
-
-        <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">Questions? Just reply to this email.</p>
-      </div>
-    `,
-  };
-}
 
 /**
  * GET /api/admin/affiliates — list applications for the admin tab.
@@ -267,13 +218,30 @@ export async function POST(req: NextRequest) {
     if (!snap.exists) {
       return NextResponse.json({ error: "application not found" }, { status: 404 });
     }
+    const rejected = snap.data() || {};
     await appRef.update({
       status: "rejected",
       reviewNote: (body.reviewNote || "").trim(),
       approvedBy: reviewer,
       approvedAt: FieldValue.serverTimestamp(),
     });
-    return NextResponse.json({ ok: true, status: "rejected" });
+
+    // Previously no email was sent on a decline, so applicants were left
+    // hanging indefinitely. Send one, but never let it fail the decision —
+    // the status is already written.
+    let emailed = false;
+    if (rejected.email && body.notify !== false) {
+      try {
+        await sendAffiliateEmail(
+          String(rejected.email),
+          affiliateDeclinedEmail({ name: String(rejected.fullName || "") })
+        );
+        emailed = true;
+      } catch (e) {
+        console.error("[/api/admin/affiliates] decline email failed", e);
+      }
+    }
+    return NextResponse.json({ ok: true, status: "rejected", emailed });
   }
 
   /* ── Approve / recode — both issue a code ── */
@@ -386,48 +354,35 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Welcome email — only on first approval. A recode gets a shorter
-  // heads-up instead of the full onboarding again.
+  // Welcome (or code-changed) email via Resend. Only on first approval does
+  // the creator get the full onboarding; a recode gets a short heads-up.
   if (application.email) {
     try {
-      const message =
-        isFirstApproval
-          ? welcomeEmail({
-              fullName: application.fullName || "there",
-              code,
-              link,
-              passwordLink,
-            })
-          : {
-              subject: `Your GymRoam referral code is now ${code}`,
-              html: `
-                <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #1F1F26;">
-                  <h2 style="margin:0 0 12px;font-size:20px;">Your code changed</h2>
-                  <p style="color:#8A8A99;font-size:14px;line-height:1.7;margin:0 0 20px;">
-                    Heads up — your GymRoam referral code is now
-                    <strong style="color:#E8FF3C;">${code}</strong>, and your
-                    tracking link is <a href="${link}" style="color:#E8FF3C;">${link}</a>.
-                    ${previousCode ? `Your old code <strong>${previousCode}</strong> no longer accepts new signups, but everything you've already earned on it is unaffected.` : ""}
-                  </p>
-                  <p style="color:#55555F;font-size:12px;margin:0;">Update your bio link and any pinned posts when you get a chance.</p>
-                </div>
-              `,
-            };
-
-      await db.collection("mail").add({
-        to: [application.email.toLowerCase()],
-        message,
-      });
+      const mail = isFirstApproval
+        ? affiliateApprovedEmail({
+            name: application.fullName || "",
+            code,
+            trackingLink: link,
+            dashboardLink: passwordLink,
+            siteOrigin: SITE_ORIGIN,
+          })
+        : affiliateCodeChangedEmail({
+            name: application.fullName || "",
+            code,
+            trackingLink: link,
+            previousCode,
+          });
+      await sendAffiliateEmail(application.email, mail);
     } catch (e) {
-      // The code IS issued at this point — an email failure must not
-      // read as a failed approval. Surface it instead.
-      console.error("[/api/admin/affiliates] welcome email failed", e);
+      // The code IS issued at this point — an email failure must not read
+      // as a failed approval. Surface it instead.
+      console.error("[/api/admin/affiliates] approval email failed", e);
       return NextResponse.json({
         ok: true,
         status: "approved",
         code,
         link,
-        warning: "Code issued, but the welcome email failed to queue.",
+        warning: "Code issued, but the email failed to send.",
       });
     }
   }
