@@ -23,7 +23,6 @@ import {
   AUDIENCE_LOCATIONS,
   PAYMENT_METHODS,
   REFERRAL_SOURCES,
-  AFFILIATE_DISCOUNT_USD,
   APPLE_SIGNIN_WARNING,
   CODE_MAX_LENGTH,
   normalizeCode,
@@ -327,25 +326,14 @@ export default function AffiliatesPage() {
       <main>
         {/* Hero */}
         <section className={styles.hero}>
-          <span className={styles.tag}>Creator Program</span>
+          <span className={styles.tag}>GymRoam Crew</span>
           <h1>
-            Get paid to send people <span className={styles.accent}>where they train.</span>
+            Join the crew that trains <span className={styles.accent}>everywhere.</span>
           </h1>
           <p>
-            Share GymRoam with your audience, they get $
-            {AFFILIATE_DISCOUNT_USD} off annual Pro, and you earn recurring
-            commission for as long as they stay subscribed.
-          </p>
-        </section>
-
-        <section className={styles.terms}>
-          <p>
-            Commission is paid on net revenue, meaning what we actually receive
-            after Apple&apos;s cut, refunds, and taxes, and recurs on
-            renewals for as long as your referral stays subscribed. Tier
-            increases apply going forward from the month you hit them.
-            Commission clears after a subscription stays active 30
-            consecutive days; payouts run monthly with a $25 minimum.
+            We work with a small group of creators who actually train while
+            they travel. Apply below. If it&apos;s a fit we&apos;ll come back
+            with your code, your link, and what you earn.
           </p>
         </section>
 

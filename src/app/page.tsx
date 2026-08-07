@@ -193,6 +193,37 @@ export default function Home() {
 
       <Globe />
 
+      {/* GYMROAM CREW — recruitment only.
+          Deliberately says nothing about rates, commission, or the
+          referral discount: what we pay is a commercial term that goes in
+          the agreement after approval, not on a page anyone can read.
+          This band exists to get the right creators to apply, nothing more. */}
+      <section className={styles.creator} id="creators">
+        <CardTopo />
+        <div className={styles.creatorInner}>
+          <span className={styles.creatorTag}>GymRoam Crew</span>
+          <h2>
+            Train everywhere?<br />
+            <span className={styles.accent}>Join our crew.</span>
+          </h2>
+          <p>
+            We work with a small group of creators who live this. If that
+            sounds like you, put your name in.
+          </p>
+          <div className={styles.creatorCtaRow}>
+            <a href="/affiliates" className={styles.creatorCta}>
+              Apply to join
+            </a>
+            <a href="/creator" className={styles.creatorSignIn}>
+              Already in the crew? Sign in &rarr;
+            </a>
+          </div>
+          <p className={styles.creatorNote}>
+            Applications are reviewed by hand.
+          </p>
+        </div>
+      </section>
+
       <Footer />
     </>
   );
