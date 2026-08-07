@@ -23,7 +23,6 @@ import {
   AUDIENCE_LOCATIONS,
   PAYMENT_METHODS,
   REFERRAL_SOURCES,
-  COMMISSION_TIERS,
   AFFILIATE_DISCOUNT_USD,
   APPLE_SIGNIN_WARNING,
   CODE_MAX_LENGTH,
@@ -339,25 +338,10 @@ export default function AffiliatesPage() {
           </p>
         </section>
 
-        {/* Commission tiers */}
-        <section className={styles.values}>
-          {COMMISSION_TIERS.map((t) => (
-            <div key={t.label} className={styles.valueCard}>
-              <h3>{t.label}</h3>
-              <p>
-                {t.maxSignups === null
-                  ? `${t.minSignups}+ Pro signups`
-                  : `${t.minSignups}–${t.maxSignups} Pro signups`}
-                {" "}in a rolling 12 months
-              </p>
-            </div>
-          ))}
-        </section>
-
         <section className={styles.terms}>
           <p>
-            Commission is paid on net revenue — what we actually receive
-            after Apple&apos;s cut, refunds, and taxes — and recurs on
+            Commission is paid on net revenue, meaning what we actually receive
+            after Apple&apos;s cut, refunds, and taxes, and recurs on
             renewals for as long as your referral stays subscribed. Tier
             increases apply going forward from the month you hit them.
             Commission clears after a subscription stays active 30
