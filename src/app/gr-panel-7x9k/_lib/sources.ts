@@ -56,6 +56,13 @@ export const DATA_SOURCES: Record<string, DataSource> = {
     status: "live",
     summary: "Gym, trainer & career applications from Firestore.",
   },
+  affiliates: {
+    key: "affiliates",
+    label: "Affiliates",
+    status: "live",
+    summary:
+      "Creator referral applications from /affiliates, with code issuance on approval.",
+  },
   gymSubs: {
     key: "gymSubs",
     label: "Gym Partner Subscriptions",
