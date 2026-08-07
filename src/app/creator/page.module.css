@@ -1,0 +1,591 @@
+/* Creator dashboard — the affiliate's own view.
+   Shares the site's dark + accent tokens, but uses its own slim header
+   instead of the marketing Nav: this is a signed-in tool, not a page
+   we want people navigating away from. */
+
+/* ── Boot / spinner ── */
+.boot {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Sign in ── */
+.loginScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+}
+
+.logoMark {
+  width: 44px;
+  height: 44px;
+  background: var(--accent);
+  color: #0a0a0b;
+  border-radius: 11px;
+  font-weight: 900;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+
+.loginTitle {
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.6px;
+  margin-bottom: 6px;
+}
+
+.loginSub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.loginInput {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.loginInput:focus {
+  border-color: var(--accent);
+}
+
+.loginError,
+.loginOk {
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 8px;
+  padding: 9px 12px;
+  margin: 4px 0 10px;
+  text-align: left;
+}
+
+.loginError {
+  color: var(--red);
+  background: rgba(255, 77, 109, 0.08);
+  border: 1px solid rgba(255, 77, 109, 0.25);
+}
+
+.loginOk {
+  color: var(--green);
+  background: rgba(78, 205, 196, 0.08);
+  border: 1px solid rgba(78, 205, 196, 0.25);
+}
+
+.loginBtn {
+  width: 100%;
+  background: var(--accent);
+  color: #0a0a0b;
+  border: none;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: opacity 0.15s;
+}
+
+.loginBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.loginBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.linkBtn:hover {
+  color: var(--accent);
+}
+
+.loginFoot {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.loginFoot a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* ── Signed-in header ── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: rgba(10, 10, 11, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.headerLogo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.logoMarkSm {
+  width: 26px;
+  height: 26px;
+  background: var(--accent);
+  color: #0a0a0b;
+  border-radius: 7px;
+  font-weight: 900;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.headerName {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.signOut {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.signOut:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Layout ── */
+.main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 36px 24px 88px;
+}
+
+.loading,
+.errorCard {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 20px;
+  text-align: center;
+}
+
+.errorCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+}
+
+.errorCard a {
+  color: var(--accent);
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin: 40px 0 14px;
+}
+
+/* ── Code + link ── */
+.codeSection {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 16px;
+}
+
+.codeBlock {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  min-width: 0;
+}
+
+.codeLabel {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 10px;
+}
+
+.codeValueRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.codeValue {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linkValue {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px 13px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.copyBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Stats ── */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statAccent {
+  border-color: rgba(232, 255, 60, 0.3);
+}
+
+.statLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+
+.statValue {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--text);
+}
+
+.statPending {
+  color: var(--dim);
+}
+
+.statSub {
+  font-size: 11px;
+  color: var(--dim);
+  min-height: 14px;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+/* ── Tier ── */
+.tierCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.tierTop {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.tierRate {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  color: var(--accent);
+}
+
+.tierMeta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tierTrack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tierStep {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  opacity: 0.5;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+
+.tierStepOn {
+  opacity: 1;
+  border-color: rgba(232, 255, 60, 0.4);
+}
+
+.tierStepRate {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+
+.tierStepReq {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tierFoot {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.6;
+  margin-top: 16px;
+}
+
+/* ── Payments ── */
+.payTable {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.payRow {
+  display: grid;
+  grid-template-columns: 110px 1fr 120px 1.2fr;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.payRow:last-child {
+  border-bottom: none;
+}
+
+.payAmount {
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.payMeta {
+  color: var(--muted);
+}
+
+.payRef {
+  color: var(--dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Resources ── */
+.resources {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.resourceCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.resourceCard h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.resourceCard p,
+.resourceCard li {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.resourceCard ul {
+  padding-left: 16px;
+  margin: 0;
+}
+
+.resourceCard li {
+  margin-bottom: 6px;
+}
+
+.resourceLink {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.resourceLink:hover {
+  opacity: 0.8;
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .resources {
+    grid-template-columns: 1fr;
+  }
+
+  .codeSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .statGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tierTrack {
+    grid-template-columns: 1fr;
+  }
+
+  .payRow {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 4px;
+  }
+
+  .main {
+    padding: 24px 16px 64px;
+  }
+}

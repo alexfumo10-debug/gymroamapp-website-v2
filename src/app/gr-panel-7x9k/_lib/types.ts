@@ -132,6 +132,45 @@ export interface CareerApplication {
   createdAt?: FirestoreTimestamp;
 }
 
+/**
+ * Creator referral-program application, written by /affiliates.
+ *
+ * `requestedCode` is what the applicant asked for; `issuedCode` is what
+ * we actually granted and is null until an admin approves. They can
+ * differ — an admin may issue a different code than the one requested.
+ * Only `issuedCode` is ever live.
+ */
+export interface AffiliateApplication {
+  id: string;
+  status: "pending" | "approved" | "rejected";
+
+  fullName: string;
+  email: string;
+  phone?: string;
+  country: string;
+  stateRegion: string;
+
+  instagramHandle: string;
+  instagramFollowers: number;
+  tiktokHandle: string;
+  tiktokFollowers: number;
+  otherPlatform?: string;
+  niche: string;
+  audienceLocation: string;
+
+  requestedCode: string;
+  issuedCode?: string | null;
+  heardAbout?: string;
+  paymentMethod?: string;
+  notes?: string;
+
+  /** Internal note an admin leaves when rejecting. */
+  reviewNote?: string;
+  approvedBy?: string | null;
+  approvedAt?: FirestoreTimestamp | null;
+  createdAt?: FirestoreTimestamp;
+}
+
 /* ────────────────────────────────────────────────────────────
    EXTERNAL SOURCES — normalized contracts for connect-ready tabs.
    These are what each tab renders; the matching /api/admin/<source>

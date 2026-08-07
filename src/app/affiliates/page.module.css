@@ -1,0 +1,447 @@
+/* Affiliate / creator program application.
+   Shares the /trainer application's layout rhythm and tokens so the two
+   public funnels feel like one system. Additions specific to this page:
+   the live code-availability status line and the Sign-in-with-Apple
+   warning callout. */
+
+/* ── Hero ── */
+.hero {
+  max-width: 720px;
+  margin: 0 auto;
+  /* Clears the fixed Nav (~68px) plus breathing room — same as /trainer. */
+  padding: 120px 24px 0;
+  text-align: center;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(232, 255, 60, 0.08);
+  border: 1px solid rgba(232, 255, 60, 0.15);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hero h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  margin-bottom: 12px;
+  line-height: var(--leading-tight);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.hero p {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto 48px;
+  line-height: 1.6;
+}
+
+/* ── Commission tiers ── */
+.values {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.valueCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.valueCard h3 {
+  font-size: 28px;
+  font-weight: 900;
+  margin-bottom: 6px;
+  color: var(--accent);
+  letter-spacing: -1px;
+}
+
+.valueCard p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── Terms summary ── */
+.terms {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+.terms p {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.7;
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ── Divider ── */
+.divider {
+  width: 48px;
+  height: 1px;
+  background: var(--border);
+  margin: 0 auto 64px;
+}
+
+/* ── Form ── */
+.formSection {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+}
+
+.formCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.formCard label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formCard input,
+.formCard select,
+.formCard textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.formCard input:focus,
+.formCard select:focus,
+.formCard textarea:focus {
+  border-color: var(--accent);
+}
+
+.formCard select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.formCard textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.sectionLabel {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.sectionLabelFirst {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.helper {
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.required {
+  color: var(--red);
+}
+
+/* ── Referral code field ──
+   Monospaced + tracked out so a code reads unambiguously while typing
+   (O vs 0, I vs 1 are a real support cost once it's on a story slide). */
+.codeInput {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-weight: 700 !important;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px !important;
+}
+
+/* Reserve a line so the layout doesn't jump as the status swaps in. */
+.codeStatusWrap {
+  min-height: 20px;
+  margin-bottom: 8px;
+}
+
+.codeStatusChecking,
+.codeStatusGood,
+.codeStatusBad,
+.codeStatusUnknown {
+  font-size: 12px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.codeStatusChecking {
+  color: var(--dim);
+}
+
+.codeStatusGood {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.codeStatusBad {
+  color: var(--red);
+}
+
+.codeStatusUnknown {
+  color: var(--orange);
+}
+
+.codeSuggestions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.codeSuggestion {
+  background: rgba(232, 255, 60, 0.08);
+  border: 1px solid rgba(232, 255, 60, 0.25);
+  color: var(--accent);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.codeSuggestion:hover {
+  background: rgba(232, 255, 60, 0.16);
+}
+
+/* ── Sign in with Apple warning ──
+   Orange rather than red: it's a "do this or we can't help you" note,
+   not a validation error. Sits directly under the email field because
+   that's where the mistake gets made. */
+.appleNotice {
+  background: rgba(255, 140, 66, 0.07);
+  border: 1px solid rgba(255, 140, 66, 0.35);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: -4px 0 20px;
+}
+
+.appleNoticeLabel {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--orange);
+  margin-bottom: 6px;
+}
+
+.appleNotice p {
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.appleNoticeSuccess {
+  max-width: 440px;
+  margin: 24px auto 0;
+  background: rgba(255, 140, 66, 0.07);
+  border: 1px solid rgba(255, 140, 66, 0.35);
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.appleNoticeSuccess strong {
+  color: var(--orange);
+}
+
+/* ── Confirmations + submit ── */
+.checkboxRow {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 12px;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: var(--muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  margin: 8px 0 20px !important;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.checkboxRow input[type="checkbox"] {
+  width: 18px !important;
+  min-width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.checkboxRow strong {
+  color: var(--text);
+}
+
+.submitBtn {
+  width: 100%;
+  background: var(--accent);
+  color: #0a0a0b;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 8px;
+  -webkit-appearance: none;
+  min-height: 48px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(232, 255, 60, 0.15);
+}
+
+.submitBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.formNote {
+  font-size: 11px;
+  color: var(--dim);
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.6;
+}
+
+/* ── Success state ── */
+.success {
+  text-align: center;
+  padding: 160px 24px 96px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  background: rgba(232, 255, 60, 0.1);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--accent);
+}
+
+.success h1 {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  margin-bottom: 10px;
+}
+
+.success p {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.success strong {
+  color: var(--accent);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  letter-spacing: 1px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .values {
+    grid-template-columns: 1fr;
+  }
+
+  .formCard {
+    padding: 24px 20px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-top: 100px;
+  }
+
+  .success {
+    padding-top: 120px;
+  }
+}

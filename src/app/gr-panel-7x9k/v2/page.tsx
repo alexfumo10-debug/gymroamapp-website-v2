@@ -21,6 +21,7 @@ import { LiveTab } from "../_components/LiveTab";
 import { UsersTab } from "../_components/UsersTab";
 import { TrafficTab } from "../_components/TrafficTab";
 import { PipelineTab } from "../_components/PipelineTab";
+import { AffiliatesTab } from "../_components/AffiliatesTab";
 import { FeedbackTab } from "../_components/FeedbackTab";
 import { SubscriptionsTab } from "../_components/SubscriptionsTab";
 import { ReviewsTab } from "../_components/ReviewsTab";
@@ -35,6 +36,7 @@ type TabKey =
   | "users"
   | "traffic"
   | "pipeline"
+  | "affiliates"
   | "feedback"
   | "subscriptions"
   | "ads"
@@ -48,6 +50,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "users", label: "Users" },
   { key: "traffic", label: "Traffic" },
   { key: "pipeline", label: "Pipeline" },
+  { key: "affiliates", label: "Affiliates" },
   { key: "feedback", label: "Feedback" },
   { key: "subscriptions", label: "Subscriptions" },
   { key: "ads", label: "Ad Stats" },
@@ -154,6 +157,7 @@ export default function DashboardV2() {
         {tab === "users" && <UsersTab auth={auth} />}
         {tab === "traffic" && <TrafficTab auth={auth} />}
         {tab === "pipeline" && <PipelineTab />}
+        {tab === "affiliates" && <AffiliatesTab auth={auth} />}
         {tab === "feedback" && <FeedbackTab />}
         {tab === "subscriptions" && <SubscriptionsTab auth={auth} />}
         {tab === "ads" && <AdsTab auth={auth} />}

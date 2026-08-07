@@ -12,6 +12,7 @@ import {
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { APP_STORE_URL } from "@/lib/app-store";
+import { AFFILIATE_DISCOUNT_USD, COMMISSION_TIERS } from "@/lib/affiliate";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Globe from "@/components/Globe";
@@ -20,6 +21,20 @@ import HeroTopo from "@/components/HeroTopo";
 import PhoneCarousel from "@/components/ui/phone-carousel";
 import { GlowCard } from "@/components/ui/spotlight-card";
 import styles from "./page.module.css";
+
+/** The three things a creator actually wants to know before applying.
+ *  Commission range is derived from COMMISSION_TIERS so the homepage
+ *  can never drift out of sync with the rates we actually pay. */
+const CREATOR_HIGHLIGHTS = [
+  {
+    value: `${Math.round(COMMISSION_TIERS[0].rate * 100)}–${Math.round(
+      COMMISSION_TIERS[COMMISSION_TIERS.length - 1].rate * 100
+    )}%`,
+    label: "Commission, by tier",
+  },
+  { value: "Recurring", label: "Paid on renewals, not just signup" },
+  { value: "Free Pro", label: "On the house, once you're approved" },
+];
 
 /** Hero carousel — ordered for a natural product story:
  *  Discover the app → Browse map → Scan list → Ask Scout → Plan trip →
@@ -191,6 +206,50 @@ export default function Home() {
       </section>
 
       <Globe />
+
+      {/* CREATOR PROGRAM — recruitment band.
+          Sits after the Globe so the page closes on a "you could be part
+          of this" note rather than another product feature. Deliberately
+          one screen tall and text-first: it's a qualifying filter, not a
+          pitch, and the real detail lives on /affiliates. */}
+      <section className={styles.creator} id="creators">
+        <CardTopo />
+        <div className={styles.creatorInner}>
+          <span className={styles.creatorTag}>Creator Program</span>
+          <h2>
+            Got an audience that trains?{" "}
+            <span className={styles.accent}>Get paid for it.</span>
+          </h2>
+          <p>
+            Share GymRoam, your followers get {AFFILIATE_DISCOUNT_USD} dollars
+            off annual Pro, and you earn recurring commission for as long as
+            they stay subscribed.
+          </p>
+
+          <div className={styles.creatorStats}>
+            {CREATOR_HIGHLIGHTS.map(({ value, label }) => (
+              <div key={label} className={styles.creatorStat}>
+                <span className={styles.creatorStatValue}>{value}</span>
+                <span className={styles.creatorStatLabel}>{label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.creatorCtaRow}>
+            <a href="/affiliates" className={styles.creatorCta}>
+              Apply to the program
+            </a>
+            <a href="/creator" className={styles.creatorSignIn}>
+              Already a creator? Sign in &rarr;
+            </a>
+          </div>
+
+          <p className={styles.creatorNote}>
+            Applications are reviewed by hand — we approve creators, not
+            coupon sites.
+          </p>
+        </div>
+      </section>
 
       <Footer />
     </>
