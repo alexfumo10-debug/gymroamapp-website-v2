@@ -50,12 +50,13 @@ function button(href: string, label: string): string {
  */
 export function affiliateApprovedEmail(opts: {
   name: string;
+  email: string;
   code: string;
   trackingLink: string;
   dashboardLink: string | null;
   siteOrigin: string;
 }): AffiliateEmail {
-  const { name, code, trackingLink, dashboardLink, siteOrigin } = opts;
+  const { name, email, code, trackingLink, dashboardLink, siteOrigin } = opts;
   const first = (name || "").split(" ")[0] || "there";
 
   const html = brandedEmail(
@@ -70,9 +71,9 @@ export function affiliateApprovedEmail(opts: {
 
      ${
        dashboardLink
-         ? `<p style="margin:0 0 8px;">Set your password and open your dashboard. You'll see clicks, signups, and what you've earned.</p>
-            ${button(dashboardLink, "Set up my dashboard")}
-            <p style="margin:0 0 18px;font-size:12px;color:#9a9a93;">After that you can sign in any time at ${esc(siteOrigin)}/creator</p>`
+         ? `<p style="margin:0 0 8px;">Your dashboard is ready. Use the button below to set your password, then you're in. You'll see your clicks, signups, and what you've earned.</p>
+            ${button(dashboardLink, "Set my password")}
+            <p style="margin:0 0 18px;font-size:12px;color:#9a9a93;">Sign in any time at <a href="${esc(siteOrigin)}/creator" style="color:#E8FF3C;">${esc(siteOrigin)}/creator</a> using <strong>${esc(email)}</strong></p>`
          : `<p style="margin:0 0 18px;">We'll follow up separately with your dashboard login.</p>`
      }
 
@@ -94,7 +95,7 @@ Your link: ${trackingLink}
 
 ${
   dashboardLink
-    ? `Set your password and open your dashboard:\n${dashboardLink}\n\nAfter that you can sign in any time at ${siteOrigin}/creator`
+    ? `Your dashboard is ready. Set your password here:\n${dashboardLink}\n\nThen sign in any time at ${siteOrigin}/creator using ${email}`
     : `We'll follow up separately with your dashboard login.`
 }
 
