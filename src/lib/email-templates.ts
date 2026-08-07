@@ -168,6 +168,28 @@ const PRO_FEATURES: [string, string][] = [
   ["Friends", "Follow friends and see where they've been training."],
 ];
 
+/**
+ * Wrap arbitrary inner HTML in the shared GymRoam email chrome.
+ * Used by the public-form notification emails (/api/forms/apply) so they
+ * carry the same brand as every other email we send.
+ */
+export function brandedEmail(innerHtml: string): string {
+  return layout(innerHtml);
+}
+
+/** A label/value table for the form-notification emails. */
+export function detailRows(rows: [string, string][]): string {
+  return rows
+    .filter(([, v]) => v && v.trim())
+    .map(
+      ([k, v]) =>
+        `<p style="margin:0 0 10px;"><span style="color:${MUTED};font-size:12px;text-transform:uppercase;letter-spacing:0.6px;">${esc(
+          k
+        )}</span><br/><strong>${esc(v)}</strong></p>`
+    )
+    .join("\n");
+}
+
 export const EMAIL_TEMPLATES: EmailTemplate[] = [
   {
     id: "custom",

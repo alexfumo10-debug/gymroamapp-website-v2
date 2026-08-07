@@ -5,8 +5,6 @@ import { Check, Gear, MapPin, ShieldCheck, TrendUp } from "@phosphor-icons/react
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import styles from "./page.module.css";
 
 export default function GrowPage() {
@@ -64,76 +62,48 @@ export default function GrowPage() {
     setLoading(true);
 
     try {
-      await addDoc(collection(db, "gymPartnerApplications"), {
-        ownerName: ownerName.trim(),
-        ownerRole,
-        ownerEmail: ownerEmail.trim(),
-        ownerPhone: ownerPhone.trim(),
-        gymName: gymName.trim(),
-        gymAddress: gymAddress.trim(),
-        gymCity: gymCity.trim(),
-        gymState: gymState.trim(),
-        gymPhone: gymPhone.trim(),
-        gymType,
-        gymWebsite: gymWebsite.trim(),
-        gymInstagram: gymInstagram.trim(),
-        verifyMethod: verifyMethod.trim(),
-        dayPass,
-        notes: gymNotes.trim(),
-        status: "pending",
-        createdAt: serverTimestamp(),
+      const res = await fetch("/api/forms/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "gym",
+          email: ownerEmail.trim().toLowerCase(),
+          name: ownerName.trim(),
+          doc: {
+            ownerName: ownerName.trim(),
+            ownerRole,
+            ownerEmail: ownerEmail.trim(),
+            ownerPhone: ownerPhone.trim(),
+            gymName: gymName.trim(),
+            gymAddress: gymAddress.trim(),
+            gymCity: gymCity.trim(),
+            gymState: gymState.trim(),
+            gymPhone: gymPhone.trim(),
+            gymType,
+            gymWebsite: gymWebsite.trim(),
+            gymInstagram: gymInstagram.trim(),
+            verifyMethod: verifyMethod.trim(),
+            dayPass,
+            notes: gymNotes.trim(),
+          },
+          fields: [
+            ["Gym", gymName.trim()],
+            ["Type", gymType],
+            ["Address", [gymAddress.trim(), gymCity.trim(), gymState.trim()].filter(Boolean).join(", ")],
+            ["Gym phone", gymPhone.trim()],
+            ["Website", gymWebsite.trim()],
+            ["Instagram", gymInstagram.trim()],
+            ["Owner", `${ownerName.trim()} (${ownerRole})`],
+            ["Owner email", ownerEmail.trim()],
+            ["Owner phone", ownerPhone.trim()],
+            ["Ownership verification", verifyMethod.trim()],
+            ["Day pass", dayPass],
+            ["Notes", gymNotes.trim()],
+          ] as [string, string][],
+        }),
       });
-
-      /* notification email via Firebase Trigger Email extension */
-      await addDoc(collection(db, "mail"), {
-        to: ["sales@gymroamapp.com"],
-        message: {
-          subject: `New Gym Partner Application: ${gymName.trim()}`,
-          html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #E8FF3C;">
-              <h2 style="color:#E8FF3C;margin:0 0 24px;">New Partner Application</h2>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Owner Info</h3>
-              <p style="margin:0 0 4px;"><strong>${ownerName.trim()}</strong> — ${ownerRole}</p>
-              <p style="margin:0 0 4px;">${ownerEmail.trim()}</p>
-              <p style="margin:0 0 16px;">${ownerPhone.trim()}</p>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Gym Info</h3>
-              <p style="margin:0 0 4px;"><strong>${gymName.trim()}</strong> (${gymType})</p>
-              <p style="margin:0 0 4px;">${gymAddress.trim()}, ${gymCity.trim()}, ${gymState.trim()}</p>
-              ${gymPhone.trim() ? `<p style="margin:0 0 4px;">${gymPhone.trim()}</p>` : ""}
-              ${gymWebsite.trim() ? `<p style="margin:0 0 4px;">${gymWebsite.trim()}</p>` : ""}
-              ${gymInstagram.trim() ? `<p style="margin:0 0 16px;">${gymInstagram.trim()}</p>` : '<p style="margin:0 0 16px;"></p>'}
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Verification</h3>
-              <p style="margin:0 0 16px;"><strong>How to verify:</strong> ${verifyMethod.trim()}</p>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Additional</h3>
-              <p style="margin:0 0 4px;"><strong>Day passes:</strong> ${dayPass}</p>
-              ${gymNotes.trim() ? `<p style="margin:0 0 4px;"><strong>Notes:</strong> ${gymNotes.trim()}</p>` : ""}
-            </div>
-          `,
-        },
-      });
-
-      /* confirmation email to applicant */
-      await addDoc(collection(db, "mail"), {
-        to: [ownerEmail.trim()],
-        message: {
-          subject: "GymRoam — We received your application",
-          html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #1F1F26;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
-              </div>
-              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;">You're on the launch list</h2>
-              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">Thanks for the interest in partnering with GymRoam, ${ownerName.trim()}.</p>
-              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:24px;">
-                <p style="margin:0 0 4px;font-weight:700;">${gymName.trim()}</p>
-                <p style="margin:0;color:#8A8A99;font-size:13px;">${gymCity.trim()}, ${gymState.trim()}</p>
-              </div>
-              <p style="color:#8A8A99;font-size:14px;text-align:center;margin:0 0 8px;">GymRoam is <strong style="color:#E8FF3C;">launching soon</strong>. We'll reach out as we open partner slots in your city.</p>
-              <p style="color:#8A8A99;font-size:14px;text-align:center;margin:0;">When we onboard you, you'll receive a passcode to sign into the app and access your Partner Dashboard.</p>
-            </div>
-          `,
-        },
-      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json?.error || `HTTP ${res.status}`);
 
       setSubmitted(true);
       showToast("Application submitted");

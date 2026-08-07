@@ -18,8 +18,6 @@ import { Check } from "@phosphor-icons/react/dist/ssr";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import {
   CONTENT_NICHES,
   AUDIENCE_LOCATIONS,
@@ -196,102 +194,52 @@ export default function AffiliatesPage() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      await addDoc(collection(db, "affiliateApplications"), {
-        status: "pending",
-
-        fullName: fullName.trim(),
-        email: cleanEmail,
-        phone: phone.trim(),
-        country: country.trim(),
-        stateRegion: stateRegion.trim(),
-
-        instagramHandle: ig,
-        instagramFollowers: igCount,
-        tiktokHandle: tt,
-        tiktokFollowers: ttCount,
-        otherPlatform: otherPlatform.trim(),
-        niche,
-        audienceLocation,
-
-        requestedCode: code,
-        heardAbout,
-        paymentMethod,
-        notes: notes.trim(),
-
-        /* Set by the admin panel on approval — never by this form. */
-        issuedCode: null,
-        approvedAt: null,
-        approvedBy: null,
-
-        createdAt: serverTimestamp(),
+      const res = await fetch("/api/forms/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "affiliate",
+          email: cleanEmail,
+          name: fullName.trim(),
+          doc: {
+            fullName: fullName.trim(),
+            phone: phone.trim(),
+            country: country.trim(),
+            stateRegion: stateRegion.trim(),
+            instagramHandle: ig,
+            instagramFollowers: igCount,
+            tiktokHandle: tt,
+            tiktokFollowers: ttCount,
+            otherPlatform: otherPlatform.trim(),
+            niche,
+            audienceLocation,
+            requestedCode: code,
+            heardAbout,
+            paymentMethod,
+            notes: notes.trim(),
+            /* Set by the admin panel on approval — never by this form. */
+            issuedCode: null,
+            approvedAt: null,
+            approvedBy: null,
+          },
+          fields: [
+            ["Creator", fullName.trim()],
+            ["Email", cleanEmail],
+            ["Phone", phone.trim()],
+            ["Location", [stateRegion.trim(), country.trim()].filter(Boolean).join(", ")],
+            ["Instagram", `${ig} — claimed ${igCount.toLocaleString()} followers`],
+            ["TikTok", `${tt} — claimed ${ttCount.toLocaleString()} followers`],
+            ["Other platform", otherPlatform.trim()],
+            ["Niche / audience", `${niche} · ${audienceLocation}`],
+            ["Requested code", code],
+            ["Payment preference", paymentMethod],
+            ["Heard about us", heardAbout],
+            ["Notes", notes.trim()],
+          ] as [string, string][],
+        }),
       });
-
-      /* notification email to us */
-      await addDoc(collection(db, "mail"), {
-        to: ["sales@gymroamapp.com"],
-        message: {
-          subject: `New Affiliate Application: ${fullName.trim()} (${ig}) — wants ${code}`,
-          html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #E8FF3C;">
-              <h2 style="color:#E8FF3C;margin:0 0 24px;">New Affiliate Application</h2>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Creator</h3>
-              <p style="margin:0 0 4px;"><strong>${fullName.trim()}</strong></p>
-              <p style="margin:0 0 4px;">${cleanEmail}</p>
-              ${phone.trim() ? `<p style="margin:0 0 4px;">${phone.trim()}</p>` : ""}
-              <p style="margin:0 0 16px;">${stateRegion.trim()}, ${country.trim()}</p>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Platforms (verify manually)</h3>
-              <p style="margin:0 0 4px;">
-                <a href="https://instagram.com/${ig.replace(/^@/, "")}" style="color:#E8FF3C;">${ig}</a>
-                — claimed <strong>${igCount.toLocaleString()}</strong> followers
-              </p>
-              <p style="margin:0 0 4px;">
-                <a href="https://tiktok.com/@${tt.replace(/^@/, "")}" style="color:#E8FF3C;">${tt}</a>
-                — claimed <strong>${ttCount.toLocaleString()}</strong> followers
-              </p>
-              ${otherPlatform.trim() ? `<p style="margin:0 0 4px;">Other: ${otherPlatform.trim()}</p>` : ""}
-              <p style="margin:0 0 16px;">${niche} &middot; ${audienceLocation}</p>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Deal</h3>
-              <p style="margin:0 0 4px;">Requested code: <strong style="color:#E8FF3C;">${code}</strong></p>
-              <p style="margin:0 0 4px;">Payment preference: ${paymentMethod}</p>
-              <p style="margin:0 0 16px;">Heard about us: ${heardAbout}</p>
-              ${notes.trim() ? `<p style="margin:0 0 16px;"><strong>Notes:</strong> ${notes.trim()}</p>` : ""}
-              <p style="margin:24px 0 0;color:#8A8A99;font-size:13px;">Review and approve in the admin panel — the code is not issued until you do.</p>
-            </div>
-          `,
-        },
-      });
-
-      /* confirmation email to applicant */
-      await addDoc(collection(db, "mail"), {
-        to: [cleanEmail],
-        message: {
-          subject: "GymRoam — Your affiliate application is in review",
-          html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #1F1F26;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
-              </div>
-              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;">Application Received</h2>
-              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">Thanks for applying, ${fullName.trim()}.</p>
-              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:24px;">
-                <p style="margin:0 0 4px;color:#8A8A99;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Requested code</p>
-                <p style="margin:0;font-weight:800;font-size:20px;color:#E8FF3C;">${code}</p>
-              </div>
-              <h3 style="font-size:13px;color:#8A8A99;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">What happens next</h3>
-              <ol style="color:#8A8A99;font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 24px;">
-                <li>We review every application by hand — usually within a few days</li>
-                <li>If approved, we confirm your code and send your agreement to sign</li>
-                <li>You get your tracking link, dashboard login, and free GymRoam Pro</li>
-              </ol>
-              <div style="background:#1A1206;border:1px solid #FF8C42;border-radius:12px;padding:16px;margin-bottom:24px;">
-                <p style="margin:0 0 6px;color:#FF8C42;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Important</p>
-                <p style="margin:0;color:#E8E8EE;font-size:13px;line-height:1.6;">${APPLE_SIGNIN_WARNING}</p>
-              </div>
-              <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">Questions? Reply to this email.</p>
-            </div>
-          `,
-        },
-      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json?.error || `HTTP ${res.status}`);
 
       setSubmitted(true);
       showToast("Application submitted");
