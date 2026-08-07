@@ -5,8 +5,6 @@ import { Check } from "@phosphor-icons/react/dist/ssr";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import Toast from "@/components/Toast";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { MIN_INSTAGRAM_FOLLOWERS } from "@/lib/subscription";
 import styles from "./page.module.css";
 
@@ -87,91 +85,50 @@ export default function TrainerPage() {
     const handle = normalizeHandle(instagramHandle);
 
     try {
-      await addDoc(collection(db, "trainerApplications"), {
-        fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-        city: city.trim(),
-        country: country.trim(),
-        instagramHandle: handle,
-        followerCount: followers,
-        specialty,
-        certifications: certifications.trim(),
-        yearsExperience,
-        bio: bio.trim(),
-        offersDropIns,
-        rate: rate.trim(),
-        websiteOrLink: websiteOrLink.trim(),
-        notes: notes.trim(),
-        status: "pending",
-        instagramVerified: false,
-        paymentStatus: "unpaid",
-        createdAt: serverTimestamp(),
+      const res = await fetch("/api/forms/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "trainer",
+          email: email.trim().toLowerCase(),
+          name: fullName.trim(),
+          doc: {
+            fullName: fullName.trim(),
+            phone: phone.trim(),
+            city: city.trim(),
+            country: country.trim(),
+            instagramHandle: handle,
+            followerCount: followers,
+            specialty,
+            certifications: certifications.trim(),
+            yearsExperience,
+            bio: bio.trim(),
+            offersDropIns,
+            rate: rate.trim(),
+            websiteOrLink: websiteOrLink.trim(),
+            notes: notes.trim(),
+            instagramVerified: false,
+            paymentStatus: "unpaid",
+          },
+          fields: [
+            ["Trainer", fullName.trim()],
+            ["Email", email.trim().toLowerCase()],
+            ["Phone", phone.trim()],
+            ["Location", [city.trim(), country.trim()].filter(Boolean).join(", ")],
+            ["Instagram", `${handle} — ${followers.toLocaleString()} followers`],
+            ["Specialty", specialty],
+            ["Certifications", certifications.trim()],
+            ["Experience", yearsExperience],
+            ["Offers drop-ins", offersDropIns],
+            ["Rate", rate.trim()],
+            ["Website / link", websiteOrLink.trim()],
+            ["Bio", bio.trim()],
+            ["Notes", notes.trim()],
+          ] as [string, string][],
+        }),
       });
-
-      /* notification email to admin */
-      await addDoc(collection(db, "mail"), {
-        to: ["sales@gymroamapp.com"],
-        message: {
-          subject: `New Trainer Application: ${fullName.trim()} (${handle})`,
-          html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #E8FF3C;">
-              <h2 style="color:#E8FF3C;margin:0 0 24px;">New Trainer Application</h2>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Trainer</h3>
-              <p style="margin:0 0 4px;"><strong>${fullName.trim()}</strong> — ${specialty}</p>
-              <p style="margin:0 0 4px;">${email.trim()}</p>
-              <p style="margin:0 0 4px;">${phone.trim()}</p>
-              <p style="margin:0 0 16px;">${city.trim()}, ${country.trim()}</p>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Instagram (verify manually)</h3>
-              <p style="margin:0 0 4px;">
-                <a href="https://instagram.com/${handle.replace(/^@/, "")}" style="color:#E8FF3C;">${handle}</a>
-                &nbsp;— <strong>claimed ${followers.toLocaleString()} followers</strong>
-              </p>
-              <p style="margin:0 0 16px;color:${followers >= MIN_INSTAGRAM_FOLLOWERS ? "#4ECDC4" : "#FF4D6D"};font-size:13px;">
-                ${followers >= MIN_INSTAGRAM_FOLLOWERS ? "✓ Meets minimum" : "✗ Below minimum"}
-              </p>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Experience</h3>
-              <p style="margin:0 0 4px;"><strong>Years:</strong> ${yearsExperience}</p>
-              ${certifications.trim() ? `<p style="margin:0 0 4px;"><strong>Certs:</strong> ${certifications.trim()}</p>` : ""}
-              <p style="margin:0 0 16px;"><strong>Bio:</strong> ${bio.trim()}</p>
-              <h3 style="color:#8A8A99;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Services</h3>
-              <p style="margin:0 0 4px;"><strong>Drop-ins:</strong> ${offersDropIns}</p>
-              ${rate.trim() ? `<p style="margin:0 0 4px;"><strong>Rate:</strong> ${rate.trim()}</p>` : ""}
-              ${websiteOrLink.trim() ? `<p style="margin:0 0 4px;"><strong>Link:</strong> ${websiteOrLink.trim()}</p>` : ""}
-              ${notes.trim() ? `<p style="margin:16px 0 0;"><strong>Notes:</strong> ${notes.trim()}</p>` : ""}
-            </div>
-          `,
-        },
-      });
-
-      /* confirmation email to applicant */
-      await addDoc(collection(db, "mail"), {
-        to: [email.trim().toLowerCase()],
-        message: {
-          subject: "GymRoam — Your trainer application is in review",
-          html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;background:#111114;color:#E8E8EE;padding:32px;border-radius:16px;border:1px solid #1F1F26;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <div style="display:inline-block;width:40px;height:40px;background:#E8FF3C;border-radius:10px;line-height:40px;font-weight:900;font-size:20px;color:#0A0A0B;">G</div>
-              </div>
-              <h2 style="text-align:center;margin:0 0 8px;font-size:22px;">Application Received</h2>
-              <p style="text-align:center;color:#8A8A99;margin:0 0 24px;font-size:14px;">Thanks for applying, ${fullName.trim()}.</p>
-              <div style="background:#18181D;border-radius:12px;padding:20px;margin-bottom:24px;">
-                <p style="margin:0 0 4px;font-weight:700;">${specialty}</p>
-                <p style="margin:0;color:#8A8A99;font-size:13px;">${handle} &middot; ${city.trim()}</p>
-              </div>
-              <h3 style="font-size:13px;color:#8A8A99;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">What happens next</h3>
-              <ol style="color:#8A8A99;font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 24px;">
-                <li>We add you to the launch list and review every submission</li>
-                <li>GymRoam is <strong style="color:#E8FF3C;">launching soon</strong>; we'll reach out when we're ready to onboard trainers</li>
-                <li>If we move forward, we email a passcode to sign into the GymRoam app</li>
-                <li>Pricing details shared at activation</li>
-              </ol>
-              <p style="color:#55555F;font-size:12px;text-align:center;margin:0;">Questions? Reply to this email.</p>
-            </div>
-          `,
-        },
-      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json?.error || `HTTP ${res.status}`);
 
       setSubmitted(true);
       showToast("Application submitted");
