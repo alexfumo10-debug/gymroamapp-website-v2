@@ -366,6 +366,10 @@
   justify-content: center;
   gap: 20px;
   flex-wrap: wrap;
+  /* The stat tiles used to sit between the copy and these buttons and
+     carried the spacing (40px/36px). With the tiles gone the row needs
+     its own breathing room, or the paragraph runs straight into the CTA. */
+  margin-top: 36px;
 }
 
 .creatorCta {
