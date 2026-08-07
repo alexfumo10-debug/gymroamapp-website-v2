@@ -5,7 +5,8 @@
  * every application lands here, you open one, adjust the code if you
  * want, and approve or reject.
  *
- * Reads come from Firestore via useCollection (same as PipelineTab).
+ * Reads go through /api/admin/affiliates (Admin SDK, admin-gated) because
+ * these applications hold applicant PII and must not be client-readable.
  * WRITES go through /api/admin/affiliates rather than the client SDK,
  * because issuing a code has to be atomic against the affiliateCodes
  * uniqueness lock — see that route for why.
@@ -13,8 +14,7 @@
 
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
-import { useCollection } from "../_lib/useAdminData";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { formatDate, formatCompact } from "../_lib/format";
 import type { AffiliateApplication } from "../_lib/types";
 import {
@@ -70,10 +70,54 @@ export function AffiliatesTab({ auth }: Props) {
   );
 }
 
+/**
+ * Applications, loaded through the admin API instead of the client SDK.
+ *
+ * These documents carry applicant PII (name, email, phone, payment
+ * preference), so `affiliateApplications` has no client read rule and never
+ * should — reading it from the browser fails with "Missing or insufficient
+ * permissions". The server route verifies the admin token and reads with the
+ * Admin SDK. Shape matches useCollection so the view below is unchanged.
+ */
+function useAffiliateApplications(getIdToken: () => Promise<string | null>) {
+  const [data, setData] = useState<AffiliateApplication[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [error, setError] = useState("");
+  const [tick, setTick] = useState(0);
+  const reload = useCallback(() => setTick((t) => t + 1), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setState("loading");
+      try {
+        const token = await getIdToken();
+        if (!token) throw new Error("not signed in");
+        const res = await fetch("/api/admin/affiliates", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (!res.ok || !json.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+        if (cancelled) return;
+        setData((json.applications || []) as AffiliateApplication[]);
+        setState("ready");
+      } catch (e) {
+        if (cancelled) return;
+        setError((e as Error).message);
+        setState("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tick]);
+
+  return { data, state, error, reload };
+}
+
 function ApplicationsView({ auth }: Props) {
-  const apps = useCollection<AffiliateApplication>("affiliateApplications", {
-    orderField: "createdAt",
-  });
+  const apps = useAffiliateApplications(auth.getIdToken);
 
   const [filter, setFilter] = useState<Filter>("pending");
   const [search, setSearch] = useState("");

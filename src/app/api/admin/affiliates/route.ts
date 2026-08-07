@@ -190,6 +190,54 @@ function welcomeEmail(params: {
   };
 }
 
+/**
+ * GET /api/admin/affiliates — list applications for the admin tab.
+ *
+ * The tab used to read `affiliateApplications` straight from the browser
+ * with the client SDK, which fails ("Missing or insufficient permissions")
+ * because the collection has no read rule — and it shouldn't have one: these
+ * documents hold applicant PII (name, email, phone, payment preference), so
+ * they must never be client-readable. Serving them here through the Admin
+ * SDK keeps the collection sealed and the data admin-only.
+ */
+export async function GET(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
+  try {
+    const snap = await adminDb()
+      .collection("affiliateApplications")
+      .orderBy("createdAt", "desc")
+      .limit(500)
+      .get();
+
+    const applications = snap.docs.map((d) => {
+      const data = d.data();
+      // Firestore Timestamps → epoch ms so the client can format them
+      // without pulling in the Firestore SDK types.
+      const ts = (v: unknown) =>
+        v && typeof (v as { toDate?: () => Date }).toDate === "function"
+          ? (v as { toDate: () => Date }).toDate().getTime()
+          : null;
+      return {
+        ...data,
+        id: d.id,
+        createdAt: ts(data.createdAt),
+        approvedAt: ts(data.approvedAt),
+        rejectedAt: ts(data.rejectedAt),
+      };
+    });
+
+    return NextResponse.json({ ok: true, applications });
+  } catch (e) {
+    console.error("[/api/admin/affiliates GET]", e);
+    return NextResponse.json(
+      { ok: false, error: (e as Error).message, applications: [] },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
