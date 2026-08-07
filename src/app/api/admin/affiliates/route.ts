@@ -43,7 +43,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Action = "approve" | "reject" | "recode";
+type Action = "approve" | "reject" | "recode" | "delete";
 
 /**
  * Send a creator-program email through Resend.
@@ -242,6 +242,49 @@ export async function POST(req: NextRequest) {
       }
     }
     return NextResponse.json({ ok: true, status: "rejected", emailed });
+  }
+
+  /* ── Delete ──
+     Removes the application AND releases its code, so the creator (or
+     anyone) can apply for that code again. Deleting the application alone
+     would leave `affiliateCodes/{CODE}` behind as a permanent uniqueness
+     lock on a code nobody owns.
+
+     What this deliberately does NOT do is delete the Firebase Auth
+     account. Affiliate logins share the Auth pool with app users, and the
+     address may well belong to a real GymRoam user (or, in one case, an
+     admin) — deleting it would take out an unrelated account. We strip the
+     affiliate claims instead, which is what actually gates /creator. */
+  if (action === "delete") {
+    const snap = await appRef.get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: "application not found" }, { status: 404 });
+    }
+    const app = snap.data() as { email?: string; issuedCode?: string | null };
+    const issued = normalizeCode(app.issuedCode || "");
+
+    if (issued) {
+      await db.collection("affiliateCodes").doc(issued).delete().catch((e) => {
+        console.error("[/api/admin/affiliates] code release failed", e);
+      });
+    }
+
+    if (app.email) {
+      try {
+        const auth = adminAuth();
+        const user = await auth.getUserByEmail(app.email.toLowerCase());
+        const claims = { ...(user.customClaims || {}) } as Record<string, unknown>;
+        delete claims.role;
+        delete claims.affiliateCode;
+        await auth.setCustomUserClaims(user.uid, claims);
+      } catch (e) {
+        // No account, or claim clear failed — neither should block the delete.
+        console.error("[/api/admin/affiliates] claim clear skipped", e);
+      }
+    }
+
+    await appRef.delete();
+    return NextResponse.json({ ok: true, status: "deleted", releasedCode: issued || null });
   }
 
   /* ── Approve / recode — both issue a code ── */
