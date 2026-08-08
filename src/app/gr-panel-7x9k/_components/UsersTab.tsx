@@ -43,7 +43,13 @@ function sourceLabel(s: string): string {
 type Auth = ReturnType<typeof useAdminAuth>;
 // uid is always resolved to a string in `enriched` (doc id), so the
 // detail modal can index authMap.map[selected.uid] without a guard.
-type EnrichedUser = AppUser & { uid: string; canonicalEmail: string; isOrphan: boolean };
+type EnrichedUser = AppUser & {
+  uid: string;
+  canonicalEmail: string;
+  isOrphan: boolean;
+  /** Auth account with no Firestore profile doc (quit during onboarding). */
+  noProfile?: boolean;
+};
 
 // Some user docs store the username already prefixed with "@"; strip any
 // leading @(s) and re-add exactly one so it never renders as "@@handle".
@@ -121,7 +127,7 @@ export function UsersTab({ auth }: { auth: Auth }) {
   const [selected, setSelected] = useState<EnrichedUser | null>(null);
 
   const enriched = useMemo(() => {
-    return users.data.map((u) => {
+    const fromFirestore = users.data.map((u) => {
       // The auth cross-ref map is keyed by Firebase Auth uid = the
       // Firestore doc ID. useCollection exposes that as `id`; the doc
       // itself has no `uid` field (iOS never writes one), so resolve the
@@ -131,8 +137,34 @@ export function UsersTab({ auth }: { auth: Auth }) {
       const authInfo = authMap.map[uid];
       const canonicalEmail = authInfo?.email || u.email || "";
       const isOrphan = authMap.state === "ready" && !authInfo;
-      return { ...u, uid, canonicalEmail, isOrphan };
+      return { ...u, uid, canonicalEmail, isOrphan, noProfile: false };
     });
+
+    // Accounts that exist in Firebase Auth but have NO Firestore user doc.
+    // These people signed up and quit before the app wrote a profile, so
+    // they were absent from this table entirely — the collection simply has
+    // no row for them. They're real signups and belong in the count, marked
+    // so it's clear why they have no name or handle.
+    const seen = new Set(fromFirestore.map((u) => u.uid));
+    const authOnly = Object.entries(authMap.map)
+      .filter(([uid]) => !seen.has(uid))
+      .map(([uid, info]) => ({
+        uid,
+        id: uid,
+        canonicalEmail: info.email || "",
+        isOrphan: false,
+        noProfile: true,
+        incompleteOnboarding: true,
+        joinedAt: info.createdAt ? Date.parse(info.createdAt) : null,
+        joinedAtApprox: false,
+      })) as unknown as (AppUser & {
+        uid: string;
+        canonicalEmail: string;
+        isOrphan: boolean;
+        noProfile: boolean;
+      })[];
+
+    return [...fromFirestore, ...authOnly];
   }, [users.data, authMap.map, authMap.state]);
 
   const filtered = useMemo(() => {
@@ -192,6 +224,11 @@ export function UsersTab({ auth }: { auth: Auth }) {
         <StatTile accent label="Total Users" value={formatCompact(enriched.length)} />
         <StatTile label="New This Week" value={newThisWeek} sub="signed up" />
         <StatTile label="Verified Creators" value={verifiedCount} />
+        <StatTile
+          label="No Profile"
+          value={enriched.filter((u) => u.noProfile).length}
+          sub="signed up, quit onboarding"
+        />
         <StatTile
           label="Orphan Docs"
           value={orphanCount}
@@ -332,7 +369,11 @@ export function UsersTab({ auth }: { auth: Auth }) {
           </div>
         ) : (
           filtered.map((u) => {
-            const name = u.displayName || u.username || u.canonicalEmail || u.uid;
+            const name =
+              u.displayName ||
+              u.username ||
+              u.canonicalEmail ||
+              (u.noProfile ? "(never finished onboarding)" : u.uid);
             const initial = (
               u.displayName?.[0] ||
               u.username?.[0] ||
@@ -373,7 +414,9 @@ export function UsersTab({ auth }: { auth: Auth }) {
                   {u.joinedAtApprox && <span style={{ opacity: 0.6 }}> ~</span>}
                 </div>
                 <div className={tabs.cellRight}>
-                  {u.isOrphan ? (
+                  {u.noProfile ? (
+                    <Badge tone="orange">no profile</Badge>
+                  ) : u.isOrphan ? (
                     <Badge tone="red">orphan</Badge>
                   ) : u.isVerifiedCreator ? (
                     <Badge tone="green">✓ verified</Badge>
