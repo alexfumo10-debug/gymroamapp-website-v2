@@ -36,7 +36,7 @@ import tabs from "./tabs.module.css";
 /** Count items whose timestamp falls in the [from,to) day window. */
 function countInWindow<T>(
   items: T[],
-  get: (t: T) => FirestoreTimestamp | number | undefined,
+  get: (t: T) => FirestoreTimestamp | number | undefined | null,
   fromDaysAgo: number,
   toDaysAgo: number
 ): number {

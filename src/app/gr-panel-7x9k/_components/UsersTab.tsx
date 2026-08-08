@@ -9,12 +9,8 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  useCollection,
-  useAuthUsers,
-  type useAdminAuth,
-} from "../_lib/useAdminData";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { useAuthUsers, type useAdminAuth } from "../_lib/useAdminData";
 import {
   formatDate,
   formatDateTime,
@@ -73,8 +69,52 @@ function formatValue(key: string, val: unknown): string {
   return String(val);
 }
 
+/**
+ * Users, read through the admin API so every row has a signup date.
+ *
+ * `createdAt` is written by the iOS profile save, so it's absent for legacy
+ * accounts and for anyone mid-onboarding — those rows showed a blank Joined
+ * date and sorted to the bottom, which looked like missing users. The route
+ * falls back to the document's server createTime, which always exists but
+ * isn't visible to the client SDK.
+ */
+function useAppUsers(getIdToken: () => Promise<string | null>) {
+  const [data, setData] = useState<AppUser[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [error, setError] = useState("");
+  const [tick, setTick] = useState(0);
+  const reload = useCallback(() => setTick((t) => t + 1), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setState("loading");
+      try {
+        const token = await getIdToken();
+        if (!token) throw new Error("not signed in");
+        const res = await fetch("/api/admin/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (!res.ok || !json.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+        if (cancelled) return;
+        setData((json.users || []) as AppUser[]);
+        setState("ready");
+      } catch (e) {
+        if (cancelled) return;
+        setError((e as Error).message);
+        setState("error");
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tick]);
+
+  return { data, state, error, reload };
+}
+
 export function UsersTab({ auth }: { auth: Auth }) {
-  const users = useCollection<AppUser>("users");
+  const users = useAppUsers(auth.getIdToken);
   const authMap = useAuthUsers(auth.getIdToken, true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "verified" | "orphan">("all");
@@ -110,17 +150,13 @@ export function UsersTab({ auth }: { auth: Auth }) {
     });
     // Always newest-first by signup time (createdAt, else updatedAt).
     // Undated docs sort to the bottom.
-    return result.sort(
-      (a, b) =>
-        (tsToMillis(b.createdAt ?? b.updatedAt) ?? 0) -
-        (tsToMillis(a.createdAt ?? a.updatedAt) ?? 0)
-    );
+    // joinedAt is server-resolved and never null, so nobody sorts to the
+    // bottom just because their profile save never wrote createdAt.
+    return result.sort((a, b) => (b.joinedAt ?? 0) - (a.joinedAt ?? 0));
   }, [enriched, search, filter]);
 
   const verifiedCount = enriched.filter((u) => u.isVerifiedCreator).length;
-  const newThisWeek = enriched.filter((u) =>
-    withinDays(u.createdAt ?? u.updatedAt, 7)
-  ).length;
+  const newThisWeek = enriched.filter((u) => withinDays(u.joinedAt, 7)).length;
   const orphanCount = enriched.filter((u) => u.isOrphan).length;
 
   // Acquisition breakdown from the onboarding "Where did you hear about us?"
@@ -328,12 +364,13 @@ export function UsersTab({ auth }: { auth: Auth }) {
                   )}
                 </div>
                 <div className={tabs.cellMuted}>{u.homeCity || "—"}</div>
-                <div className={tabs.cellDim}>
-                  {formatDate(u.createdAt ?? u.updatedAt, {
+                <div className={tabs.cellDim} title={u.joinedAtApprox ? "From account creation metadata (profile never saved a signup date)" : undefined}>
+                  {formatDate(u.joinedAt, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
                   })}
+                  {u.joinedAtApprox && <span style={{ opacity: 0.6 }}> ~</span>}
                 </div>
                 <div className={tabs.cellRight}>
                   {u.isOrphan ? (

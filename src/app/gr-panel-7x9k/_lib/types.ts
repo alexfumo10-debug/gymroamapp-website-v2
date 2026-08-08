@@ -55,8 +55,15 @@ export interface AppUser {
   proGrantedAt?: FirestoreTimestamp | null;
   proRevokedBy?: string | null;
   proRevokedAt?: FirestoreTimestamp | null;
-  createdAt?: FirestoreTimestamp;
-  updatedAt?: number; // iOS writes epoch seconds on every save
+  createdAt?: FirestoreTimestamp | number | null;
+  updatedAt?: number | null; // iOS writes epoch seconds on every save
+  /** Server-resolved signup date (epoch ms). Never null — falls back to the
+   *  document's Firestore createTime when createdAt/updatedAt are absent. */
+  joinedAt?: number | null;
+  /** True when joinedAt came from document metadata rather than a field. */
+  joinedAtApprox?: boolean;
+  /** Signed up but never completed the profile step. */
+  incompleteOnboarding?: boolean;
 }
 
 /** Canonical Firebase Auth identity, from /api/admin/users-auth. */
