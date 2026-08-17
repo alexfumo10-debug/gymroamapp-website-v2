@@ -36,6 +36,34 @@ export function normalizeCode(raw: string): string {
 }
 
 /**
+ * Doc id in `creatorCodes/` — the collection the iOS APP reads to unlock the
+ * creator-discount SKU at the paywall. Deliberately the OPPOSITE case fold
+ * from `normalizeCode`: the app lowercases whatever the user types
+ * (AttributionFeature.normalizeCreatorCode: trim, strip "@", lowercase) and
+ * does an exact-ID get, so the twin doc MUST be lowercase to be findable.
+ * `affiliateCodes/{UPPER}` and `creatorCodes/{lower}` describe the same code
+ * in two systems; nothing may mix the two conventions.
+ */
+export function creatorCodeDocId(code: string): string {
+  return (code || "").trim().replace(/@/g, "").toLowerCase();
+}
+
+/**
+ * What the app renders as "{displayName}'s code applied" on the onboarding
+ * creator page. The applicant's first name beats a prettified code: a creator
+ * named Ashley with code FITWITHASH should read "Ashley's", not
+ * "Fitwithash's". Falls back to a capitalized code when the application has
+ * no usable name (the app itself falls back to the raw code if this is ever
+ * empty, which reads like a typo — so never store empty).
+ */
+export function creatorDisplayName(fullName: string, code: string): string {
+  const first = (fullName || "").trim().split(/\s+/)[0] || "";
+  if (first) return first.charAt(0).toUpperCase() + first.slice(1);
+  const c = creatorCodeDocId(code);
+  return c ? c.charAt(0).toUpperCase() + c.slice(1) : c;
+}
+
+/**
  * Reserved words. Two reasons a code lands here:
  *   - it would let an affiliate impersonate us (GYMROAM, SUPPORT, BILLING)
  *   - it reads like a system/marketing code a user might guess and try

@@ -27,6 +27,8 @@ import { adminDb, adminAuth } from "@/lib/firebase-admin";
 import { Resend } from "resend";
 import {
   normalizeCode,
+  creatorCodeDocId,
+  creatorDisplayName,
   validateCodeFormat,
   CODE_REJECTION_MESSAGES,
   trackingLink,
@@ -267,6 +269,16 @@ export async function POST(req: NextRequest) {
       await db.collection("affiliateCodes").doc(issued).delete().catch((e) => {
         console.error("[/api/admin/affiliates] code release failed", e);
       });
+      // Also revoke the in-app discount twin — leaving it behind would keep
+      // the code unlocking the creator price at the paywall for a creator we
+      // just removed. (Same doc the approval transaction maintains.)
+      await db
+        .collection("creatorCodes")
+        .doc(creatorCodeDocId(issued))
+        .delete()
+        .catch((e) => {
+          console.error("[/api/admin/affiliates] creator-code twin release failed", e);
+        });
     }
 
     if (app.email) {
@@ -315,6 +327,14 @@ export async function POST(req: NextRequest) {
 
   const previousCode = normalizeCode(application.issuedCode || "");
   const codeRef = db.collection("affiliateCodes").doc(code);
+  // The in-app twin. `affiliateCodes/{UPPER}` powers the referral link,
+  // signup tracking and payout — the iOS app never reads it. The app reads
+  // `creatorCodes/{lower}` to validate a typed code and unlock the
+  // creator-price SKU at the paywall. Every affiliate gets the discount
+  // (Alex, 2026-08-17), so the twin is maintained in the SAME transaction —
+  // an approval can no longer produce a creator with a working link whose
+  // audience is silently charged full price (the gap that bit creator #1).
+  const twinRef = db.collection("creatorCodes").doc(creatorCodeDocId(code));
 
   try {
     await db.runTransaction(async (tx) => {
@@ -322,6 +342,8 @@ export async function POST(req: NextRequest) {
       // Firestore transactions forbid a read after a write, so both the
       // new-code check and the old-code lookup have to happen up front.
       const existing = await tx.get(codeRef);
+      // Twin read is only for preserving createdAt across a re-approval.
+      const twinSnap = await tx.get(twinRef);
       const previousRef =
         previousCode && previousCode !== code
           ? db.collection("affiliateCodes").doc(previousCode)
@@ -348,6 +370,22 @@ export async function POST(req: NextRequest) {
         issuedAt: FieldValue.serverTimestamp(),
       });
 
+      // The twin the app validates against. Shape is the iOS contract:
+      // `active` must be a real boolean and `displayName` renders as
+      // "{displayName}'s code applied" — see CreatorCodeService.lookup.
+      // NO applicant PII here beyond the first name: creatorCodes is
+      // readable by any signed-in user (exact-ID get), unlike the sealed
+      // affiliateCodes/affiliateApplications collections.
+      // Full set (not merge): after this bridge, approval owns the twin —
+      // a hand-edited displayName lasts only until the next approval.
+      tx.set(twinRef, {
+        displayName: creatorDisplayName(application.fullName || "", code),
+        active: true,
+        createdAt: twinSnap.exists ? twinSnap.data()?.createdAt ?? Date.now() : Date.now(),
+        updatedAt: Date.now(),
+        applicationId, // provenance — lets recode/delete/audits find the owner
+      });
+
       // Retire the old code rather than deleting it: links and story
       // slides already carry it, and we still need it to resolve
       // historical attribution.
@@ -357,6 +395,15 @@ export async function POST(req: NextRequest) {
           retiredAt: FieldValue.serverTimestamp(),
           replacedBy: code,
         });
+      }
+      // The old twin has no attribution role — an inactive twin and a
+      // missing twin behave identically in-app (code reads as unknown) —
+      // so delete it outright and keep `creatorCodes` = exactly the codes
+      // that work. (A device that already validated the old code keeps its
+      // stored validation — accepted iOS-side limit, same class as the
+      // codeless-SKU purchase: worst case someone pays the creator price.)
+      if (previousCode && previousCode !== code) {
+        tx.delete(db.collection("creatorCodes").doc(creatorCodeDocId(previousCode)));
       }
 
       tx.update(appRef, {
