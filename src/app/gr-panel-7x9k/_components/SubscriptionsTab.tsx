@@ -37,9 +37,20 @@ interface ProMember {
   permanent: boolean;
   badgeActive: boolean;
   expiredComp: boolean;
+  lastSeen: string | null;
+  lastSeenDays: number | null;
+  /** Purchased badge no device has reaffirmed lately — may have cancelled. */
+  unconfirmed: boolean;
 }
 interface ProMembersResponse {
-  counts: { purchased: number; comped: number; founders: number; total: number };
+  counts: {
+    purchased: number;
+    purchasedUnconfirmed: number;
+    purchasedConfirmed: number;
+    comped: number;
+    founders: number;
+    total: number;
+  };
   purchased: ProMember[];
   comped: ProMember[];
   founders: ProMember[];
@@ -65,7 +76,13 @@ function ProMembersSection({ data }: { data: ProMembersResponse }) {
     <>
       <SectionHeading
         title="Pro Members"
-        meta={`${counts.total} total · ${counts.purchased} purchased · ${counts.comped} comped · ${counts.founders} founder`}
+        meta={
+          `${counts.total} total · ${counts.purchased} purchased` +
+          (counts.purchasedUnconfirmed
+            ? ` (${counts.purchasedUnconfirmed} unconfirmed)`
+            : "") +
+          ` · ${counts.comped} comped · ${counts.founders} founder`
+        }
       />
       {rows.length === 0 ? (
         <Card>
@@ -125,10 +142,28 @@ function ProMembersSection({ data }: { data: ProMembersResponse }) {
                 {m.source !== "founder" && (
                   <span
                     className={tabs.cellSecondary}
-                    style={{ color: m.badgeActive ? "var(--green)" : "var(--dim)" }}
+                    style={{
+                      color: m.unconfirmed
+                        ? "var(--orange, #e0a33a)"
+                        : m.badgeActive
+                        ? "var(--green)"
+                        : "var(--dim)",
+                    }}
                   >
                     {m.expiredComp
                       ? "grant expired"
+                      : m.unconfirmed
+                      ? // The badge is on, but only the user's device can clear
+                        // it and that device hasn't checked in — so we can't
+                        // tell a live subscriber from someone who cancelled.
+                        `unconfirmed · last seen ${
+                          m.lastSeen
+                            ? formatDate(Date.parse(m.lastSeen), {
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "never"
+                        }`
                       : m.badgeActive
                       ? "active on device"
                       : "not activated yet"}

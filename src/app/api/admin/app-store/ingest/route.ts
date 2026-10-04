@@ -21,6 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-gate";
 import { subsConfigured, fetchAnalyticsFunnel, fetchLifetimeDownloads } from "@/lib/appstore";
 import { adminDb } from "@/lib/firebase-admin";
+import { syncAffiliateReferrals } from "@/lib/affiliate-referral-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,7 +90,18 @@ async function ingest(req: NextRequest) {
         { merge: true }
       );
 
-    return NextResponse.json({ ok: true, wrote: true, funnel, lifetime });
+    // Piggyback the affiliate referral sync on this cron. Its own Vercel
+    // cron never fired in 47 days, and this one demonstrably runs daily, so
+    // referrals ride the schedule that actually works. Non-fatal: a referral
+    // failure must not fail the App Store ingest, which is the primary job.
+    let referrals = null;
+    try {
+      referrals = await syncAffiliateReferrals();
+    } catch (e) {
+      console.error("[ingest] affiliate referral sync failed", e);
+    }
+
+    return NextResponse.json({ ok: true, wrote: true, funnel, lifetime, referrals });
   } catch (e) {
     console.error("[/api/admin/app-store/ingest]", e);
     return NextResponse.json(
